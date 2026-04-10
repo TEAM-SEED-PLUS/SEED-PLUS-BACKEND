@@ -29,7 +29,7 @@ import seed.seedplusbackend.domain.entity.user.StoreOwner;
     uniqueConstraints = {
         @UniqueConstraint(
             name = "uk_builder_store_like_user_store",
-            columnNames = {"user_id", "builder_store_id"}
+            columnNames = {"liker_id", "builder_store_id"}
         )
     }
 )

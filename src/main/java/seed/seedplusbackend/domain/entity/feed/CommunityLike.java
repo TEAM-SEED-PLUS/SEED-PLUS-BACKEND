@@ -27,7 +27,7 @@ import seed.seedplusbackend.domain.entity.user.StoreOwner;
 @Builder
 @Table(
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_community_reaction_user_post_type", columnNames = {"user_id", "community_post_id"})
+        @UniqueConstraint(name = "uk_community_reaction_user_post_type", columnNames = {"liker_id", "community_post_id"})
     }
 )
 public class CommunityLike extends BaseEntity {
