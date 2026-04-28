@@ -1,0 +1,45 @@
+name: Dev CD Pipeline (Backend)
+
+on:
+  workflow_run:
+    workflows: ["Backend CI Pipeline"] # BE 레포지토리의 CI 워크플로우 이름과 정확히 일치
+    types:
+      - completed
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  deploy-to-openstack:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Infra Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'TEAM-SEED-PLUS/SEED-PLUS-INFRA'
+          token: ${{ secrets.INFRA_REPO_TOKEN }}
+          path: 'infra-repo'
+
+      - name: Set up SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.OPENSTACK_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # BE 포트는 2225
+          ssh-keyscan -p 2225 -H ${{ secrets.TARGET_IP }} >> ~/.ssh/known_hosts
+
+      - name: Run Ansible Playbook
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          cd infra-repo/openstack-cd
+          ansible-playbook -i ${{ secrets.TARGET_IP }}:2225, -u ubuntu playbooks/os_dev_deploy.yml \
+            --extra-vars "target_app=backend \
+                          ecr_registry=${{ secrets.ECR_REGISTRY }} \
+                          ecr_repository=${{ secrets.ECR_REPOSITORY }} \
+                          image_tag=${{ github.event.workflow_run.head_sha || github.sha }} \
+                          aws_region=ap-northeast-2 \
+                          aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                          aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                          app_env_content='${{ secrets.BE_ENV_PAYLOAD }}'"

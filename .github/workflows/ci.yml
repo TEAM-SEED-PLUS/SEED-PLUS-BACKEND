@@ -36,11 +36,7 @@ jobs:
         run: |
           # Spring Boot Docker 이미지 빌드 (멀티 스테이지)
           docker build \
-            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
-            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest .
+            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} .
           
           # Commit SHA 태그 푸시
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-          
-          # latest 태그 푸시
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
