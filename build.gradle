@@ -36,6 +36,7 @@ spotless {
 
     format 'misc', {
         target '*.gradle', '.gitignore', 'src/**/*.yml', 'src/**/*.yaml', 'src/**/*.sql'
+        targetExclude 'src/main/resources/db/migration/**/*.sql'
         trimTrailingWhitespace()
         endWithNewline()
     }
