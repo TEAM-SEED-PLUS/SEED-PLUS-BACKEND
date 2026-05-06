@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.11'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '8.4.0'
 }
 
 group = 'seed'
@@ -22,6 +23,23 @@ configurations {
 
 repositories {
     mavenCentral()
+}
+
+spotless {
+    java {
+        target 'src/**/*.java'
+        googleJavaFormat('1.22.0')
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    format 'misc', {
+        target '*.gradle', '.gitignore', 'src/**/*.yml', 'src/**/*.yaml', 'src/**/*.sql'
+        targetExclude 'src/main/resources/db/migration/**/*.sql'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
 
 dependencies {
@@ -48,6 +66,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     // DB
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
 
     // Test
@@ -57,4 +77,20 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('spotlessCheck') {
+    dependsOn tasks.named('spotlessApply')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    dependsOn tasks.named('spotlessApply')
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('spotlessApply')
+}
+
+tasks.named('bootJar') {
+    dependsOn tasks.named('spotlessApply')
 }
