@@ -10,4 +10,5 @@ class SeedPlusBackendApplicationTests {
   void contextLoads() {
   }
 
+  void contextLoads() {}
 }
