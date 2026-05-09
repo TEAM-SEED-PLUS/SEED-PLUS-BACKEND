@@ -76,8 +76,9 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(HandlerMethodValidationException.class)
   public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(
       HandlerMethodValidationException e) {
-    log.warn("[Method Validation Error] {}", e.getMessage());
-    return createErrorResponse(ErrorCode.INVALID_PARAMETER, e.getMessage());
+    String detail = "method parameter validation failed";
+    log.warn("[Method Validation Error] {}", detail);
+    return createErrorResponse(ErrorCode.INVALID_PARAMETER, detail);
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
