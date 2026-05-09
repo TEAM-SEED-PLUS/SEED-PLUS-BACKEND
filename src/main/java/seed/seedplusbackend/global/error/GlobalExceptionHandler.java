@@ -165,8 +165,8 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
-    log.warn("[IllegalArgumentException] {}", e.getMessage());
-    return createErrorResponse(ErrorCode.INVALID_REQUEST, e.getMessage());
+    log.warn("[IllegalArgumentException] {}", e.getMessage(), e);
+    return createErrorResponse(ErrorCode.INVALID_REQUEST);
   }
 
   @ExceptionHandler(Exception.class)
