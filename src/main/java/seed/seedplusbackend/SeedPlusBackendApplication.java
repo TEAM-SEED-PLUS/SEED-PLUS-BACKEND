@@ -9,5 +9,4 @@ public class SeedPlusBackendApplication {
   public static void main(String[] args) {
     SpringApplication.run(SeedPlusBackendApplication.class, args);
   }
-
 }
