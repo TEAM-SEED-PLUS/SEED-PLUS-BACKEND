@@ -33,7 +33,7 @@ public class SwaggerConfig {
   private String port;
 
   @Bean
-  public OpenAPI retrivrOpenAPI() {
+  public OpenAPI retrieveOpenAPI() {
     return new OpenAPI()
         .info(new Info().title("SEED-PLUS API").description("SEED-PLUS API 문서").version("v1.0.0"))
         .servers(List.of(new Server().url(baseUrl + ":" + port).description("Server")));
