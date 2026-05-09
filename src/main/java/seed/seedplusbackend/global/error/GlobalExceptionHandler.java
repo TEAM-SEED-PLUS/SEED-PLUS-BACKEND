@@ -151,8 +151,9 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(NoResourceFoundException.class)
   public ResponseEntity<ErrorResponse> handleNoResourceFoundException(NoResourceFoundException e) {
-    log.warn("[Resource Not Found] {}", e.getMessage());
-    return createErrorResponse(ErrorCode.RESOURCE_NOT_FOUND, e.getMessage());
+    String detail = "%s %s".formatted(e.getHttpMethod(), e.getResourcePath());
+    log.warn("[Resource Not Found] {}", detail);
+    return createErrorResponse(ErrorCode.RESOURCE_NOT_FOUND, detail);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
