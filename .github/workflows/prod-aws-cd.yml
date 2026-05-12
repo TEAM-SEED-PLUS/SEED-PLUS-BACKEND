@@ -2,9 +2,8 @@ name: Prod CD Pipeline (Backend)
 
 on:
   push:
-    branches: ["develop"]
+    branches: ["main"]
   workflow_dispatch:
-
 
 jobs:
   deploy-to-aws:
