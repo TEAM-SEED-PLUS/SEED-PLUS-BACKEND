@@ -12,6 +12,7 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
+import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -114,6 +115,14 @@ public class GlobalExceptionHandler {
     String detail = "header=%s".formatted(e.getHeaderName());
     log.warn("[Bad Request] missing required header: {}", detail);
     return createErrorResponse(ErrorCode.MISSING_REQUIRED_HEADER, detail);
+  }
+
+  @ExceptionHandler(MissingRequestCookieException.class)
+  public ResponseEntity<ErrorResponse> handleMissingRequestCookieException(
+      MissingRequestCookieException e) {
+    String detail = "cookie=%s".formatted(e.getCookieName());
+    log.warn("[Bad Request] missing required cookie: {}", detail);
+    return createErrorResponse(ErrorCode.INVALID_TOKEN, detail);
   }
 
   @ExceptionHandler(MissingPathVariableException.class)

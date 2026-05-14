@@ -10,9 +10,15 @@ public interface UserRepository {
 
   Optional<User> findById(Long id);
 
+  Optional<User> findByPhoneNumber(String phoneNumber);
+
   List<User> findAll();
 
   boolean existsById(Long id);
+
+  boolean existsByPhoneNumber(String phoneNumber);
+
+  boolean existsByEmail(String email);
 
   void delete(User entity);
 

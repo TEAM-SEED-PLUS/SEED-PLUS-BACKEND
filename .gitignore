@@ -7,6 +7,7 @@ build/
 
 ### ENV FILE ###
 .env
+.cursor
 
 ### STS ###
 .apt_generated

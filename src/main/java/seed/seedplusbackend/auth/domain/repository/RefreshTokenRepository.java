@@ -10,6 +10,8 @@ public interface RefreshTokenRepository {
 
   Optional<RefreshToken> findById(Long id);
 
+  Optional<RefreshToken> findByTokenHash(String tokenHash);
+
   List<RefreshToken> findAll();
 
   boolean existsById(Long id);

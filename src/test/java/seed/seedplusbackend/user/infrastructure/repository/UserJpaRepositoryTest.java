@@ -30,6 +30,7 @@ class UserJpaRepositoryTest extends AbstractPostgresContainerTest {
 
     assertThat(saved.getId()).isNotNull();
     assertThat(saved.getCreatedAt()).isNotNull();
+    assertThat(saved.getPhoneNumber()).isNotBlank();
     assertThat(saved.getEmail()).isEqualTo("save@test.com");
   }
 
@@ -41,6 +42,17 @@ class UserJpaRepositoryTest extends AbstractPostgresContainerTest {
     User found = userJpaRepository.findById(saved.getId()).orElseThrow();
 
     assertThat(found.getEmail()).isEqualTo("find@test.com");
+  }
+
+  @Test
+  @DisplayName("휴대폰 번호로 사용자를 조회하면 저장된 사용자를 반환한다")
+  void findByPhoneNumber_returnsSavedUser_whenExists() {
+    User saved =
+        userJpaRepository.save(UserFixture.generalActiveUser("01011112222", "phone@test.com"));
+
+    User found = userJpaRepository.findByPhoneNumber(saved.getPhoneNumber()).orElseThrow();
+
+    assertThat(found.getId()).isEqualTo(saved.getId());
   }
 
   @Test
@@ -64,6 +76,23 @@ class UserJpaRepositoryTest extends AbstractPostgresContainerTest {
     assertThatThrownBy(
             () -> {
               userJpaRepository.save(UserFixture.generalActiveUser(duplicatedEmail));
+              entityManager.flush();
+            })
+        .isInstanceOf(DataIntegrityViolationException.class);
+  }
+
+  @Test
+  @DisplayName("휴대폰 번호가 중복되면 저장 시 무결성 예외가 발생한다")
+  void save_throwsDataIntegrityViolation_whenPhoneNumberDuplicates() {
+    String duplicatedPhoneNumber = "01022223333";
+    userJpaRepository.save(
+        UserFixture.generalActiveUser(duplicatedPhoneNumber, "phone-a@test.com"));
+    entityManager.flush();
+
+    assertThatThrownBy(
+            () -> {
+              userJpaRepository.save(
+                  UserFixture.generalActiveUser(duplicatedPhoneNumber, "phone-b@test.com"));
               entityManager.flush();
             })
         .isInstanceOf(DataIntegrityViolationException.class);
@@ -96,6 +125,7 @@ class UserJpaRepositoryTest extends AbstractPostgresContainerTest {
     User saved =
         userJpaRepository.save(
             User.builder()
+                .phoneNumber("01099990000")
                 .email("deleted@test.com")
                 .password("password")
                 .name("탈퇴 사용자")

@@ -37,5 +37,6 @@ class RefreshTokenJpaRepositoryTest extends AbstractPostgresContainerTest {
     assertThat(saved.getId()).isNotNull();
     assertThat(saved.getCreatedAt()).isNotNull();
     assertThat(refreshTokenJpaRepository.findById(saved.getId())).isPresent();
+    assertThat(refreshTokenJpaRepository.findByTokenHash(saved.getTokenHash())).isPresent();
   }
 }

@@ -54,4 +54,20 @@ public class RefreshToken extends BaseCreatedEntity {
     this.expiresAt = expiresAt;
     this.revokedAt = revokedAt;
   }
+
+  public void revoke(OffsetDateTime revokedAt) {
+    this.revokedAt = revokedAt;
+  }
+
+  public boolean isRevoked() {
+    return revokedAt != null;
+  }
+
+  public boolean isExpired(OffsetDateTime now) {
+    return !expiresAt.isAfter(now);
+  }
+
+  public boolean isUsable(OffsetDateTime now) {
+    return !isRevoked() && !isExpired(now);
+  }
 }

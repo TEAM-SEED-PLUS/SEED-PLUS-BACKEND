@@ -1,5 +1,6 @@
 package seed.seedplusbackend.global.swagger;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.examples.Example;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +38,14 @@ public class SwaggerConfig {
   public OpenAPI retrieveOpenAPI() {
     return new OpenAPI()
         .info(new Info().title("SEED-PLUS API").description("SEED-PLUS API 문서").version("v1.0.0"))
+        .components(
+            new Components()
+                .addSecuritySchemes(
+                    "bearerAuth",
+                    new SecurityScheme()
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT")))
         .servers(List.of(new Server().url(baseUrl + ":" + port).description("Server")));
   }
 

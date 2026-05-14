@@ -15,5 +15,8 @@ public interface RefreshTokenJpaRepository
   Optional<RefreshToken> findById(Long id);
 
   @Override
+  Optional<RefreshToken> findByTokenHash(String tokenHash);
+
+  @Override
   void deleteById(Long id);
 }
