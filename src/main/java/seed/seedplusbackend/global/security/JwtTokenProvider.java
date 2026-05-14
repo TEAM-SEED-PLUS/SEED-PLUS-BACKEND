@@ -66,9 +66,17 @@ public class JwtTokenProvider {
             parseUserId(claims),
             claims.get(PHONE_NUMBER_CLAIM, String.class),
             claims.get(EMAIL_CLAIM, String.class),
-            UserRole.valueOf(claims.get(ROLE_CLAIM, String.class)));
+            parseUserRole(claims));
 
     return new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+  }
+
+  private UserRole parseUserRole(Claims claims) {
+    try {
+      return UserRole.valueOf(claims.get(ROLE_CLAIM, String.class));
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new ApplicationException(ErrorCode.INVALID_TOKEN);
+    }
   }
 
   public Long getRefreshTokenUserId(String refreshToken) {
