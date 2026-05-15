@@ -60,7 +60,10 @@ public class JwtTokenProvider {
   }
 
   public Authentication getAuthentication(String accessToken) {
-    Claims claims = parseAccessClaims(accessToken);
+    return toAuthentication(parseAccessClaims(accessToken));
+  }
+
+  public Authentication toAuthentication(Claims claims) {
     AuthenticatedUser principal =
         new AuthenticatedUser(
             parseUserId(claims),
@@ -71,12 +74,8 @@ public class JwtTokenProvider {
     return new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
   }
 
-  private UserRole parseUserRole(Claims claims) {
-    try {
-      return UserRole.valueOf(claims.get(ROLE_CLAIM, String.class));
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new ApplicationException(ErrorCode.INVALID_TOKEN);
-    }
+  public String getJti(Claims claims) {
+    return claims.getId();
   }
 
   public Long getRefreshTokenUserId(String refreshToken) {
@@ -126,7 +125,7 @@ public class JwtTokenProvider {
         .build();
   }
 
-  private Claims parseAccessClaims(String token) {
+  public Claims parseAccessClaims(String token) {
     return parseTypedClaims(token, ACCESS_TOKEN_TYPE, ErrorCode.EXPIRED_TOKEN);
   }
 
@@ -158,6 +157,14 @@ public class JwtTokenProvider {
     try {
       return Long.valueOf(claims.getSubject());
     } catch (NumberFormatException e) {
+      throw new ApplicationException(ErrorCode.INVALID_TOKEN);
+    }
+  }
+
+  private UserRole parseUserRole(Claims claims) {
+    try {
+      return UserRole.valueOf(claims.get(ROLE_CLAIM, String.class));
+    } catch (IllegalArgumentException | NullPointerException e) {
       throw new ApplicationException(ErrorCode.INVALID_TOKEN);
     }
   }

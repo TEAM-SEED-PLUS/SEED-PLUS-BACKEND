@@ -120,7 +120,9 @@ class AuthServiceTest {
             .revokedAt(null)
             .build();
     given(jwtTokenProvider.getRefreshTokenUserId("old-refresh-token")).willReturn(user.getId());
-    given(refreshTokenRepository.findByTokenHash(TokenHashUtil.sha256("old-refresh-token")))
+    given(
+            refreshTokenRepository.findByTokenHashForUpdate(
+                TokenHashUtil.sha256("old-refresh-token")))
         .willReturn(Optional.of(oldRefreshToken));
     given(jwtTokenProvider.generateAccessToken(user)).willReturn(jwtToken("new-access-token"));
     given(jwtTokenProvider.generateRefreshToken(user)).willReturn(jwtToken("new-refresh-token"));
@@ -130,6 +132,29 @@ class AuthServiceTest {
     assertThat(oldRefreshToken.isRevoked()).isTrue();
     assertThat(result.getAccessToken()).isEqualTo("new-access-token");
     verify(refreshTokenRepository).save(any(RefreshToken.class));
+  }
+
+  @Test
+  @DisplayName("이미 폐기된 리프레시 토큰으로 재발급하면 예외가 발생한다")
+  void reissue_throwsInvalidToken_whenRefreshTokenAlreadyRevoked() {
+    User user = activeUser();
+    RefreshToken revokedRefreshToken =
+        RefreshToken.builder()
+            .user(user)
+            .tokenHash(TokenHashUtil.sha256("old-refresh-token"))
+            .expiresAt(OffsetDateTime.now().plusDays(1))
+            .revokedAt(OffsetDateTime.now().minusMinutes(1))
+            .build();
+    given(jwtTokenProvider.getRefreshTokenUserId("old-refresh-token")).willReturn(user.getId());
+    given(
+            refreshTokenRepository.findByTokenHashForUpdate(
+                TokenHashUtil.sha256("old-refresh-token")))
+        .willReturn(Optional.of(revokedRefreshToken));
+
+    assertThatThrownBy(() -> authService.reissue("old-refresh-token"))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.INVALID_TOKEN);
   }
 
   @Test

@@ -70,7 +70,7 @@ public class AuthService {
     String tokenHash = TokenHashUtil.sha256(refreshTokenValue);
     RefreshToken refreshToken =
         refreshTokenRepository
-            .findByTokenHash(tokenHash)
+            .findByTokenHashForUpdate(tokenHash)
             .orElseThrow(() -> new ApplicationException(ErrorCode.INVALID_TOKEN));
 
     OffsetDateTime now = OffsetDateTime.now();
@@ -140,7 +140,7 @@ public class AuthService {
   private void revokeRefreshTokenIfOwned(Long userId, String refreshTokenValue) {
     String tokenHash = TokenHashUtil.sha256(refreshTokenValue);
     refreshTokenRepository
-        .findByTokenHash(tokenHash)
+        .findByTokenHashForUpdate(tokenHash)
         .filter(refreshToken -> refreshToken.getUser().getId().equals(userId))
         .filter(refreshToken -> !refreshToken.isRevoked())
         .ifPresent(refreshToken -> refreshToken.revoke(OffsetDateTime.now()));

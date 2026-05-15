@@ -39,4 +39,26 @@ class RefreshTokenJpaRepositoryTest extends AbstractPostgresContainerTest {
     assertThat(refreshTokenJpaRepository.findById(saved.getId())).isPresent();
     assertThat(refreshTokenJpaRepository.findByTokenHash(saved.getTokenHash())).isPresent();
   }
+
+  @Test
+  @DisplayName("findByTokenHashForUpdate는 저장된 토큰을 잠금 조회로 반환한다")
+  void findByTokenHashForUpdate_returnsRow_whenExists() {
+    User user = userJpaRepository.save(UserFixture.generalActiveUser("rt-lock@test.com"));
+    String tokenHash = "hash-lock-" + System.nanoTime();
+    RefreshToken saved =
+        refreshTokenJpaRepository.save(
+            RefreshToken.builder()
+                .user(user)
+                .tokenHash(tokenHash)
+                .expiresAt(OffsetDateTime.now().plusDays(3))
+                .revokedAt(null)
+                .build());
+
+    assertThat(refreshTokenJpaRepository.findByTokenHashForUpdate(tokenHash))
+        .isPresent()
+        .get()
+        .extracting(RefreshToken::getId)
+        .isEqualTo(saved.getId());
+    assertThat(refreshTokenJpaRepository.findByTokenHashForUpdate("missing-hash")).isEmpty();
+  }
 }

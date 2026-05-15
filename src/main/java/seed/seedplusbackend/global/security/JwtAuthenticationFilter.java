@@ -1,10 +1,12 @@
 package seed.seedplusbackend.global.security;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
@@ -20,10 +22,18 @@ import seed.seedplusbackend.global.error.ErrorCode;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private static final String BEARER_PREFIX = "Bearer ";
+  private static final Set<String> PUBLIC_AUTH_PATHS =
+      Set.of(
+          "/api/v1/auth/csrf", "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/reissue");
 
   private final JwtTokenProvider jwtTokenProvider;
   private final AccessTokenBlacklist accessTokenBlacklist;
   private final SecurityErrorResponseWriter errorResponseWriter;
+
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    return PUBLIC_AUTH_PATHS.contains(request.getServletPath());
+  }
 
   @Override
   protected void doFilterInternal(
@@ -36,13 +46,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     try {
-      String jti = jwtTokenProvider.getAccessTokenJti(accessToken);
+      Claims claims = jwtTokenProvider.parseAccessClaims(accessToken);
+      String jti = jwtTokenProvider.getJti(claims);
       if (accessTokenBlacklist.contains(jti)) {
         errorResponseWriter.write(response, ErrorCode.INVALID_TOKEN);
         return;
       }
 
-      Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
+      Authentication authentication = jwtTokenProvider.toAuthentication(claims);
       SecurityContextHolder.getContext().setAuthentication(authentication);
       filterChain.doFilter(request, response);
     } catch (ApplicationException e) {

@@ -12,6 +12,8 @@ public interface RefreshTokenRepository {
 
   Optional<RefreshToken> findByTokenHash(String tokenHash);
 
+  Optional<RefreshToken> findByTokenHashForUpdate(String tokenHash);
+
   List<RefreshToken> findAll();
 
   boolean existsById(Long id);

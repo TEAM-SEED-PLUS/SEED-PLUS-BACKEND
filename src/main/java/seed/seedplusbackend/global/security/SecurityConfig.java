@@ -30,6 +30,8 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
     csrfTokenRepository.setCookiePath("/");
+    csrfTokenRepository.setCookieCustomizer(
+        cookie -> cookie.httpOnly(false).secure(true).sameSite("None").path("/"));
 
     return http.cors(Customizer.withDefaults())
         .csrf(
