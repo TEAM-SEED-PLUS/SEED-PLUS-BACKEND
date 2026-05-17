@@ -64,9 +64,7 @@ public class AuthService {
                 });
 
     if (!passwordEncoder.matches(command.getPassword(), user.getPassword())) {
-      log.warn(
-          "[AuthService] 로그인 실패, 사유=존재하지 않는 사용자 또는 비밀번호 불일치 사용자ID={}",
-          user.getId());
+      log.warn("[AuthService] 로그인 실패, 사유=존재하지 않는 사용자 또는 비밀번호 불일치 사용자ID={}", user.getId());
       throw new ApplicationException(ErrorCode.INVALID_CREDENTIALS);
     }
     validateLoginAllowed(user);
@@ -85,9 +83,7 @@ public class AuthService {
             .findByTokenHash(tokenHash)
             .orElseThrow(
                 () -> {
-                  log.warn(
-                      "[AuthService] 토큰 재발급 실패, 사유=저장된 리프레시 토큰 없음 사용자ID={}",
-                      userId);
+                  log.warn("[AuthService] 토큰 재발급 실패, 사유=저장된 리프레시 토큰 없음 사용자ID={}", userId);
                   return new ApplicationException(ErrorCode.INVALID_TOKEN);
                 });
 
@@ -97,9 +93,7 @@ public class AuthService {
       throw new ApplicationException(ErrorCode.EXPIRED_REFRESH_TOKEN);
     }
     if (refreshToken.isRevoked() || !refreshToken.getUser().getId().equals(userId)) {
-      log.warn(
-          "[AuthService] 토큰 재발급 실패, 사유=폐기되었거나 사용자 정보가 일치하지 않는 리프레시 토큰 사용자ID={}",
-          userId);
+      log.warn("[AuthService] 토큰 재발급 실패, 사유=폐기되었거나 사용자 정보가 일치하지 않는 리프레시 토큰 사용자ID={}", userId);
       throw new ApplicationException(ErrorCode.INVALID_TOKEN);
     }
 
