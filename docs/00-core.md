@@ -187,6 +187,7 @@ global → 전체 공통 지원
 - 성공 응답은 `ApiResponse` 공통 래퍼를 사용하고 실제 Response DTO는 `data` 필드에 담는다.
 - 기본 성공 메시지는 `"요청 성공"`으로 한다.
 - 빈 응답은 `ResponseEntity<ApiResponse<Void>>`로 표현한다.
+- 목록 조회 API는 페이지네이션을 적용하고 `ApiResponse<PageResponse<T>>`로 반환한다.
 - Request/Response DTO는 `record`로 작성한다.
 - Request DTO는 `toCommand` 또는 `toQuery` 변환 메서드를 제공한다.
 - Response DTO는 `from` 정적 팩토리 메서드로 생성한다.
@@ -215,6 +216,7 @@ global → 전체 공통 지원
 | 계층 상세 책임, DTO/Command/Query/Mapper 결정, 새 클래스 배치 | `layer-detail.md` |
 | Request/Response DTO record, Command/Query 변환, `from` 정적 팩토리 | `dto-mapper.md` |
 | 성공 응답 공통 래퍼, `data` 필드 응답 구조 | `api-response.md` |
+| 목록 조회, 검색, 피드, 랭킹 API 페이지네이션 | `pagination.md` |
 | ErrorCode, ApplicationException, DomainException, GlobalExceptionHandler, Swagger 에러 명세 | `error-handling.md` |
 | Spring Security, JWT, Refresh Token Cookie, CSRF, 인증 사용자 처리 | `security.md` |
 | Entity, Repository, Soft Delete(`@SQLRestriction`/`@SQLDelete`), JPA/QueryDSL | `persistence.md` |

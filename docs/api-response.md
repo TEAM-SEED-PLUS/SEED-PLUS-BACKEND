@@ -75,4 +75,4 @@ public ResponseEntity<ApiResponse<UserMeResponse>> me(
 
 아래 항목은 실제 공통 응답 객체 구현 시 확정한다.
 
-- 페이징 응답 포맷
+- 페이징 응답 포맷은 `pagination.md`를 따른다.
