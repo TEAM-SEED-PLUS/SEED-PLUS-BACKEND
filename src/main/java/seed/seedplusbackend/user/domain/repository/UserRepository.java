@@ -18,8 +18,6 @@ public interface UserRepository {
 
   boolean existsByPhoneNumber(String phoneNumber);
 
-  boolean existsByEmail(String email);
-
   void delete(User entity);
 
   void deleteById(Long id);

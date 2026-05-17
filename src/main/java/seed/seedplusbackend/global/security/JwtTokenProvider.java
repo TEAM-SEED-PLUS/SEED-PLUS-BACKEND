@@ -31,7 +31,6 @@ public class JwtTokenProvider {
   private static final String ACCESS_TOKEN_TYPE = "access";
   private static final String REFRESH_TOKEN_TYPE = "refresh";
   private static final String PHONE_NUMBER_CLAIM = "phoneNumber";
-  private static final String EMAIL_CLAIM = "email";
   private static final String ROLE_CLAIM = "role";
   private static final String AUTHORITIES_CLAIM = "authorities";
 
@@ -68,7 +67,6 @@ public class JwtTokenProvider {
         new AuthenticatedUser(
             parseUserId(claims),
             claims.get(PHONE_NUMBER_CLAIM, String.class),
-            claims.get(EMAIL_CLAIM, String.class),
             parseUserRole(claims));
 
     return new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
@@ -111,7 +109,6 @@ public class JwtTokenProvider {
             .setExpiration(Date.from(expiresAt))
             .claim(TOKEN_TYPE_CLAIM, tokenType)
             .claim(PHONE_NUMBER_CLAIM, user.getPhoneNumber())
-            .claim(EMAIL_CLAIM, user.getEmail())
             .claim(ROLE_CLAIM, user.getRole().name())
             .claim(AUTHORITIES_CLAIM, List.of("ROLE_" + user.getRole().name()))
             .signWith(signingKey, SignatureAlgorithm.HS256)

@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,7 +21,6 @@ import seed.seedplusbackend.global.common.BaseTimeEntity;
 @Table(
     name = "users",
     uniqueConstraints = {
-      @UniqueConstraint(name = "users_email_key", columnNames = "email"),
       @UniqueConstraint(name = "users_phone_number_key", columnNames = "phone_number")
     })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -34,8 +34,8 @@ public class User extends BaseTimeEntity {
   @Column(name = "phone_number", nullable = false, length = 20)
   private String phoneNumber;
 
-  @Column(name = "email", length = 255)
-  private String email;
+  @Column(name = "birth_date", nullable = false)
+  private LocalDate birthDate;
 
   @Column(name = "password", nullable = false, length = 255)
   private String password;
@@ -54,13 +54,13 @@ public class User extends BaseTimeEntity {
   @Builder
   private User(
       String phoneNumber,
-      String email,
+      LocalDate birthDate,
       String password,
       String name,
       UserRole role,
       UserStatus status) {
     this.phoneNumber = phoneNumber;
-    this.email = email;
+    this.birthDate = birthDate;
     this.password = password;
     this.name = name;
     this.role = role;

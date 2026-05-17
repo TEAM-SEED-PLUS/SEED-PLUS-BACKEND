@@ -1,5 +1,6 @@
 package seed.seedplusbackend.auth.application.command;
 
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -10,5 +11,5 @@ public class SignupCommand {
   private final String phoneNumber;
   private final String password;
   private final String name;
-  private final String email;
+  private final LocalDate birthDate;
 }

@@ -76,7 +76,6 @@ public class SecurityConfig {
   private RequestMatcher csrfProtectionMatcher() {
     return request ->
         HttpMethod.POST.matches(request.getMethod())
-            && ("/api/v1/auth/login".equals(request.getServletPath())
-                || "/api/v1/auth/reissue".equals(request.getServletPath()));
+            && "/api/v1/auth/reissue".equals(request.getServletPath());
   }
 }

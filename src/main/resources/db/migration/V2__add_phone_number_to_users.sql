@@ -5,4 +5,7 @@ ALTER TABLE users
     ADD CONSTRAINT users_phone_number_key UNIQUE (phone_number);
 
 ALTER TABLE users
-    ALTER COLUMN email DROP NOT NULL;
+    DROP COLUMN email;
+
+ALTER TABLE users
+    ADD COLUMN birth_date DATE NOT NULL;

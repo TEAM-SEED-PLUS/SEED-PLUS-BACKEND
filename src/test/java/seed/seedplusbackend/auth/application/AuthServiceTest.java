@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -47,9 +49,9 @@ class AuthServiceTest {
   @Test
   @DisplayName("휴대폰 번호로 회원가입하면 비밀번호를 암호화해 사용자를 저장한다")
   void signup_savesUserWithEncodedPassword() {
-    SignupCommand command = new SignupCommand("01012345678", "password123", "홍길동", "user@test.com");
+    SignupCommand command =
+        new SignupCommand("01012345678", "password123", "홍길동", LocalDate.of(1990, 1, 1));
     given(userRepository.existsByPhoneNumber(command.getPhoneNumber())).willReturn(false);
-    given(userRepository.existsByEmail(command.getEmail())).willReturn(false);
     given(passwordEncoder.encode(command.getPassword())).willReturn("encoded-password");
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
@@ -58,6 +60,7 @@ class AuthServiceTest {
     verify(userRepository).save(userCaptor.capture());
     User saved = userCaptor.getValue();
     assertThat(saved.getPhoneNumber()).isEqualTo(command.getPhoneNumber());
+    assertThat(saved.getBirthDate()).isEqualTo(command.getBirthDate());
     assertThat(saved.getPassword()).isEqualTo("encoded-password");
     assertThat(saved.getRole()).isEqualTo(UserRole.GENERAL);
     assertThat(saved.getStatus()).isEqualTo(UserStatus.ACTIVE);
@@ -66,7 +69,8 @@ class AuthServiceTest {
   @Test
   @DisplayName("중복된 휴대폰 번호로 회원가입하면 예외가 발생한다")
   void signup_throwsException_whenPhoneNumberDuplicated() {
-    SignupCommand command = new SignupCommand("01012345678", "password123", "홍길동", "user@test.com");
+    SignupCommand command =
+        new SignupCommand("01012345678", "password123", "홍길동", LocalDate.of(1990, 1, 1));
     given(userRepository.existsByPhoneNumber(command.getPhoneNumber())).willReturn(true);
 
     assertThatThrownBy(() -> authService.signup(command))
@@ -120,18 +124,52 @@ class AuthServiceTest {
             .revokedAt(null)
             .build();
     given(jwtTokenProvider.getRefreshTokenUserId("old-refresh-token")).willReturn(user.getId());
-    given(
-            refreshTokenRepository.findByTokenHashForUpdate(
-                TokenHashUtil.sha256("old-refresh-token")))
+    given(refreshTokenRepository.findByTokenHash(TokenHashUtil.sha256("old-refresh-token")))
         .willReturn(Optional.of(oldRefreshToken));
+    given(
+            refreshTokenRepository.revokeByTokenHashIfNotRevoked(
+                org.mockito.ArgumentMatchers.eq(TokenHashUtil.sha256("old-refresh-token")),
+                any(OffsetDateTime.class)))
+        .willReturn(1);
     given(jwtTokenProvider.generateAccessToken(user)).willReturn(jwtToken("new-access-token"));
     given(jwtTokenProvider.generateRefreshToken(user)).willReturn(jwtToken("new-refresh-token"));
 
     AuthTokenResult result = authService.reissue("old-refresh-token");
 
-    assertThat(oldRefreshToken.isRevoked()).isTrue();
     assertThat(result.getAccessToken()).isEqualTo("new-access-token");
+    verify(refreshTokenRepository)
+        .revokeByTokenHashIfNotRevoked(
+            org.mockito.ArgumentMatchers.eq(TokenHashUtil.sha256("old-refresh-token")),
+            any(OffsetDateTime.class));
     verify(refreshTokenRepository).save(any(RefreshToken.class));
+  }
+
+  @Test
+  @DisplayName("이미 다른 요청이 리프레시 토큰을 revoke했으면 재발급에 실패한다")
+  void reissue_throwsInvalidToken_whenAtomicRevokeAffectsNoRows() {
+    User user = activeUser();
+    RefreshToken oldRefreshToken =
+        RefreshToken.builder()
+            .user(user)
+            .tokenHash(TokenHashUtil.sha256("old-refresh-token"))
+            .expiresAt(OffsetDateTime.now().plusDays(1))
+            .revokedAt(null)
+            .build();
+    given(jwtTokenProvider.getRefreshTokenUserId("old-refresh-token")).willReturn(user.getId());
+    given(refreshTokenRepository.findByTokenHash(TokenHashUtil.sha256("old-refresh-token")))
+        .willReturn(Optional.of(oldRefreshToken));
+    given(
+            refreshTokenRepository.revokeByTokenHashIfNotRevoked(
+                org.mockito.ArgumentMatchers.eq(TokenHashUtil.sha256("old-refresh-token")),
+                any(OffsetDateTime.class)))
+        .willReturn(0);
+
+    assertThatThrownBy(() -> authService.reissue("old-refresh-token"))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.INVALID_TOKEN);
+
+    verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
   }
 
   @Test
@@ -146,9 +184,7 @@ class AuthServiceTest {
             .revokedAt(OffsetDateTime.now().minusMinutes(1))
             .build();
     given(jwtTokenProvider.getRefreshTokenUserId("old-refresh-token")).willReturn(user.getId());
-    given(
-            refreshTokenRepository.findByTokenHashForUpdate(
-                TokenHashUtil.sha256("old-refresh-token")))
+    given(refreshTokenRepository.findByTokenHash(TokenHashUtil.sha256("old-refresh-token")))
         .willReturn(Optional.of(revokedRefreshToken));
 
     assertThatThrownBy(() -> authService.reissue("old-refresh-token"))
@@ -161,7 +197,7 @@ class AuthServiceTest {
   @DisplayName("로그아웃하면 액세스 토큰 jti를 블랙리스트에 등록한다")
   void logout_blacklistsAccessToken() {
     AuthenticatedUser authenticatedUser =
-        new AuthenticatedUser(1L, "01012345678", "user@test.com", UserRole.GENERAL);
+        new AuthenticatedUser(1L, "01012345678", UserRole.GENERAL);
     given(jwtTokenProvider.getAccessTokenJti("access-token")).willReturn("jti");
     OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(10);
     given(jwtTokenProvider.getAccessTokenExpiresAt("access-token")).willReturn(expiresAt);
@@ -179,7 +215,7 @@ class AuthServiceTest {
     User user =
         User.builder()
             .phoneNumber("01012345678")
-            .email("user@test.com")
+            .birthDate(LocalDate.of(1990, 1, 1))
             .password("encoded-password")
             .name("홍길동")
             .role(UserRole.GENERAL)

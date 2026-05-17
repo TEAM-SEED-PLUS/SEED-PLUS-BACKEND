@@ -16,7 +16,7 @@ class RefreshTokenTest {
     OffsetDateTime now = OffsetDateTime.now();
     RefreshToken refreshToken =
         RefreshToken.builder()
-            .user(UserFixture.generalActiveUser("01033334444", "rt-domain@test.com"))
+            .user(UserFixture.generalActiveUser("01033334444"))
             .tokenHash("hash")
             .expiresAt(now.plusDays(1))
             .revokedAt(null)
@@ -34,7 +34,7 @@ class RefreshTokenTest {
     OffsetDateTime now = OffsetDateTime.now();
     RefreshToken refreshToken =
         RefreshToken.builder()
-            .user(UserFixture.generalActiveUser("01033335555", "rt-expired@test.com"))
+            .user(UserFixture.generalActiveUser("01033335555"))
             .tokenHash("hash")
             .expiresAt(now.minusSeconds(1))
             .revokedAt(null)

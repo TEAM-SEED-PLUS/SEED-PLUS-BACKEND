@@ -13,13 +13,11 @@ public class AuthenticatedUser implements UserDetails {
 
   private final Long id;
   private final String phoneNumber;
-  private final String email;
   private final UserRole role;
 
-  public AuthenticatedUser(Long id, String phoneNumber, String email, UserRole role) {
+  public AuthenticatedUser(Long id, String phoneNumber, UserRole role) {
     this.id = id;
     this.phoneNumber = phoneNumber;
-    this.email = email;
     this.role = role;
   }
 

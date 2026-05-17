@@ -41,7 +41,7 @@ public class AuthService {
             .phoneNumber(command.getPhoneNumber())
             .password(passwordEncoder.encode(command.getPassword()))
             .name(command.getName())
-            .email(normalizeEmail(command.getEmail()))
+            .birthDate(command.getBirthDate())
             .role(UserRole.GENERAL)
             .status(UserStatus.ACTIVE)
             .build();
@@ -70,7 +70,7 @@ public class AuthService {
     String tokenHash = TokenHashUtil.sha256(refreshTokenValue);
     RefreshToken refreshToken =
         refreshTokenRepository
-            .findByTokenHashForUpdate(tokenHash)
+            .findByTokenHash(tokenHash)
             .orElseThrow(() -> new ApplicationException(ErrorCode.INVALID_TOKEN));
 
     OffsetDateTime now = OffsetDateTime.now();
@@ -83,7 +83,11 @@ public class AuthService {
 
     User user = refreshToken.getUser();
     validateLoginAllowed(user);
-    refreshToken.revoke(now);
+
+    int revokedCount = refreshTokenRepository.revokeByTokenHashIfNotRevoked(tokenHash, now);
+    if (revokedCount != 1) {
+      throw new ApplicationException(ErrorCode.INVALID_TOKEN);
+    }
 
     return issueAndSaveTokens(user);
   }
@@ -103,11 +107,6 @@ public class AuthService {
   private void validateSignup(SignupCommand command) {
     if (userRepository.existsByPhoneNumber(command.getPhoneNumber())) {
       throw new ApplicationException(ErrorCode.DUPLICATE_PHONE_NUMBER);
-    }
-
-    String email = normalizeEmail(command.getEmail());
-    if (StringUtils.hasText(email) && userRepository.existsByEmail(email)) {
-      throw new ApplicationException(ErrorCode.DUPLICATE_EMAIL);
     }
   }
 
@@ -144,13 +143,5 @@ public class AuthService {
         .filter(refreshToken -> refreshToken.getUser().getId().equals(userId))
         .filter(refreshToken -> !refreshToken.isRevoked())
         .ifPresent(refreshToken -> refreshToken.revoke(OffsetDateTime.now()));
-  }
-
-  private String normalizeEmail(String email) {
-    if (!StringUtils.hasText(email)) {
-      return null;
-    }
-
-    return email.trim();
   }
 }

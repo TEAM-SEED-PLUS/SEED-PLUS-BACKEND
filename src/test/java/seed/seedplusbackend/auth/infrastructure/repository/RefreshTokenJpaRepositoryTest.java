@@ -61,4 +61,34 @@ class RefreshTokenJpaRepositoryTest extends AbstractPostgresContainerTest {
         .isEqualTo(saved.getId());
     assertThat(refreshTokenJpaRepository.findByTokenHashForUpdate("missing-hash")).isEmpty();
   }
+
+  @Test
+  @DisplayName("revokeByTokenHashIfNotRevoked는 미폐기 토큰만 1회 폐기한다")
+  void revokeByTokenHashIfNotRevoked_updatesOnlyNotRevokedToken() {
+    User user = userJpaRepository.save(UserFixture.generalActiveUser("rt-revoke"));
+    String tokenHash = "hash-revoke-" + System.nanoTime();
+    RefreshToken saved =
+        refreshTokenJpaRepository.save(
+            RefreshToken.builder()
+                .user(user)
+                .tokenHash(tokenHash)
+                .expiresAt(OffsetDateTime.now().plusDays(3))
+                .revokedAt(null)
+                .build());
+    OffsetDateTime revokedAt = OffsetDateTime.now();
+
+    int firstUpdatedCount =
+        refreshTokenJpaRepository.revokeByTokenHashIfNotRevoked(tokenHash, revokedAt);
+    int secondUpdatedCount =
+        refreshTokenJpaRepository.revokeByTokenHashIfNotRevoked(
+            tokenHash, revokedAt.plusSeconds(1));
+
+    assertThat(firstUpdatedCount).isEqualTo(1);
+    assertThat(secondUpdatedCount).isZero();
+    assertThat(refreshTokenJpaRepository.findById(saved.getId()))
+        .isPresent()
+        .get()
+        .extracting(RefreshToken::isRevoked)
+        .isEqualTo(true);
+  }
 }

@@ -14,7 +14,7 @@ import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 import seed.seedplusbackend.user.application.UserQueryService;
 import seed.seedplusbackend.user.presentation.dto.UserMeResponse;
 
-@Tag(name = "User", description = "사용자 API")
+@Tag(name = "유저", description = "사용자 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")

@@ -20,8 +20,5 @@ public interface UserJpaRepository extends JpaRepository<User, Long>, UserReposi
   boolean existsByPhoneNumber(String phoneNumber);
 
   @Override
-  boolean existsByEmail(String email);
-
-  @Override
   void deleteById(Long id);
 }

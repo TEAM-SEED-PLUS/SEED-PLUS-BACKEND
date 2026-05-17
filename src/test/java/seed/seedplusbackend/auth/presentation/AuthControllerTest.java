@@ -49,7 +49,7 @@ class AuthControllerTest {
           "phoneNumber": "01012345678",
           "password": "password123",
           "name": "홍길동",
-          "email": "user@test.com"
+          "birthDate": "1990-01-01"
         }
         """;
 
@@ -70,7 +70,8 @@ class AuthControllerTest {
         {
           "phoneNumber": "010-1234-5678",
           "password": "password123",
-          "name": "홍길동"
+          "name": "홍길동",
+          "birthDate": "1990-01-01"
         }
         """;
 

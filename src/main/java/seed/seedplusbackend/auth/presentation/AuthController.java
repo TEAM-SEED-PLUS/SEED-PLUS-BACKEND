@@ -33,7 +33,7 @@ import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.global.security.AuthenticatedUser;
 import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 
-@Tag(name = "Auth", description = "인증 API")
+@Tag(name = "인증", description = "인증 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
