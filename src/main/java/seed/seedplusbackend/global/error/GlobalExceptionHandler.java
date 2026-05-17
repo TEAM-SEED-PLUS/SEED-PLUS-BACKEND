@@ -29,22 +29,14 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(ApplicationException.class)
   public ResponseEntity<ErrorResponse> handleApplicationException(ApplicationException e) {
     ErrorCode errorCode = e.getErrorCode();
-    log.warn(
-        "[ApplicationException] code={}, message={}, detail={}",
-        errorCode.getCode(),
-        errorCode.getMessage(),
-        e.getDetail());
+    logCustomException("ApplicationException", errorCode, e.getDetail(), e);
     return createErrorResponse(errorCode, e.getDetail());
   }
 
   @ExceptionHandler(DomainException.class)
   public ResponseEntity<ErrorResponse> handleDomainException(DomainException e) {
     ErrorCode errorCode = e.getErrorCode();
-    log.warn(
-        "[DomainException] code={}, message={}, detail={}",
-        errorCode.getCode(),
-        errorCode.getMessage(),
-        e.getDetail());
+    logCustomException("DomainException", errorCode, e.getDetail(), e);
     return createErrorResponse(errorCode, e.getDetail());
   }
 
@@ -52,14 +44,14 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
       MethodArgumentNotValidException e) {
     String detail = getBindingErrorDetail(e);
-    log.warn("[Validation Error] request body validation failed: {}", detail);
+    log.warn("[GlobalExceptionHandler] 요청 본문 검증 실패, 사유={}", detail);
     return createErrorResponse(ErrorCode.INVALID_PARAMETER, detail);
   }
 
   @ExceptionHandler(BindException.class)
   public ResponseEntity<ErrorResponse> handleBindException(BindException e) {
     String detail = getBindingErrorDetail(e);
-    log.warn("[Validation Error] parameter/model binding validation failed: {}", detail);
+    log.warn("[GlobalExceptionHandler] 파라미터 바인딩 검증 실패, 사유={}", detail);
     return createErrorResponse(ErrorCode.INVALID_PARAMETER, detail);
   }
 
@@ -70,22 +62,22 @@ public class GlobalExceptionHandler {
     String detail = getConstraintViolationDetail(e);
     ErrorCode errorCode = resolveParameterErrorCode(path);
 
-    log.warn("[Constraint Violation] path={}, detail={}", path, detail);
+    log.warn("[GlobalExceptionHandler] 제약 조건 검증 실패, 경로={} 사유={}", path, detail);
     return createErrorResponse(errorCode, detail);
   }
 
   @ExceptionHandler(HandlerMethodValidationException.class)
   public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(
       HandlerMethodValidationException e) {
-    String detail = "method parameter validation failed";
-    log.warn("[Method Validation Error] {}", detail);
+    String detail = "메서드 파라미터 검증 실패";
+    log.warn("[GlobalExceptionHandler] 메서드 파라미터 검증 실패, 사유={}", detail);
     return createErrorResponse(ErrorCode.INVALID_PARAMETER, detail);
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
       HttpMessageNotReadableException e) {
-    log.warn("[Bad Request] request body parse failed: {}", e.getMessage());
+    log.warn("[GlobalExceptionHandler] 요청 본문 파싱 실패, 사유={}", e.getMessage());
     return createErrorResponse(ErrorCode.INVALID_REQUEST);
   }
 
@@ -97,7 +89,7 @@ public class GlobalExceptionHandler {
         "parameter=%s, value=%s, requiredType=%s"
             .formatted(e.getName(), e.getValue(), getRequiredTypeName(e));
 
-    log.warn("[Type Mismatch] {}", detail);
+    log.warn("[GlobalExceptionHandler] 파라미터 타입 변환 실패, 사유={}", detail);
     return createErrorResponse(errorCode, detail);
   }
 
@@ -105,7 +97,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(
       MissingServletRequestParameterException e) {
     String detail = "parameter=%s".formatted(e.getParameterName());
-    log.warn("[Bad Request] missing required parameter: {}", detail);
+    log.warn("[GlobalExceptionHandler] 필수 요청 파라미터 누락, 사유={}", detail);
     return createErrorResponse(ErrorCode.MISSING_REQUIRED_PARAMETER, detail);
   }
 
@@ -113,7 +105,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMissingRequestHeaderException(
       MissingRequestHeaderException e) {
     String detail = "header=%s".formatted(e.getHeaderName());
-    log.warn("[Bad Request] missing required header: {}", detail);
+    log.warn("[GlobalExceptionHandler] 필수 요청 헤더 누락, 사유={}", detail);
     return createErrorResponse(ErrorCode.MISSING_REQUIRED_HEADER, detail);
   }
 
@@ -121,7 +113,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMissingRequestCookieException(
       MissingRequestCookieException e) {
     String detail = "cookie=%s".formatted(e.getCookieName());
-    log.warn("[Bad Request] missing required cookie: {}", detail);
+    log.warn("[GlobalExceptionHandler] 필수 요청 쿠키 누락, 사유={}", detail);
     return createErrorResponse(ErrorCode.INVALID_TOKEN, detail);
   }
 
@@ -129,7 +121,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMissingPathVariableException(
       MissingPathVariableException e) {
     String detail = "pathVariable=%s".formatted(e.getVariableName());
-    log.warn("[Bad Request] missing path variable: {}", detail);
+    log.warn("[GlobalExceptionHandler] 경로 변수 누락, 사유={}", detail);
     return createErrorResponse(ErrorCode.INVALID_PARAMETER, detail);
   }
 
@@ -137,7 +129,9 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
       HttpRequestMethodNotSupportedException e) {
     log.warn(
-        "[Method Not Allowed] method={}, supported={}", e.getMethod(), e.getSupportedMethods());
+        "[GlobalExceptionHandler] 지원하지 않는 HTTP 메서드, method={} supported={}",
+        e.getMethod(),
+        e.getSupportedMethods());
     return createErrorResponse(ErrorCode.METHOD_NOT_ALLOWED);
   }
 
@@ -145,7 +139,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
       HttpMediaTypeNotSupportedException e) {
     log.warn(
-        "[Unsupported Media Type] contentType={}, supported={}",
+        "[GlobalExceptionHandler] 지원하지 않는 미디어 타입, contentType={} supported={}",
         e.getContentType(),
         e.getSupportedMediaTypes());
     return createErrorResponse(ErrorCode.UNSUPPORTED_MEDIA_TYPE);
@@ -154,33 +148,35 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(NoHandlerFoundException.class)
   public ResponseEntity<ErrorResponse> handleNoHandlerFoundException(NoHandlerFoundException e) {
     String detail = "%s %s".formatted(e.getHttpMethod(), e.getRequestURL());
-    log.warn("[Not Found] {}", detail);
+    log.warn("[GlobalExceptionHandler] 요청 리소스 조회 실패, 사유=핸들러 없음 detail={}", detail);
     return createErrorResponse(ErrorCode.RESOURCE_NOT_FOUND, detail);
   }
 
   @ExceptionHandler(NoResourceFoundException.class)
   public ResponseEntity<ErrorResponse> handleNoResourceFoundException(NoResourceFoundException e) {
     String detail = "%s %s".formatted(e.getHttpMethod(), e.getResourcePath());
-    log.warn("[Resource Not Found] {}", detail);
+    log.warn("[GlobalExceptionHandler] 요청 리소스 조회 실패, 사유=정적 리소스 없음 detail={}", detail);
     return createErrorResponse(ErrorCode.RESOURCE_NOT_FOUND, detail);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
       DataIntegrityViolationException e) {
-    log.warn("[DataIntegrityViolation] {}", e.getMostSpecificCause().getMessage());
+    log.warn(
+        "[GlobalExceptionHandler] 데이터 저장 실패, 사유=데이터 무결성 제약 위반 detail={}",
+        e.getMostSpecificCause().getMessage());
     return createErrorResponse(ErrorCode.DATA_INTEGRITY_VIOLATION);
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
-    log.warn("[IllegalArgumentException] {}", e.getMessage(), e);
+    log.warn("[GlobalExceptionHandler] 잘못된 요청 처리 실패, 사유={}", e.getMessage(), e);
     return createErrorResponse(ErrorCode.INVALID_REQUEST);
   }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleAllUncaughtException(Exception e) {
-    log.error("[Unhandled Exception] {}", e.getMessage(), e);
+    log.error("[GlobalExceptionHandler] 처리되지 않은 서버 예외 발생, 사유={}", e.getMessage(), e);
     return createErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR);
   }
 
@@ -191,6 +187,27 @@ public class GlobalExceptionHandler {
   private ResponseEntity<ErrorResponse> createErrorResponse(ErrorCode errorCode, String detail) {
     return ResponseEntity.status(errorCode.getHttpStatus())
         .body(ErrorResponse.of(errorCode, detail));
+  }
+
+  private void logCustomException(
+      String exceptionName, ErrorCode errorCode, String detail, RuntimeException e) {
+    if (errorCode.getHttpStatus().is5xxServerError()) {
+      log.error(
+          "[GlobalExceptionHandler] 커스텀 예외 발생, 예외={} code={} 메시지={} 상세={}",
+          exceptionName,
+          errorCode.getCode(),
+          errorCode.getMessage(),
+          detail,
+          e);
+      return;
+    }
+
+    log.warn(
+        "[GlobalExceptionHandler] 커스텀 예외 발생, 예외={} code={} 메시지={} 상세={}",
+        exceptionName,
+        errorCode.getCode(),
+        errorCode.getMessage(),
+        detail);
   }
 
   private String getBindingErrorDetail(BindException e) {

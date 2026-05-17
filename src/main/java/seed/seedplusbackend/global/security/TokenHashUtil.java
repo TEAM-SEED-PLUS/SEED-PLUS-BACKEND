@@ -4,6 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import seed.seedplusbackend.global.error.ApplicationException;
+import seed.seedplusbackend.global.error.ErrorCode;
 
 public final class TokenHashUtil {
 
@@ -15,7 +17,7 @@ public final class TokenHashUtil {
       byte[] hashed = digest.digest(token.getBytes(StandardCharsets.UTF_8));
       return Base64.getUrlEncoder().withoutPadding().encodeToString(hashed);
     } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("SHA-256 algorithm is not available", e);
+      throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR, e);
     }
   }
 }
