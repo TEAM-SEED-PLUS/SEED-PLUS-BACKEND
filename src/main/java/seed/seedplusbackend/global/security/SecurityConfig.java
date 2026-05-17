@@ -54,6 +54,15 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
                     .requestMatchers(
+                        HttpMethod.GET,
+                        "/api/v1/industries",
+                        "/api/v1/industries/**",
+                        "/api/v1/stores",
+                        "/api/v1/stores/**",
+                        "/api/v1/commercial-areas",
+                        "/api/v1/commercial-areas/**")
+                    .permitAll()
+                    .requestMatchers(
                         "/api/v1/auth/csrf",
                         "/api/v1/auth/signup",
                         "/api/v1/auth/login",
