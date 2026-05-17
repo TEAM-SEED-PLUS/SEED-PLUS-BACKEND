@@ -2,6 +2,7 @@ package seed.seedplusbackend.auth.application;
 
 import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import seed.seedplusbackend.user.domain.entity.UserStatus;
 import seed.seedplusbackend.user.domain.repository.UserRepository;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -47,6 +49,7 @@ public class AuthService {
             .build();
 
     userRepository.save(user);
+    log.info("[AuthService] 회원가입 완료 사용자ID={}", user.getId());
   }
 
   @Transactional
@@ -54,14 +57,23 @@ public class AuthService {
     User user =
         userRepository
             .findByPhoneNumber(command.getPhoneNumber())
-            .orElseThrow(() -> new ApplicationException(ErrorCode.INVALID_CREDENTIALS));
+            .orElseThrow(
+                () -> {
+                  log.warn("[AuthService] 로그인 실패, 사유=존재하지 않는 사용자 또는 비밀번호 불일치");
+                  return new ApplicationException(ErrorCode.INVALID_CREDENTIALS);
+                });
 
     if (!passwordEncoder.matches(command.getPassword(), user.getPassword())) {
+      log.warn(
+          "[AuthService] 로그인 실패, 사유=존재하지 않는 사용자 또는 비밀번호 불일치 사용자ID={}",
+          user.getId());
       throw new ApplicationException(ErrorCode.INVALID_CREDENTIALS);
     }
     validateLoginAllowed(user);
 
-    return issueAndSaveTokens(user);
+    AuthTokenResult result = issueAndSaveTokens(user);
+    log.info("[AuthService] 로그인 완료 사용자ID={}", user.getId());
+    return result;
   }
 
   @Transactional
@@ -71,13 +83,23 @@ public class AuthService {
     RefreshToken refreshToken =
         refreshTokenRepository
             .findByTokenHash(tokenHash)
-            .orElseThrow(() -> new ApplicationException(ErrorCode.INVALID_TOKEN));
+            .orElseThrow(
+                () -> {
+                  log.warn(
+                      "[AuthService] 토큰 재발급 실패, 사유=저장된 리프레시 토큰 없음 사용자ID={}",
+                      userId);
+                  return new ApplicationException(ErrorCode.INVALID_TOKEN);
+                });
 
     OffsetDateTime now = OffsetDateTime.now();
     if (refreshToken.isExpired(now)) {
+      log.warn("[AuthService] 토큰 재발급 실패, 사유=리프레시 토큰 만료 사용자ID={}", userId);
       throw new ApplicationException(ErrorCode.EXPIRED_REFRESH_TOKEN);
     }
     if (refreshToken.isRevoked() || !refreshToken.getUser().getId().equals(userId)) {
+      log.warn(
+          "[AuthService] 토큰 재발급 실패, 사유=폐기되었거나 사용자 정보가 일치하지 않는 리프레시 토큰 사용자ID={}",
+          userId);
       throw new ApplicationException(ErrorCode.INVALID_TOKEN);
     }
 
@@ -86,10 +108,13 @@ public class AuthService {
 
     int revokedCount = refreshTokenRepository.revokeByTokenHashIfNotRevoked(tokenHash, now);
     if (revokedCount != 1) {
+      log.warn("[AuthService] 토큰 재발급 실패, 사유=리프레시 토큰 회전 충돌 사용자ID={}", userId);
       throw new ApplicationException(ErrorCode.INVALID_TOKEN);
     }
 
-    return issueAndSaveTokens(user);
+    AuthTokenResult result = issueAndSaveTokens(user);
+    log.info("[AuthService] 토큰 재발급 완료 사용자ID={}", user.getId());
+    return result;
   }
 
   @Transactional
@@ -102,16 +127,25 @@ public class AuthService {
     String jti = jwtTokenProvider.getAccessTokenJti(accessTokenValue);
     OffsetDateTime expiresAt = jwtTokenProvider.getAccessTokenExpiresAt(accessTokenValue);
     accessTokenBlacklist.blacklist(jti, expiresAt);
+    log.info(
+        "[AuthService] 로그아웃 완료 사용자ID={} 리프레시토큰제공여부={}",
+        authenticatedUser.getId(),
+        StringUtils.hasText(refreshTokenValue));
   }
 
   private void validateSignup(SignupCommand command) {
     if (userRepository.existsByPhoneNumber(command.getPhoneNumber())) {
+      log.warn("[AuthService] 회원가입 실패, 사유=중복된 전화번호");
       throw new ApplicationException(ErrorCode.DUPLICATE_PHONE_NUMBER);
     }
   }
 
   private void validateLoginAllowed(User user) {
     if (user.getStatus() != UserStatus.ACTIVE) {
+      log.warn(
+          "[AuthService] 로그인 실패, 사유=활성 상태가 아닌 사용자 사용자ID={} 사용자상태={}",
+          user.getId(),
+          user.getStatus());
       throw new ApplicationException(ErrorCode.INVALID_USER_STATUS);
     }
   }

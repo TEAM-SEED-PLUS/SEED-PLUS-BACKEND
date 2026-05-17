@@ -218,6 +218,7 @@ global → 전체 공통 지원
 | 성공 응답 공통 래퍼, `data` 필드 응답 구조 | `api-response.md` |
 | 목록 조회, 검색, 피드, 랭킹 API 페이지네이션 | `pagination.md` |
 | ErrorCode, ApplicationException, DomainException, GlobalExceptionHandler, Swagger 에러 명세 | `error-handling.md` |
+| SLF4J 운영 로그, 요청 추적, 인증/보안 이벤트, 민감정보 로그 금지 | `logging.md` |
 | Spring Security, JWT, Refresh Token Cookie, CSRF, 인증 사용자 처리 | `security.md` |
 | Entity, Repository, Soft Delete(`@SQLRestriction`/`@SQLDelete`), JPA/QueryDSL | `persistence.md` |
 | 테스트 클래스 작성(Domain/Presentation/Application/Infrastructure), Fixture, Test Naming | `testing.md` |

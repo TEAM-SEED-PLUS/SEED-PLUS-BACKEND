@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,8 +17,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
+import seed.seedplusbackend.global.logging.ApiRequestLoggingFilter;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -49,15 +52,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       Claims claims = jwtTokenProvider.parseAccessClaims(accessToken);
       String jti = jwtTokenProvider.getJti(claims);
       if (accessTokenBlacklist.contains(jti)) {
+        log.warn(
+            "[JwtAuthenticationFilter] 액세스 토큰 인증 실패, 사유=블랙리스트 토큰 path={} method={}",
+            request.getServletPath(),
+            request.getMethod());
         errorResponseWriter.write(response, ErrorCode.INVALID_TOKEN);
         return;
       }
 
       Authentication authentication = jwtTokenProvider.toAuthentication(claims);
       SecurityContextHolder.getContext().setAuthentication(authentication);
+      request.setAttribute(
+          ApiRequestLoggingFilter.AUTHENTICATED_USER_ID_ATTRIBUTE,
+          ((AuthenticatedUser) authentication.getPrincipal()).getId());
       filterChain.doFilter(request, response);
     } catch (ApplicationException e) {
       SecurityContextHolder.clearContext();
+      log.warn(
+          "[JwtAuthenticationFilter] 액세스 토큰 인증 실패, 사유=유효하지 않은 토큰 path={} method={} code={} detail={}",
+          request.getServletPath(),
+          request.getMethod(),
+          e.getErrorCode().getCode(),
+          e.getDetail());
       errorResponseWriter.write(response, e.getErrorCode(), e.getDetail());
     }
   }
