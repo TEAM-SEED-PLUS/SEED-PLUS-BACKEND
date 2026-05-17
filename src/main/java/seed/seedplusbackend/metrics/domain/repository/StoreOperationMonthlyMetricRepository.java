@@ -1,5 +1,6 @@
 package seed.seedplusbackend.metrics.domain.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import seed.seedplusbackend.metrics.domain.entity.StoreOperationMonthlyMetric;
@@ -11,6 +12,9 @@ public interface StoreOperationMonthlyMetricRepository {
   Optional<StoreOperationMonthlyMetric> findById(Long id);
 
   List<StoreOperationMonthlyMetric> findAll();
+
+  List<StoreOperationMonthlyMetric> findByStoreIdAndReferenceMonthRange(
+      Long storeId, LocalDate startMonth, LocalDate endMonth);
 
   boolean existsById(Long id);
 
