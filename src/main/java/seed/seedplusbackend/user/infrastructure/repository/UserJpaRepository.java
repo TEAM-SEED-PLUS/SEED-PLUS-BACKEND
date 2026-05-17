@@ -14,5 +14,11 @@ public interface UserJpaRepository extends JpaRepository<User, Long>, UserReposi
   Optional<User> findById(Long id);
 
   @Override
+  Optional<User> findByPhoneNumber(String phoneNumber);
+
+  @Override
+  boolean existsByPhoneNumber(String phoneNumber);
+
+  @Override
   void deleteById(Long id);
 }

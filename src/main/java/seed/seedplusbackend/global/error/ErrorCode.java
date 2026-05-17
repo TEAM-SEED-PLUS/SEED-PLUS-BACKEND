@@ -32,7 +32,7 @@ public enum ErrorCode {
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2900, "서버 내부 오류가 발생했습니다."),
 
   // 3000: Auth
-  INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, 3000, "이메일 또는 비밀번호가 올바르지 않습니다."),
+  INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, 3000, "휴대폰 번호 또는 비밀번호가 올바르지 않습니다."),
   EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, 3001, "토큰이 만료되었습니다."),
   INVALID_TOKEN(HttpStatus.UNAUTHORIZED, 3002, "유효하지 않은 토큰입니다."),
   EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, 3003, "리프레시 토큰이 만료되었습니다."),
@@ -41,6 +41,7 @@ public enum ErrorCode {
   NOT_FOUND_USER(HttpStatus.NOT_FOUND, 4000, "사용자를 찾을 수 없습니다."),
   DUPLICATE_EMAIL(HttpStatus.CONFLICT, 4001, "이미 사용 중인 이메일입니다."),
   INVALID_USER_STATUS(HttpStatus.BAD_REQUEST, 4002, "유효하지 않은 사용자 상태입니다."),
+  DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, 4003, "이미 사용 중인 휴대폰 번호입니다."),
 
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),
