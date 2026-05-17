@@ -12,6 +12,10 @@ public interface CommercialAreaRegionMappingRepository {
 
   List<CommercialAreaRegionMapping> findAll();
 
+  List<CommercialAreaRegionMapping> findByCommercialArea_Id(Long commercialAreaId);
+
+  List<CommercialAreaRegionMapping> findByRegion_Id(Long regionId);
+
   boolean existsById(Long id);
 
   void delete(CommercialAreaRegionMapping entity);

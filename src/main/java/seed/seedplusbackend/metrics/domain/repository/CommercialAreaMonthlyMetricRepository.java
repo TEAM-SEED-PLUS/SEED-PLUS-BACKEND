@@ -12,6 +12,12 @@ public interface CommercialAreaMonthlyMetricRepository {
 
   List<CommercialAreaMonthlyMetric> findAll();
 
+  List<CommercialAreaMonthlyMetric> findByCommercialArea_IdOrderByReferenceMonthAsc(
+      Long commercialAreaId);
+
+  Optional<CommercialAreaMonthlyMetric> findFirstByCommercialArea_IdOrderByReferenceMonthDesc(
+      Long commercialAreaId);
+
   boolean existsById(Long id);
 
   void delete(CommercialAreaMonthlyMetric entity);
