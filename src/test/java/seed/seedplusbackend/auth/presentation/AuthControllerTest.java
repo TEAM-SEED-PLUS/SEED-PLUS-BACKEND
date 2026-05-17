@@ -3,7 +3,7 @@ package seed.seedplusbackend.auth.presentation;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -41,8 +41,8 @@ class AuthControllerTest {
   }
 
   @Test
-  @DisplayName("회원가입에 성공하면 201 Created와 빈 본문을 반환한다")
-  void signup_returnsCreatedAndEmptyBody_whenRequestValid() throws Exception {
+  @DisplayName("회원가입에 성공하면 201 Created와 성공 응답을 반환한다")
+  void signup_returnsCreatedAndApiResponse_whenRequestValid() throws Exception {
     String request =
         """
         {
@@ -57,7 +57,10 @@ class AuthControllerTest {
         .perform(
             post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON).content(request))
         .andExpect(status().isCreated())
-        .andExpect(content().string(""));
+        .andExpect(jsonPath("$.status").value(201))
+        .andExpect(jsonPath("$.code").value(2000))
+        .andExpect(jsonPath("$.message").value("요청 성공"))
+        .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(authService).signup(any(SignupCommand.class));
   }

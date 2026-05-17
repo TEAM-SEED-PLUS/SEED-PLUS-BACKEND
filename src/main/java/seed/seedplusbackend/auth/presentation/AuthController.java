@@ -3,7 +3,6 @@ package seed.seedplusbackend.auth.presentation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +29,7 @@ import seed.seedplusbackend.auth.presentation.dto.SignupRequest;
 import seed.seedplusbackend.auth.presentation.dto.TokenResponse;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
+import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.security.AuthenticatedUser;
 import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 
@@ -47,24 +47,30 @@ public class AuthController {
   @Operation(summary = "CSRF 토큰 발급")
   @ApiResponses(
       value = {
-        @ApiResponse(responseCode = "200", description = "CSRF 토큰 발급 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "CSRF 토큰 발급 성공"),
       })
   @GetMapping("/csrf")
-  public CsrfTokenResponse csrf(@Parameter(hidden = true) CsrfToken csrfToken) {
-    return CsrfTokenResponse.from(csrfToken);
+  public ResponseEntity<ApiResponse<CsrfTokenResponse>> csrf(
+      @Parameter(hidden = true) CsrfToken csrfToken) {
+    return ResponseEntity.ok(ApiResponse.success(CsrfTokenResponse.from(csrfToken)));
   }
 
-  @Operation(summary = "회원가입", description = "휴대폰 번호 기반 사용자를 생성한다. 성공 응답 body는 없다.")
-  @ApiResponse(responseCode = "201", description = "회원가입 성공", content = @Content)
+  @Operation(summary = "회원가입", description = "휴대폰 번호 기반 사용자를 생성한다.")
+  @io.swagger.v3.oas.annotations.responses.ApiResponse(
+      responseCode = "201",
+      description = "회원가입 성공",
+      content = @Content)
   @ApiErrorCodeExamples({
     ErrorCode.INVALID_PARAMETER,
     ErrorCode.DUPLICATE_PHONE_NUMBER,
     ErrorCode.DUPLICATE_EMAIL
   })
   @PostMapping("/signup")
-  public ResponseEntity<Void> signup(@Valid @RequestBody SignupRequest request) {
+  public ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody SignupRequest request) {
     authService.signup(request.toCommand());
-    return ResponseEntity.status(HttpStatus.CREATED).build();
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(HttpStatus.CREATED));
   }
 
   @Operation(
@@ -77,7 +83,8 @@ public class AuthController {
     ErrorCode.FORBIDDEN
   })
   @PostMapping("/login")
-  public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+  public ResponseEntity<ApiResponse<TokenResponse>> login(
+      @Valid @RequestBody LoginRequest request) {
     AuthTokenResult result = authService.login(request.toCommand());
     return ResponseEntity.ok()
         .header(
@@ -85,7 +92,7 @@ public class AuthController {
             refreshTokenCookieManager
                 .createCookie(result.getRefreshToken(), result.getRefreshTokenExpiresIn())
                 .toString())
-        .body(TokenResponse.from(result));
+        .body(ApiResponse.success(TokenResponse.from(result)));
   }
 
   @Operation(summary = "토큰 재발급", description = "Refresh Token Cookie를 검증하고 토큰을 회전 발급한다.")
@@ -96,7 +103,7 @@ public class AuthController {
     ErrorCode.FORBIDDEN
   })
   @PostMapping("/reissue")
-  public ResponseEntity<TokenResponse> reissue(
+  public ResponseEntity<ApiResponse<TokenResponse>> reissue(
       @CookieValue(name = RefreshTokenCookieManager.COOKIE_NAME) String refreshToken) {
     AuthTokenResult result = authService.reissue(refreshToken);
     return ResponseEntity.ok()
@@ -105,22 +112,25 @@ public class AuthController {
             refreshTokenCookieManager
                 .createCookie(result.getRefreshToken(), result.getRefreshTokenExpiresIn())
                 .toString())
-        .body(TokenResponse.from(result));
+        .body(ApiResponse.success(TokenResponse.from(result)));
   }
 
   @Operation(summary = "로그아웃", security = @SecurityRequirement(name = "bearerAuth"))
-  @ApiResponse(responseCode = "204", description = "로그아웃 성공", content = @Content)
+  @io.swagger.v3.oas.annotations.responses.ApiResponse(
+      responseCode = "200",
+      description = "로그아웃 성공",
+      content = @Content)
   @ApiErrorCodeExamples({ErrorCode.UNAUTHORIZED, ErrorCode.INVALID_TOKEN})
   @PostMapping("/logout")
-  public ResponseEntity<Void> logout(
+  public ResponseEntity<ApiResponse<Void>> logout(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
       @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
       @CookieValue(name = RefreshTokenCookieManager.COOKIE_NAME, required = false)
           String refreshToken) {
     authService.logout(authenticatedUser, extractBearerToken(authorization), refreshToken);
-    return ResponseEntity.noContent()
+    return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, refreshTokenCookieManager.deleteCookie().toString())
-        .build();
+        .body(ApiResponse.success(HttpStatus.OK));
   }
 
   private String extractBearerToken(String authorization) {
