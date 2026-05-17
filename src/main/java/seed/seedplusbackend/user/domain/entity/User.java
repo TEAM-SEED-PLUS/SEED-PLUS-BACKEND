@@ -66,4 +66,13 @@ public class User extends BaseTimeEntity {
     this.role = role;
     this.status = status;
   }
+
+  public void updateProfile(String name, String password) {
+    if (name != null) {
+      this.name = name;
+    }
+    if (password != null) {
+      this.password = password;
+    }
+  }
 }
