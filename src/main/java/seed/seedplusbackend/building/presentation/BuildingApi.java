@@ -16,7 +16,7 @@ import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.response.PageResponse;
 import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 
-@Tag(name = "Buildings", description = "건물 API")
+@Tag(name = "건물", description = "건물 API")
 public interface BuildingApi {
 
   @Operation(summary = "건물 목록 조회", operationId = "getBuildings")

@@ -17,7 +17,7 @@ import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 import seed.seedplusbackend.user.presentation.dto.UserMeResponse;
 import seed.seedplusbackend.user.presentation.dto.UserUpdateRequest;
 
-@Tag(name = "Users", description = "사용자 API")
+@Tag(name = "회원", description = "사용자 API")
 public interface UserApi {
 
   @Operation(

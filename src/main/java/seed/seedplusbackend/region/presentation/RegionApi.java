@@ -17,7 +17,7 @@ import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 import seed.seedplusbackend.region.domain.entity.RegionCodeType;
 import seed.seedplusbackend.region.presentation.dto.RegionResponse;
 
-@Tag(name = "지역",description = "지역 관련 API")
+@Tag(name = "지역", description = "지역 관련 API")
 public interface RegionApi {
 
   @Operation(summary = "지역 목록 조회 (계층 필터)", operationId = "getRegions")

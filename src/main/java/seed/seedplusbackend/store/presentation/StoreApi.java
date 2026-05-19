@@ -20,7 +20,7 @@ import seed.seedplusbackend.metrics.presentation.dto.StoreOperationMetricRespons
 import seed.seedplusbackend.store.presentation.dto.PagedStoreResponse;
 import seed.seedplusbackend.store.presentation.dto.StoreDetailResponse;
 
-@Tag(name = "Stores", description = "점포 API")
+@Tag(name = "점포", description = "점포 API")
 public interface StoreApi {
 
   @Operation(summary = "실제 점포 목록 조회", operationId = "getStores")
@@ -45,7 +45,7 @@ public interface StoreApi {
   @Operation(
       summary = "점포 운영 메트릭 조회",
       operationId = "getStoreOperationMetrics",
-      tags = {"Stores", "Metrics"})
+      tags = {"점포", "메트릭"})
   @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.NOT_FOUND_STORE})
   @GetMapping("/{storeId}/operation-metrics")
   ResponseEntity<ApiResponse<List<StoreOperationMetricResponse>>> getStoreOperationMetrics(
@@ -62,7 +62,7 @@ public interface StoreApi {
   @Operation(
       summary = "점포 재무 메트릭 조회",
       operationId = "getStoreFinancialMetrics",
-      tags = {"Stores", "Metrics"})
+      tags = {"점포", "메트릭"})
   @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.NOT_FOUND_STORE})
   @GetMapping("/{storeId}/financial-metrics")
   ResponseEntity<ApiResponse<List<StoreFinancialMetricResponse>>> getStoreFinancialMetrics(

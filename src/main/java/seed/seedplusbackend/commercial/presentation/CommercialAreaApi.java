@@ -21,7 +21,7 @@ import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 
-@Tag(name = "Commercial Areas", description = "상권 API")
+@Tag(name = "상권", description = "상권 API")
 public interface CommercialAreaApi {
 
   @Operation(summary = "상권 목록 조회", operationId = "getCommercialAreas")
