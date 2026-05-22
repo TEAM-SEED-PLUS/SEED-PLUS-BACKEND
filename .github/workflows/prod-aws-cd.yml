@@ -56,5 +56,5 @@ jobs:
                 ecr_repository=${{ secrets.ECR_REPOSITORY }} \
                 image_tag=${{ github.sha }} \
                 aws_region=ap-northeast-2 \
-                app_env_content='${{ secrets.ENV_FILE }}'" \
+                app_env_content='${{ secrets.ENV_FILE_PROD }}'" \
             playbooks/aws_be_deploy.yml
