@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springdoc.core.customizers.OperationCustomizer;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerMethod;
@@ -27,12 +26,6 @@ import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 
 @Configuration
 public class SwaggerConfig {
-
-  @Value("${app.base-url}")
-  private String baseUrl;
-
-  @Value("${server.port}")
-  private String port;
 
   @Bean
   public OpenAPI retrieveOpenAPI() {
@@ -46,7 +39,7 @@ public class SwaggerConfig {
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
                         .bearerFormat("JWT")))
-        .servers(List.of(new Server().url(baseUrl + ":" + port).description("Server")));
+        .servers(List.of(new Server().url("/").description("Server")));
   }
 
   @Bean
