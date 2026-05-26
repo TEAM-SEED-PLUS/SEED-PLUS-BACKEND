@@ -2,12 +2,16 @@ name: Dev CD Pipeline (Backend)
 
 on:
   workflow_run:
-    workflows: ["Backend CI Pipeline"] # BE 레포지토리의 CI 워크플로우 이름과 정확히 일치
+    workflows: ["Backend CI Pipeline"]
     types:
       - completed
     branches:
       - develop
   workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   deploy-to-openstack:
@@ -21,12 +25,17 @@ jobs:
           token: ${{ secrets.INFRA_REPO_TOKEN }}
           path: 'infra-repo'
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.CI_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
       - name: Set up SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.OPENSTACK_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # BE 포트는 2225
           ssh-keyscan -p 2225 -H ${{ secrets.TARGET_IP }} >> ~/.ssh/known_hosts
 
       - name: Run Ansible Playbook
@@ -40,6 +49,7 @@ jobs:
                           ecr_repository=${{ secrets.ECR_REPOSITORY }} \
                           image_tag=${{ github.event.workflow_run.head_sha || github.sha }} \
                           aws_region=ap-northeast-2 \
-                          aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
-                          aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                          aws_access_key_id=${{ env.AWS_ACCESS_KEY_ID }} \
+                          aws_secret_access_key=${{ env.AWS_SECRET_ACCESS_KEY }} \
+                          aws_session_token=${{ env.AWS_SESSION_TOKEN }} \
                           app_env_content='${{ secrets.ENV_FILE }}'"
