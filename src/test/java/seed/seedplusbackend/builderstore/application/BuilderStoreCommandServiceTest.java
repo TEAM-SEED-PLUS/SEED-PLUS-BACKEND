@@ -96,7 +96,7 @@ class BuilderStoreCommandServiceTest {
   @DisplayName("생성 시 propertyScore는 0으로 시작하고 생성 이벤트를 발행한다")
   void create_setsInitialPropertyScoreAndPublishesEvent() {
     var region = RegionFixture.seoulGangnamYeoksamLegalDong();
-    var commercialArea = CommercialAreaFixture.developedActive("?앹꽦 ?곴텒");
+    var commercialArea = CommercialAreaFixture.developedActive("생성 상권");
     Building baseBuilding = BuildingFixture.seoulGangnamBuilding(region, commercialArea);
     given(userRepository.findById(1L)).willReturn(Optional.of(owner));
     given(regionRepository.findById(10L)).willReturn(Optional.of(region));
