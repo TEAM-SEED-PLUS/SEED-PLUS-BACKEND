@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,5 +46,6 @@ public interface MyBuilderStoreApi {
   @GetMapping("/{builderStoreId}")
   ResponseEntity<ApiResponse<BuilderStoreDetailResponse>> getMyBuilderStore(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "가상 점포 ID", example = "1") @PathVariable Long builderStoreId);
+      @Parameter(description = "가상 점포 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId);
 }

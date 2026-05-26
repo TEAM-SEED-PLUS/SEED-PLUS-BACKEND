@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import seed.seedplusbackend.builderstore.application.command.UpdateBuilderStoreCommand;
@@ -11,10 +12,10 @@ import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreVisibilitySta
 
 @Schema(description = "빌더스토어 수정 요청")
 public record UpdateBuilderStoreRequest(
-    @Schema(description = "지역 ID", example = "1") Long regionId,
-    @Schema(description = "상권 ID", example = "1") Long commercialAreaId,
-    @Schema(description = "업종 ID", example = "1") Long industryId,
-    @Schema(description = "기준 건물 ID", example = "1") Long baseBuildingId,
+    @Schema(description = "지역 ID", example = "1") @Positive Long regionId,
+    @Schema(description = "상권 ID", example = "1") @Positive Long commercialAreaId,
+    @Schema(description = "업종 ID", example = "1") @Positive Long industryId,
+    @Schema(description = "기준 건물 ID", example = "1") @Positive Long baseBuildingId,
     @Schema(description = "빌더스토어명", example = "강남 샐러드 창업안")
         @Pattern(regexp = ".*\\S.*", message = "공백만 입력할 수 없습니다.")
         @Size(max = 150)

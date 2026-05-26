@@ -3,6 +3,7 @@ package seed.seedplusbackend.industry.presentation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,12 +22,12 @@ public interface IndustryApi {
   @GetMapping
   ResponseEntity<ApiResponse<List<IndustryResponse>>> getIndustries(
       @Parameter(description = "업종 분류 레벨 필터") @RequestParam(required = false) IndustryLevel level,
-      @Parameter(description = "상위 업종 ID (하위 업종 조회)") @RequestParam(required = false)
+      @Parameter(description = "상위 업종 ID (하위 업종 조회)") @RequestParam(required = false) @Positive
           Long parentId);
 
   @Operation(summary = "업종 상세 조회", operationId = "getIndustry")
   @ApiErrorCodeExamples({ErrorCode.NOT_FOUND_INDUSTRY})
   @GetMapping("/{industryId}")
   ResponseEntity<ApiResponse<IndustryResponse>> getIndustry(
-      @Parameter(description = "업종 ID", example = "1") @PathVariable Long industryId);
+      @Parameter(description = "업종 ID", example = "1") @PathVariable @Positive Long industryId);
 }

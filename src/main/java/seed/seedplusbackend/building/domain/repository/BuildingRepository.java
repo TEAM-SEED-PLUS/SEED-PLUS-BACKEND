@@ -1,5 +1,6 @@
 package seed.seedplusbackend.building.domain.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,16 @@ public interface BuildingRepository {
   Optional<Building> findById(Long id);
 
   Optional<Building> findWithRegionAndCommercialAreaById(Long id);
+
+  Optional<Building> findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(
+      Long regionId, Long commercialAreaId, String address);
+
+  Optional<Building> findNearestWithinDistance(
+      Long regionId,
+      Long commercialAreaId,
+      BigDecimal latitude,
+      BigDecimal longitude,
+      double distanceMeters);
 
   List<Building> findAll();
 
