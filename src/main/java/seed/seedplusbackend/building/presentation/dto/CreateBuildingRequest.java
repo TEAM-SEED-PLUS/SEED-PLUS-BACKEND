@@ -18,7 +18,7 @@ public record CreateBuildingRequest(
     @Schema(description = "주소", example = "서울특별시 강남구 테헤란로 123") @NotBlank @Size(max = 255)
         String address,
     @Schema(description = "건물명", example = "시드빌딩") @Size(max = 150) String name,
-    @Schema(description = "총 층수", example = "15") @Min(0) Integer totalFloor,
+    @Schema(description = "총 층수", example = "15") @Min(0) Integer floor,
     @Schema(description = "총 면적", example = "12345.67") @DecimalMin("0.00") BigDecimal totalArea,
     @Schema(description = "위도", example = "37.5012") @DecimalMin("-90.0") @DecimalMax("90.0")
         BigDecimal latitude,
@@ -27,7 +27,7 @@ public record CreateBuildingRequest(
 
   public CreateBuildingCommand toCommand() {
     return new CreateBuildingCommand(
-        regionId, commercialAreaId, address, name, totalFloor, totalArea, latitude, longitude);
+        regionId, commercialAreaId, address, name, floor, totalArea, latitude, longitude);
   }
 
   @AssertTrue(message = "위도와 경도는 함께 입력해야 합니다.")

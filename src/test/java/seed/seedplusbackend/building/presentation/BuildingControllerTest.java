@@ -1,5 +1,6 @@
 package seed.seedplusbackend.building.presentation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
@@ -66,7 +68,7 @@ class BuildingControllerTest {
                       "commercialAreaId": 2,
                       "address": "123 Teheran-ro",
                       "name": "Seed Building",
-                      "totalFloor": 15,
+                      "floor": 15,
                       "totalArea": 12345.67,
                       "latitude": 37.5012,
                       "longitude": 127.0364
@@ -78,7 +80,10 @@ class BuildingControllerTest {
         .andExpect(jsonPath("$.data.latitude").value(37.5012))
         .andExpect(jsonPath("$.data.longitude").value(127.0364));
 
-    verify(buildingCommandService).create(any(CreateBuildingCommand.class));
+    ArgumentCaptor<CreateBuildingCommand> commandCaptor =
+        ArgumentCaptor.forClass(CreateBuildingCommand.class);
+    verify(buildingCommandService).create(commandCaptor.capture());
+    assertThat(commandCaptor.getValue().totalFloor()).isEqualTo(15);
   }
 
   @Test
