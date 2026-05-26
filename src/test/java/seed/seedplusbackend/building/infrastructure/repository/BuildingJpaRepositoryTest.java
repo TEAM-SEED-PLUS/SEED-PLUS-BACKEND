@@ -3,6 +3,7 @@ package seed.seedplusbackend.building.infrastructure.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
+import java.math.BigDecimal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ class BuildingJpaRepositoryTest extends AbstractPostgresContainerTest {
   void save_persistsBuildingWithGeographyPoint() {
     Region region = regionJpaRepository.save(RegionFixture.seoulGangnamYeoksamLegalDong());
     CommercialArea area =
-        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("강남상권"));
+        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("Gangnam Area"));
 
     Building saved = buildingJpaRepository.save(BuildingFixture.seoulGangnamBuilding(region, area));
 
@@ -42,26 +43,60 @@ class BuildingJpaRepositoryTest extends AbstractPostgresContainerTest {
   }
 
   @Test
+  @DisplayName("같은 지역과 상권의 동일 주소 건물을 조회할 수 있다")
+  void findFirstByRegionAndCommercialAreaAndAddress_returnsBuilding() {
+    Region region = regionJpaRepository.save(RegionFixture.seoulGangnamYeoksamLegalDong());
+    CommercialArea area =
+        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("Address Area"));
+    Building saved = buildingJpaRepository.save(BuildingFixture.seoulGangnamBuilding(region, area));
+    entityManager.flush();
+    entityManager.clear();
+
+    Building found =
+        buildingJpaRepository
+            .findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(
+                region.getId(), area.getId(), saved.getAddress())
+            .orElseThrow();
+
+    assertThat(found.getId()).isEqualTo(saved.getId());
+  }
+
+  @Test
+  @DisplayName("좌표 반경 안의 가장 가까운 건물을 조회할 수 있다")
+  void findNearestWithinDistance_returnsNearestBuilding() {
+    Region region = regionJpaRepository.save(RegionFixture.seoulGangnamYeoksamLegalDong());
+    CommercialArea area =
+        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("Location Area"));
+    Building saved = buildingJpaRepository.save(BuildingFixture.seoulGangnamBuilding(region, area));
+    entityManager.flush();
+    entityManager.clear();
+
+    Building found =
+        buildingJpaRepository
+            .findNearestWithinDistance(
+                region.getId(),
+                area.getId(),
+                new BigDecimal("37.5012001"),
+                new BigDecimal("127.0364001"),
+                5.0)
+            .orElseThrow();
+
+    assertThat(found.getId()).isEqualTo(saved.getId());
+  }
+
+  @Test
   @DisplayName("ID로 건물을 조회하면 저장된 데이터가 반환된다")
   void findById_returnsSavedBuilding() {
-    Region region =
-        regionJpaRepository.save(
-            Region.builder()
-                .sido("서울특별시")
-                .sigungu("강남구")
-                .dong("삼성동")
-                .code("1168010500")
-                .codeType(seed.seedplusbackend.region.domain.entity.RegionCodeType.LEGAL_DONG)
-                .build());
+    Region region = regionJpaRepository.save(RegionFixture.seoulGangnamYeoksamLegalDong());
     CommercialArea area =
-        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("삼성동상권"));
+        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("Find Area"));
     Building saved = buildingJpaRepository.save(BuildingFixture.seoulGangnamBuilding(region, area));
     entityManager.flush();
     entityManager.clear();
 
     Building found = buildingJpaRepository.findById(saved.getId()).orElseThrow();
 
-    assertThat(found.getName()).isEqualTo("테스트 빌딩");
+    assertThat(found.getName()).isEqualTo(saved.getName());
     assertThat(found.getRegion().getId()).isEqualTo(region.getId());
     assertThat(found.getCommercialArea().getId()).isEqualTo(area.getId());
   }
@@ -71,14 +106,14 @@ class BuildingJpaRepositoryTest extends AbstractPostgresContainerTest {
   void save_persistsBuildingWithoutLocation() {
     Region region = regionJpaRepository.save(RegionFixture.seoulGangnamYeoksamLegalDong());
     CommercialArea area =
-        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("위치없음상권"));
+        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("No Location Area"));
 
     Building noLocation =
         Building.builder()
             .commercialArea(area)
             .region(region)
             .address("서울 강남구 어딘가")
-            .name("좌표없음 빌딩")
+            .name("No Location Building")
             .totalFloor(3)
             .totalArea(null)
             .location(null)
@@ -94,7 +129,7 @@ class BuildingJpaRepositoryTest extends AbstractPostgresContainerTest {
   void deleteById_removesBuilding() {
     Region region = regionJpaRepository.save(RegionFixture.seoulGangnamYeoksamLegalDong());
     CommercialArea area =
-        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("삭제대상상권"));
+        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("Delete Area"));
     Building saved = buildingJpaRepository.save(BuildingFixture.seoulGangnamBuilding(region, area));
     Long id = saved.getId();
 

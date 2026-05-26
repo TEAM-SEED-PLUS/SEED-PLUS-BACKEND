@@ -25,6 +25,7 @@ import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreCommentRe
 import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreImageRepository;
 import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreLikeRepository;
 import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreRepository;
+import seed.seedplusbackend.building.application.BuildingCommandService;
 import seed.seedplusbackend.building.domain.entity.Building;
 import seed.seedplusbackend.building.domain.repository.BuildingRepository;
 import seed.seedplusbackend.commercial.domain.entity.CommercialArea;
@@ -57,6 +58,7 @@ public class BuilderStoreCommandService {
   private final RegionRepository regionRepository;
   private final CommercialAreaRepository commercialAreaRepository;
   private final IndustryRepository industryRepository;
+  private final BuildingCommandService buildingCommandService;
   private final BuildingRepository buildingRepository;
   private final ScoreSnapshotRepository scoreSnapshotRepository;
   private final ApplicationEventPublisher eventPublisher;
@@ -69,7 +71,8 @@ public class BuilderStoreCommandService {
     Region region = getRegion(command.regionId());
     CommercialArea commercialArea = getCommercialArea(command.commercialAreaId());
     Industry industry = getIndustry(command.industryId());
-    Building baseBuilding = getBaseBuilding(command.baseBuildingId());
+    Building baseBuilding =
+        buildingCommandService.resolveOrCreate(command.building(), region, commercialArea);
 
     BuilderStore builderStore =
         builderStoreRepository.save(

@@ -68,7 +68,7 @@ class BuilderStoreControllerTest {
   }
 
   @Test
-  @DisplayName("공개 목록 조회는 페이지 응답 구조를 반환한다")
+  @DisplayName("공개 가상 점포 목록은 페이지 응답을 반환한다")
   void getBuilderStores_returnsPageResponse() throws Exception {
     BuilderStore builderStore = builderStore(1L, user(1L));
     given(builderStoreQueryService.searchPublic(any()))
@@ -85,14 +85,22 @@ class BuilderStoreControllerTest {
   }
 
   @Test
-  @DisplayName("생성 요청의 필수값이 누락되면 400 Bad Request를 반환한다")
+  @DisplayName("빌더스토어 목록 조회는 최소 면적이 최대 면적보다 크면 400을 반환한다")
+  void getBuilderStores_returnsBadRequest_whenAreaRangeInvalid() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/builder-stores").param("minArea", "100").param("maxArea", "10"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("가상 점포 생성 요청의 필수 값이 빠지면 400을 반환한다")
   void createBuilderStore_returnsBadRequest_whenRequiredFieldMissing() throws Exception {
     String request =
         """
         {
           "commercialAreaId": 1,
           "industryId": 1,
-          "name": "강남 샐러드 창업안",
+          "name": "Virtual Store",
           "metrics": {
             "area": 40,
             "expectedMonthlySales": 50000000,
@@ -112,33 +120,12 @@ class BuilderStoreControllerTest {
   }
 
   @Test
-  @DisplayName("생성 요청은 metrics 구조와 인증 사용자 ID를 서비스로 전달한다")
-  void createBuilderStore_passesMetricsAndAuthenticatedUserIdToService() throws Exception {
+  @DisplayName("가상 점포 생성 요청은 건물 입력과 인증 사용자 ID를 서비스로 전달한다")
+  void createBuilderStore_passesBuildingAndAuthenticatedUserIdToService() throws Exception {
     User owner = user(9L);
     BuilderStore builderStore = builderStore(100L, owner);
     given(builderStoreCommandService.create(eq(9L), any(CreateBuilderStoreCommand.class)))
         .willReturn(new BuilderStoreDetailResult(builderStore, List.of(), null, false, false));
-
-    String request =
-        """
-        {
-          "regionId": 1,
-          "commercialAreaId": 1,
-          "industryId": 1,
-          "name": "강남 샐러드 창업안",
-          "metrics": {
-            "area": 40,
-            "expectedMonthlySales": 50000000,
-            "expectedProfitRate": 12.50,
-            "investmentPaybackMonths": 36,
-            "monthlyRent": 2000000,
-            "deposit": 20000000,
-            "investmentAmount": 100000000
-          },
-          "visibilityStatus": "PUBLIC",
-          "imageUrls": []
-        }
-        """;
 
     try {
       SecurityContextHolder.getContext().setAuthentication(userAuthentication());
@@ -147,7 +134,7 @@ class BuilderStoreControllerTest {
           .perform(
               post("/api/v1/builder-stores")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(request))
+                  .content(validCreateRequest()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.status").value(201))
           .andExpect(jsonPath("$.data.builderStoreId").value(100));
@@ -159,7 +146,7 @@ class BuilderStoreControllerTest {
   }
 
   @Test
-  @DisplayName("생성 요청의 metrics 필수값이 누락되면 400 Bad Request를 반환한다")
+  @DisplayName("가상 점포 생성 요청의 metrics 필수 값이 빠지면 400을 반환한다")
   void createBuilderStore_returnsBadRequest_whenMetricsRequiredFieldMissing() throws Exception {
     String request =
         """
@@ -167,7 +154,10 @@ class BuilderStoreControllerTest {
           "regionId": 1,
           "commercialAreaId": 1,
           "industryId": 1,
-          "name": "강남 샐러드 창업안",
+          "building": {
+            "address": "123 Teheran-ro"
+          },
+          "name": "Virtual Store",
           "metrics": {
             "expectedMonthlySales": 50000000,
             "expectedProfitRate": 12.50,
@@ -186,7 +176,39 @@ class BuilderStoreControllerTest {
   }
 
   @Test
-  @DisplayName("수정 요청은 name 없이 metrics 일부만 수정할 수 있다")
+  @DisplayName("가상 점포 생성 요청의 건물 좌표는 위도와 경도를 함께 입력해야 한다")
+  void createBuilderStore_returnsBadRequest_whenBuildingLocationIsIncomplete() throws Exception {
+    String request =
+        """
+        {
+          "regionId": 1,
+          "commercialAreaId": 1,
+          "industryId": 1,
+          "building": {
+            "address": "123 Teheran-ro",
+            "latitude": 37.5012
+          },
+          "name": "Virtual Store",
+          "metrics": {
+            "area": 40,
+            "expectedMonthlySales": 50000000,
+            "expectedProfitRate": 12.50,
+            "investmentPaybackMonths": 36,
+            "monthlyRent": 2000000,
+            "deposit": 20000000,
+            "investmentAmount": 100000000
+          }
+        }
+        """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/builder-stores").contentType(MediaType.APPLICATION_JSON).content(request))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("가상 점포 수정 요청은 name 없이 metrics 일부만 수정할 수 있다")
   void updateBuilderStore_allowsMissingNameAndPartialMetrics() throws Exception {
     User owner = user(9L);
     BuilderStore builderStore = builderStore(100L, owner);
@@ -221,7 +243,7 @@ class BuilderStoreControllerTest {
   }
 
   @Test
-  @DisplayName("수정 요청의 name이 공백이면 400 Bad Request를 반환한다")
+  @DisplayName("가상 점포 수정 요청의 name이 공백이면 400을 반환한다")
   void updateBuilderStore_returnsBadRequest_whenNameIsBlank() throws Exception {
     String request =
         """
@@ -245,7 +267,7 @@ class BuilderStoreControllerTest {
   }
 
   @Test
-  @DisplayName("댓글 목록 조회는 작성자와 대댓글 정보를 포함해 반환한다")
+  @DisplayName("댓글 목록 조회는 작성자와 대댓글 정보를 포함한다")
   void getComments_returnsAuthorAndReplies() throws Exception {
     User owner = user(1L);
     User author = user(2L);
@@ -273,6 +295,36 @@ class BuilderStoreControllerTest {
         .andExpect(jsonPath("$.data.content[0].replies[0].content").value("reply comment"));
   }
 
+  private String validCreateRequest() {
+    return """
+        {
+          "regionId": 1,
+          "commercialAreaId": 1,
+          "industryId": 1,
+          "building": {
+            "address": "123 Teheran-ro",
+            "name": "Seed Building",
+            "floor": 15,
+            "totalArea": 12345.67,
+            "latitude": 37.5012,
+            "longitude": 127.0364
+          },
+          "name": "Virtual Store",
+          "metrics": {
+            "area": 40,
+            "expectedMonthlySales": 50000000,
+            "expectedProfitRate": 12.50,
+            "investmentPaybackMonths": 36,
+            "monthlyRent": 2000000,
+            "deposit": 20000000,
+            "investmentAmount": 100000000
+          },
+          "visibilityStatus": "PUBLIC",
+          "imageUrls": []
+        }
+        """;
+  }
+
   private UsernamePasswordAuthenticationToken userAuthentication() {
     AuthenticatedUser authenticatedUser =
         new AuthenticatedUser(9L, "01012345678", UserRole.GENERAL);
@@ -285,8 +337,8 @@ class BuilderStoreControllerTest {
         BuilderStoreFixture.publicBuilderStore(
             owner,
             RegionFixture.seoulGangnamYeoksamLegalDong(),
-            CommercialAreaFixture.developedActive("상권"),
-            IndustryFixture.largeRoot("IND", "음식점업"));
+            CommercialAreaFixture.developedActive("Commercial Area"),
+            IndustryFixture.largeRoot("IND", "Food"));
     ReflectionTestUtils.setField(builderStore, "id", id);
     return builderStore;
   }

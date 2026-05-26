@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -37,7 +38,7 @@ public interface CommercialAreaApi {
           @Max(100)
           @RequestParam(defaultValue = "20")
           int size,
-      @Parameter(description = "지역 ID 필터", example = "1") @RequestParam(required = false)
+      @Parameter(description = "지역 ID 필터", example = "1") @RequestParam(required = false) @Positive
           Long regionId,
       @Parameter(description = "상권 유형 필터", example = "DEVELOPED") @RequestParam(required = false)
           CommercialAreaType type,
@@ -49,13 +50,15 @@ public interface CommercialAreaApi {
   @ApiErrorCodeExamples({ErrorCode.NOT_FOUND_COMMERCIAL_AREA})
   @GetMapping("/{commercialAreaId}")
   ResponseEntity<ApiResponse<CommercialAreaDetailResponse>> getCommercialArea(
-      @Parameter(description = "상권 ID", example = "1") @PathVariable Long commercialAreaId);
+      @Parameter(description = "상권 ID", example = "1") @PathVariable @Positive
+          Long commercialAreaId);
 
   @Operation(summary = "상권 월별 메트릭 조회", operationId = "getCommercialAreaMetrics")
   @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.NOT_FOUND_COMMERCIAL_AREA})
   @GetMapping("/{commercialAreaId}/metrics")
   ResponseEntity<ApiResponse<List<CommercialAreaMetricResponse>>> getCommercialAreaMetrics(
-      @Parameter(description = "상권 ID", example = "1") @PathVariable Long commercialAreaId,
+      @Parameter(description = "상권 ID", example = "1") @PathVariable @Positive
+          Long commercialAreaId,
       @Parameter(description = "시작 월 (yyyy-MM-01)", example = "2026-01-01")
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           @RequestParam(required = false)

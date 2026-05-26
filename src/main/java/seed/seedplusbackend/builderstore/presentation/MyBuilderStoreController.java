@@ -1,6 +1,7 @@
 package seed.seedplusbackend.builderstore.presentation;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,7 @@ public class MyBuilderStoreController implements MyBuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<BuilderStoreDetailResponse>> getMyBuilderStore(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId) {
+      @PathVariable @Positive Long builderStoreId) {
     return ResponseEntity.ok(
         ApiResponse.success(
             BuilderStoreDetailResponse.from(

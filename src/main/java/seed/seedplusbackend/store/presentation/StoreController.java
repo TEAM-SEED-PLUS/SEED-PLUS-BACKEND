@@ -2,6 +2,7 @@ package seed.seedplusbackend.store.presentation;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +32,9 @@ public class StoreController implements StoreApi {
   public ResponseEntity<ApiResponse<PagedStoreResponse>> getStores(
       @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
-      @RequestParam(required = false) Long buildingId,
-      @RequestParam(required = false) Long industryId,
-      @RequestParam(required = false) Long regionId,
+      @RequestParam(required = false) @Positive Long buildingId,
+      @RequestParam(required = false) @Positive Long industryId,
+      @RequestParam(required = false) @Positive Long regionId,
       @RequestParam(required = false) Boolean isVacant) {
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -43,14 +44,15 @@ public class StoreController implements StoreApi {
   }
 
   @Override
-  public ResponseEntity<ApiResponse<StoreDetailResponse>> getStore(@PathVariable Long storeId) {
+  public ResponseEntity<ApiResponse<StoreDetailResponse>> getStore(
+      @PathVariable @Positive Long storeId) {
     return ResponseEntity.ok(
         ApiResponse.success(StoreDetailResponse.from(storeQueryService.getStore(storeId))));
   }
 
   @Override
   public ResponseEntity<ApiResponse<List<StoreOperationMetricResponse>>> getStoreOperationMetrics(
-      @PathVariable Long storeId,
+      @PathVariable @Positive Long storeId,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate startMonth,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -63,7 +65,7 @@ public class StoreController implements StoreApi {
 
   @Override
   public ResponseEntity<ApiResponse<List<StoreFinancialMetricResponse>>> getStoreFinancialMetrics(
-      @PathVariable Long storeId,
+      @PathVariable @Positive Long storeId,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate startMonth,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

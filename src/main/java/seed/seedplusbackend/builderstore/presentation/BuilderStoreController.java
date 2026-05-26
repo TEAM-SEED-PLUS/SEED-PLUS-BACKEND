@@ -1,6 +1,7 @@
 package seed.seedplusbackend.builderstore.presentation;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
@@ -48,7 +49,7 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<BuilderStoreDetailResponse>> getBuilderStore(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId) {
+      @PathVariable @Positive Long builderStoreId) {
     Long userId = authenticatedUser == null ? null : authenticatedUser.getId();
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -72,7 +73,7 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<BuilderStoreDetailResponse>> updateBuilderStore(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId,
+      @PathVariable @Positive Long builderStoreId,
       @Valid @RequestBody UpdateBuilderStoreRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -84,7 +85,7 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<Void>> deleteBuilderStore(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId) {
+      @PathVariable @Positive Long builderStoreId) {
     builderStoreCommandService.delete(authenticatedUser.getId(), builderStoreId);
     return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK));
   }
@@ -92,7 +93,7 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<Void>> likeBuilderStore(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId) {
+      @PathVariable @Positive Long builderStoreId) {
     builderStoreCommandService.like(authenticatedUser.getId(), builderStoreId);
     return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK));
   }
@@ -100,7 +101,7 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<Void>> unlikeBuilderStore(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId) {
+      @PathVariable @Positive Long builderStoreId) {
     builderStoreCommandService.unlike(authenticatedUser.getId(), builderStoreId);
     return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK));
   }
@@ -108,7 +109,7 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<Void>> bookmarkBuilderStore(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId) {
+      @PathVariable @Positive Long builderStoreId) {
     builderStoreCommandService.bookmark(authenticatedUser.getId(), builderStoreId);
     return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK));
   }
@@ -116,14 +117,14 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<Void>> unbookmarkBuilderStore(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId) {
+      @PathVariable @Positive Long builderStoreId) {
     builderStoreCommandService.unbookmark(authenticatedUser.getId(), builderStoreId);
     return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK));
   }
 
   @Override
   public ResponseEntity<ApiResponse<PageResponse<BuilderStoreCommentResponse>>> getComments(
-      @PathVariable Long builderStoreId,
+      @PathVariable @Positive Long builderStoreId,
       @Valid @ParameterObject BuilderStoreCommentPageRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -135,7 +136,7 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<BuilderStoreCommentResponse>> createComment(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId,
+      @PathVariable @Positive Long builderStoreId,
       @Valid @RequestBody CreateBuilderStoreCommentRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(
@@ -149,8 +150,8 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<BuilderStoreCommentResponse>> updateComment(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId,
-      @PathVariable Long commentId,
+      @PathVariable @Positive Long builderStoreId,
+      @PathVariable @Positive Long commentId,
       @Valid @RequestBody UpdateBuilderStoreCommentRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -162,8 +163,8 @@ public class BuilderStoreController implements BuilderStoreApi {
   @Override
   public ResponseEntity<ApiResponse<Void>> deleteComment(
       @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @PathVariable Long builderStoreId,
-      @PathVariable Long commentId) {
+      @PathVariable @Positive Long builderStoreId,
+      @PathVariable @Positive Long commentId) {
     builderStoreCommandService.deleteComment(authenticatedUser.getId(), builderStoreId, commentId);
     return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK));
   }

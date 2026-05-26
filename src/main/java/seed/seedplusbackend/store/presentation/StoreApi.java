@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,16 +32,16 @@ public interface StoreApi {
           int page,
       @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") @Min(1) @Max(100)
           int size,
-      @Parameter(description = "건물 ID") @RequestParam(required = false) Long buildingId,
-      @Parameter(description = "업종 ID") @RequestParam(required = false) Long industryId,
-      @Parameter(description = "지역 ID") @RequestParam(required = false) Long regionId,
+      @Parameter(description = "건물 ID") @RequestParam(required = false) @Positive Long buildingId,
+      @Parameter(description = "업종 ID") @RequestParam(required = false) @Positive Long industryId,
+      @Parameter(description = "지역 ID") @RequestParam(required = false) @Positive Long regionId,
       @Parameter(description = "공실 여부") @RequestParam(required = false) Boolean isVacant);
 
   @Operation(summary = "점포 상세 조회", operationId = "getStore")
   @ApiErrorCodeExamples({ErrorCode.NOT_FOUND_STORE})
   @GetMapping("/{storeId}")
   ResponseEntity<ApiResponse<StoreDetailResponse>> getStore(
-      @Parameter(description = "점포 ID", example = "1") @PathVariable Long storeId);
+      @Parameter(description = "점포 ID", example = "1") @PathVariable @Positive Long storeId);
 
   @Operation(
       summary = "점포 운영 메트릭 조회",
@@ -49,7 +50,7 @@ public interface StoreApi {
   @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.NOT_FOUND_STORE})
   @GetMapping("/{storeId}/operation-metrics")
   ResponseEntity<ApiResponse<List<StoreOperationMetricResponse>>> getStoreOperationMetrics(
-      @Parameter(description = "점포 ID", example = "1") @PathVariable Long storeId,
+      @Parameter(description = "점포 ID", example = "1") @PathVariable @Positive Long storeId,
       @Parameter(description = "시작 월", example = "2026-01-01")
           @RequestParam(required = false)
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -66,7 +67,7 @@ public interface StoreApi {
   @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.NOT_FOUND_STORE})
   @GetMapping("/{storeId}/financial-metrics")
   ResponseEntity<ApiResponse<List<StoreFinancialMetricResponse>>> getStoreFinancialMetrics(
-      @Parameter(description = "점포 ID", example = "1") @PathVariable Long storeId,
+      @Parameter(description = "점포 ID", example = "1") @PathVariable @Positive Long storeId,
       @Parameter(description = "시작 월", example = "2026-01-01")
           @RequestParam(required = false)
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

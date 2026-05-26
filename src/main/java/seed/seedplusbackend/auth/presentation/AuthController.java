@@ -2,6 +2,7 @@ package seed.seedplusbackend.auth.presentation;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -95,7 +96,17 @@ public class AuthController {
         .body(ApiResponse.success(TokenResponse.from(result)));
   }
 
-  @Operation(summary = "토큰 재발급", description = "Refresh Token Cookie를 검증하고 토큰을 회전 발급한다.")
+  @Operation(
+      summary = "토큰 재발급",
+      description =
+          "Refresh Token Cookie와 CSRF Token을 검증하고 토큰을 회전 발급한다. "
+              + "X-XSRF-TOKEN 헤더와 XSRF-TOKEN Cookie가 함께 전송되어야 한다.",
+      parameters =
+          @Parameter(
+              name = "X-XSRF-TOKEN",
+              in = ParameterIn.HEADER,
+              required = true,
+              description = "/api/v1/auth/csrf 응답의 token 값"))
   @ApiErrorCodeExamples({
     ErrorCode.INVALID_TOKEN,
     ErrorCode.EXPIRED_REFRESH_TOKEN,
@@ -104,7 +115,8 @@ public class AuthController {
   })
   @PostMapping("/reissue")
   public ResponseEntity<ApiResponse<TokenResponse>> reissue(
-      @CookieValue(name = RefreshTokenCookieManager.COOKIE_NAME) String refreshToken) {
+      @Parameter(hidden = true) @CookieValue(name = RefreshTokenCookieManager.COOKIE_NAME)
+          String refreshToken) {
     AuthTokenResult result = authService.reissue(refreshToken);
     return ResponseEntity.ok()
         .header(

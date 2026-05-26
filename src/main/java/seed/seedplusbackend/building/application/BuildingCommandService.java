@@ -24,6 +24,7 @@ import seed.seedplusbackend.region.domain.repository.RegionRepository;
 public class BuildingCommandService {
 
   private static final int WGS84_SRID = 4326;
+  private static final double SAME_BUILDING_DISTANCE_METERS = 5.0;
   private static final GeometryFactory GEOMETRY_FACTORY =
       new GeometryFactory(new PrecisionModel(), WGS84_SRID);
 
@@ -33,6 +34,11 @@ public class BuildingCommandService {
 
   @Transactional
   public Building create(CreateBuildingCommand command) {
+    return resolveOrCreate(command);
+  }
+
+  @Transactional
+  public Building resolveOrCreate(CreateBuildingCommand command) {
     Region region =
         regionRepository
             .findById(command.regionId())
@@ -42,6 +48,31 @@ public class BuildingCommandService {
             .findByIdAndStatusNot(command.commercialAreaId(), CommercialAreaStatus.DELETED)
             .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_COMMERCIAL_AREA));
 
+    return resolveOrCreate(command, region, commercialArea);
+  }
+
+  @Transactional
+  public Building resolveOrCreate(
+      CreateBuildingCommand command, Region region, CommercialArea commercialArea) {
+    Point location = toPoint(command.latitude(), command.longitude());
+    return buildingRepository
+        .findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(
+            command.regionId(), command.commercialAreaId(), command.address())
+        .or(
+            () ->
+                location == null
+                    ? java.util.Optional.empty()
+                    : buildingRepository.findNearestWithinDistance(
+                        command.regionId(),
+                        command.commercialAreaId(),
+                        command.latitude(),
+                        command.longitude(),
+                        SAME_BUILDING_DISTANCE_METERS))
+        .orElseGet(() -> save(command, region, commercialArea, location));
+  }
+
+  private Building save(
+      CreateBuildingCommand command, Region region, CommercialArea commercialArea, Point location) {
     return buildingRepository.save(
         Building.builder()
             .region(region)
@@ -50,7 +81,7 @@ public class BuildingCommandService {
             .name(command.name())
             .totalFloor(command.totalFloor())
             .totalArea(command.totalArea())
-            .location(toPoint(command.latitude(), command.longitude()))
+            .location(location)
             .build());
   }
 

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,7 +44,8 @@ public interface BuilderStoreApi {
   @GetMapping("/{builderStoreId}")
   ResponseEntity<ApiResponse<BuilderStoreDetailResponse>> getBuilderStore(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "가상 점포 ID", example = "1") @PathVariable Long builderStoreId);
+      @Parameter(description = "가상 점포 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId);
 
   @Operation(
       summary = "가상 점포 생성",
@@ -56,7 +58,6 @@ public interface BuilderStoreApi {
     ErrorCode.NOT_FOUND_REGION,
     ErrorCode.NOT_FOUND_COMMERCIAL_AREA,
     ErrorCode.NOT_FOUND_INDUSTRY,
-    ErrorCode.NOT_FOUND_BUILDING,
     ErrorCode.INVALID_BUILDER_STORE_STATUS
   })
   @PostMapping
@@ -82,7 +83,8 @@ public interface BuilderStoreApi {
   @PatchMapping("/{builderStoreId}")
   ResponseEntity<ApiResponse<BuilderStoreDetailResponse>> updateBuilderStore(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId,
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId,
       @Valid @RequestBody UpdateBuilderStoreRequest request);
 
   @Operation(
@@ -97,7 +99,8 @@ public interface BuilderStoreApi {
   @DeleteMapping("/{builderStoreId}")
   ResponseEntity<ApiResponse<Void>> deleteBuilderStore(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "가상 점포 ID", example = "1") @PathVariable Long builderStoreId);
+      @Parameter(description = "가상 점포 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId);
 
   @Operation(
       summary = "가상 점포 좋아요",
@@ -112,7 +115,8 @@ public interface BuilderStoreApi {
   @PostMapping("/{builderStoreId}/likes")
   ResponseEntity<ApiResponse<Void>> likeBuilderStore(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId);
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId);
 
   @Operation(
       summary = "가상 점포 좋아요 취소",
@@ -126,7 +130,8 @@ public interface BuilderStoreApi {
   @DeleteMapping("/{builderStoreId}/likes")
   ResponseEntity<ApiResponse<Void>> unlikeBuilderStore(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId);
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId);
 
   @Operation(
       summary = "가상 점포 북마크",
@@ -141,7 +146,8 @@ public interface BuilderStoreApi {
   @PostMapping("/{builderStoreId}/bookmarks")
   ResponseEntity<ApiResponse<Void>> bookmarkBuilderStore(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId);
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId);
 
   @Operation(
       summary = "가상 점포 북마크 취소",
@@ -155,13 +161,15 @@ public interface BuilderStoreApi {
   @DeleteMapping("/{builderStoreId}/bookmarks")
   ResponseEntity<ApiResponse<Void>> unbookmarkBuilderStore(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId);
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId);
 
   @Operation(summary = "가상 점포 댓글 목록 조회", operationId = "getBuilderStoreComments")
   @ApiErrorCodeExamples({ErrorCode.NOT_FOUND_BUILDER_STORE})
   @GetMapping("/{builderStoreId}/comments")
   ResponseEntity<ApiResponse<PageResponse<BuilderStoreCommentResponse>>> getComments(
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId,
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId,
       @Valid @ParameterObject BuilderStoreCommentPageRequest request);
 
   @Operation(
@@ -178,7 +186,8 @@ public interface BuilderStoreApi {
   @PostMapping("/{builderStoreId}/comments")
   ResponseEntity<ApiResponse<BuilderStoreCommentResponse>> createComment(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId,
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId,
       @Valid @RequestBody CreateBuilderStoreCommentRequest request);
 
   @Operation(
@@ -195,8 +204,9 @@ public interface BuilderStoreApi {
   @PatchMapping("/{builderStoreId}/comments/{commentId}")
   ResponseEntity<ApiResponse<BuilderStoreCommentResponse>> updateComment(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId,
-      @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId,
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId,
+      @Parameter(description = "댓글 ID", example = "1") @PathVariable @Positive Long commentId,
       @Valid @RequestBody UpdateBuilderStoreCommentRequest request);
 
   @Operation(
@@ -212,6 +222,7 @@ public interface BuilderStoreApi {
   @DeleteMapping("/{builderStoreId}/comments/{commentId}")
   ResponseEntity<ApiResponse<Void>> deleteComment(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable Long builderStoreId,
-      @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId);
+      @Parameter(description = "빌더스토어 ID", example = "1") @PathVariable @Positive
+          Long builderStoreId,
+      @Parameter(description = "댓글 ID", example = "1") @PathVariable @Positive Long commentId);
 }

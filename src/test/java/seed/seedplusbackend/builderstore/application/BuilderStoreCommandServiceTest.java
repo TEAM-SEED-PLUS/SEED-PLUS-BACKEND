@@ -35,6 +35,9 @@ import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreCommentRe
 import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreImageRepository;
 import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreLikeRepository;
 import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreRepository;
+import seed.seedplusbackend.building.application.BuildingCommandService;
+import seed.seedplusbackend.building.application.command.CreateBuildingCommand;
+import seed.seedplusbackend.building.domain.entity.Building;
 import seed.seedplusbackend.building.domain.repository.BuildingRepository;
 import seed.seedplusbackend.commercial.domain.repository.CommercialAreaRepository;
 import seed.seedplusbackend.global.error.ApplicationException;
@@ -43,6 +46,7 @@ import seed.seedplusbackend.industry.domain.repository.IndustryRepository;
 import seed.seedplusbackend.region.domain.repository.RegionRepository;
 import seed.seedplusbackend.score.domain.repository.ScoreSnapshotRepository;
 import seed.seedplusbackend.support.fixture.BuilderStoreFixture;
+import seed.seedplusbackend.support.fixture.BuildingFixture;
 import seed.seedplusbackend.support.fixture.CommercialAreaFixture;
 import seed.seedplusbackend.support.fixture.IndustryFixture;
 import seed.seedplusbackend.support.fixture.RegionFixture;
@@ -63,6 +67,7 @@ class BuilderStoreCommandServiceTest {
   @Mock private RegionRepository regionRepository;
   @Mock private CommercialAreaRepository commercialAreaRepository;
   @Mock private IndustryRepository industryRepository;
+  @Mock private BuildingCommandService buildingCommandService;
   @Mock private BuildingRepository buildingRepository;
   @Mock private ScoreSnapshotRepository scoreSnapshotRepository;
   @Mock private ApplicationEventPublisher eventPublisher;
@@ -90,13 +95,17 @@ class BuilderStoreCommandServiceTest {
   @Test
   @DisplayName("생성 시 propertyScore는 0으로 시작하고 생성 이벤트를 발행한다")
   void create_setsInitialPropertyScoreAndPublishesEvent() {
+    var region = RegionFixture.seoulGangnamYeoksamLegalDong();
+    var commercialArea = CommercialAreaFixture.developedActive("?앹꽦 ?곴텒");
+    Building baseBuilding = BuildingFixture.seoulGangnamBuilding(region, commercialArea);
     given(userRepository.findById(1L)).willReturn(Optional.of(owner));
-    given(regionRepository.findById(10L))
-        .willReturn(Optional.of(RegionFixture.seoulGangnamYeoksamLegalDong()));
+    given(regionRepository.findById(10L)).willReturn(Optional.of(region));
     given(commercialAreaRepository.findByIdAndStatusNot(any(), any()))
         .willReturn(Optional.of(CommercialAreaFixture.developedActive("생성 상권")));
     given(industryRepository.findByIdAndStatus(any(), any()))
         .willReturn(Optional.of(IndustryFixture.largeRoot("CREATE-IND", "음식점업")));
+    given(buildingCommandService.resolveOrCreate(any(CreateBuildingCommand.class), any(), any()))
+        .willReturn(baseBuilding);
     given(builderStoreRepository.save(any(BuilderStore.class)))
         .willAnswer(
             invocation -> {
@@ -115,6 +124,8 @@ class BuilderStoreCommandServiceTest {
     BuilderStoreDetailResult result = builderStoreCommandService.create(1L, createCommand());
 
     assertThat(result.builderStore().getPropertyScore()).isZero();
+    assertThat(result.builderStore().getBaseBuilding()).isSameAs(baseBuilding);
+    verify(buildingCommandService).resolveOrCreate(any(CreateBuildingCommand.class), any(), any());
     verify(eventPublisher).publishEvent(new BuilderStoreCreatedEvent(100L));
     verify(scoreSnapshotRepository, never()).save(any());
   }
@@ -312,7 +323,15 @@ class BuilderStoreCommandServiceTest {
         10L,
         20L,
         30L,
-        null,
+        new CreateBuildingCommand(
+            10L,
+            20L,
+            "123 Teheran-ro",
+            "Seed Building",
+            15,
+            new BigDecimal("12345.67"),
+            new BigDecimal("37.5012"),
+            new BigDecimal("127.0364")),
         "생성 빌더스토어",
         new BuilderStoreMetricsCommand(
             40, 50_000_000L, new BigDecimal("12.50"), 36, 2_000_000L, 20_000_000L, 100_000_000L),

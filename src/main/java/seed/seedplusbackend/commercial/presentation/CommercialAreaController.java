@@ -1,5 +1,8 @@
 package seed.seedplusbackend.commercial.presentation;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +32,9 @@ public class CommercialAreaController implements CommercialAreaApi {
 
   @Override
   public ResponseEntity<ApiResponse<PagedCommercialAreaResponse>> getCommercialAreas(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) Long regionId,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+      @RequestParam(required = false) @Positive Long regionId,
       @RequestParam(required = false) CommercialAreaType type,
       @RequestParam(defaultValue = "ACTIVE") CommercialAreaStatusFilter status) {
     CommercialAreaStatusFilter resolvedStatus =
@@ -47,7 +50,7 @@ public class CommercialAreaController implements CommercialAreaApi {
 
   @Override
   public ResponseEntity<ApiResponse<CommercialAreaDetailResponse>> getCommercialArea(
-      @PathVariable Long commercialAreaId) {
+      @PathVariable @Positive Long commercialAreaId) {
     return ResponseEntity.ok(
         ApiResponse.success(
             CommercialAreaDetailResponse.from(
@@ -56,7 +59,7 @@ public class CommercialAreaController implements CommercialAreaApi {
 
   @Override
   public ResponseEntity<ApiResponse<List<CommercialAreaMetricResponse>>> getCommercialAreaMetrics(
-      @PathVariable Long commercialAreaId,
+      @PathVariable @Positive Long commercialAreaId,
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(required = false)
           LocalDate startMonth,
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(required = false)

@@ -3,7 +3,10 @@ package seed.seedplusbackend.building.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -21,6 +24,7 @@ import seed.seedplusbackend.commercial.domain.repository.CommercialAreaRepositor
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.region.domain.repository.RegionRepository;
+import seed.seedplusbackend.support.fixture.BuildingFixture;
 import seed.seedplusbackend.support.fixture.CommercialAreaFixture;
 import seed.seedplusbackend.support.fixture.RegionFixture;
 
@@ -66,6 +70,52 @@ class BuildingCommandServiceTest {
     assertThat(result.getCommercialArea()).isSameAs(commercialArea);
     assertThat(result.getLocation().getY()).isCloseTo(37.5012, withinDouble());
     assertThat(result.getLocation().getX()).isCloseTo(127.0364, withinDouble());
+  }
+
+  @Test
+  @DisplayName("resolveOrCreate returns existing building when address matches")
+  void resolveOrCreate_returnsExistingBuilding_whenAddressMatches() {
+    var region = RegionFixture.seoulGangnamYeoksamLegalDong();
+    var commercialArea = CommercialAreaFixture.developedActive("Gangnam");
+    Building existing = BuildingFixture.seoulGangnamBuilding(region, commercialArea);
+    given(regionRepository.findById(1L)).willReturn(Optional.of(region));
+    given(commercialAreaRepository.findByIdAndStatusNot(any(), any()))
+        .willReturn(Optional.of(commercialArea));
+    given(
+            buildingRepository.findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(
+                1L, 2L, "123 Teheran-ro"))
+        .willReturn(Optional.of(existing));
+
+    Building result = buildingCommandService.resolveOrCreate(command());
+
+    assertThat(result).isSameAs(existing);
+    verify(buildingRepository, never())
+        .findNearestWithinDistance(any(), any(), any(), any(), anyDouble());
+    verify(buildingRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("resolveOrCreate returns nearest building within five meters when address differs")
+  void resolveOrCreate_returnsNearestBuilding_whenLocationMatches() {
+    var region = RegionFixture.seoulGangnamYeoksamLegalDong();
+    var commercialArea = CommercialAreaFixture.developedActive("Gangnam");
+    Building existing = BuildingFixture.seoulGangnamBuilding(region, commercialArea);
+    given(regionRepository.findById(1L)).willReturn(Optional.of(region));
+    given(commercialAreaRepository.findByIdAndStatusNot(any(), any()))
+        .willReturn(Optional.of(commercialArea));
+    given(
+            buildingRepository.findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(
+                1L, 2L, "123 Teheran-ro"))
+        .willReturn(Optional.empty());
+    given(
+            buildingRepository.findNearestWithinDistance(
+                1L, 2L, new BigDecimal("37.5012"), new BigDecimal("127.0364"), 5.0))
+        .willReturn(Optional.of(existing));
+
+    Building result = buildingCommandService.resolveOrCreate(command());
+
+    assertThat(result).isSameAs(existing);
+    verify(buildingRepository, never()).save(any());
   }
 
   @Test
