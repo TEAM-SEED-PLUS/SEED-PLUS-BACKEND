@@ -10,7 +10,11 @@ public interface BuilderStoreBookmarkRepository {
 
   Optional<BuilderStoreBookmark> findById(Long id);
 
+  Optional<BuilderStoreBookmark> findByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
+
   List<BuilderStoreBookmark> findAll();
+
+  boolean existsByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
 
   boolean existsById(Long id);
 

@@ -15,5 +15,11 @@ public interface BuilderStoreBookmarkJpaRepository
   Optional<BuilderStoreBookmark> findById(Long id);
 
   @Override
+  Optional<BuilderStoreBookmark> findByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
+
+  @Override
+  boolean existsByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
+
+  @Override
   void deleteById(Long id);
 }

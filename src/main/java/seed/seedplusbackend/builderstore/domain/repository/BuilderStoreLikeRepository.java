@@ -10,7 +10,11 @@ public interface BuilderStoreLikeRepository {
 
   Optional<BuilderStoreLike> findById(Long id);
 
+  Optional<BuilderStoreLike> findByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
+
   List<BuilderStoreLike> findAll();
+
+  boolean existsByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
 
   boolean existsById(Long id);
 

@@ -50,4 +50,20 @@ public class BuilderStoreComment extends BaseTimeEntity {
     this.user = user;
     this.content = content;
   }
+
+  public boolean isOwnedBy(Long userId) {
+    return user != null && user.getId().equals(userId);
+  }
+
+  public boolean belongsTo(Long builderStoreId) {
+    return builderStore != null && builderStore.getId().equals(builderStoreId);
+  }
+
+  public boolean isReply() {
+    return parent != null;
+  }
+
+  public void updateContent(String content) {
+    this.content = content;
+  }
 }

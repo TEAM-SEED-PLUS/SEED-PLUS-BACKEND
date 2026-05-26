@@ -3,9 +3,13 @@ package seed.seedplusbackend.builderstore.infrastructure.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
+import java.util.List;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStore;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreComment;
 import seed.seedplusbackend.commercial.domain.entity.CommercialArea;
@@ -71,8 +75,34 @@ class BuilderStoreCommentJpaRepositoryTest extends AbstractPostgresContainerTest
 
     BuilderStoreComment refetched =
         builderStoreCommentJpaRepository.findById(child.getId()).orElseThrow();
+    Page<BuilderStoreComment> rootComments =
+        builderStoreCommentJpaRepository
+            .findByBuilderStore_IdAndParentIsNullOrderByCreatedAtAscIdAsc(
+                builderStore.getId(), PageRequest.of(0, 10));
 
     assertThat(refetched.getParent()).isNotNull();
     assertThat(refetched.getParent().getId()).isEqualTo(parent.getId());
+    assertThat(rootComments.getContent())
+        .extracting(BuilderStoreComment::getId)
+        .contains(parent.getId());
+    assertThat(rootComments.getContent())
+        .extracting(BuilderStoreComment::getId)
+        .doesNotContain(child.getId());
+
+    BuilderStoreComment rootComment = rootComments.getContent().get(0);
+    List<BuilderStoreComment> replies =
+        builderStoreCommentJpaRepository.findByParent_IdOrderByCreatedAtAscIdAsc(parent.getId());
+    BuilderStoreComment reply = replies.get(0);
+
+    assertThat(replies).extracting(BuilderStoreComment::getId).containsExactly(child.getId());
+    assertThat(Hibernate.isInitialized(rootComment.getUser())).isTrue();
+    assertThat(Hibernate.isInitialized(reply.getUser())).isTrue();
+    assertThat(Hibernate.isInitialized(reply.getParent())).isTrue();
+
+    entityManager.clear();
+
+    assertThat(rootComment.getUser().getId()).isEqualTo(commenter.getId());
+    assertThat(reply.getUser().getId()).isEqualTo(commenter.getId());
+    assertThat(reply.getParent().getId()).isEqualTo(parent.getId());
   }
 }
