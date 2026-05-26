@@ -139,4 +139,65 @@ public class BuilderStore extends BaseTimeEntity {
     this.visibilityStatus = visibilityStatus;
     this.uploadedAt = uploadedAt;
   }
+
+  public void update(
+      Region region,
+      CommercialArea commercialArea,
+      Industry industry,
+      Building baseBuilding,
+      String name,
+      int area,
+      long expectedMonthlySales,
+      BigDecimal expectedProfitRate,
+      int investmentPaybackMonths,
+      long monthlyRent,
+      long deposit,
+      long investmentAmount,
+      String description,
+      BuilderStoreVisibilityStatus visibilityStatus) {
+    this.region = region;
+    this.commercialArea = commercialArea;
+    this.industry = industry;
+    this.baseBuilding = baseBuilding;
+    this.name = name;
+    this.area = area;
+    this.expectedMonthlySales = expectedMonthlySales;
+    this.expectedProfitRate = expectedProfitRate;
+    this.investmentPaybackMonths = investmentPaybackMonths;
+    this.monthlyRent = monthlyRent;
+    this.deposit = deposit;
+    this.investmentAmount = investmentAmount;
+    this.description = description;
+    this.visibilityStatus = visibilityStatus;
+  }
+
+  public boolean isOwnedBy(Long userId) {
+    return user != null && user.getId().equals(userId);
+  }
+
+  public boolean isDeleted() {
+    return visibilityStatus == BuilderStoreVisibilityStatus.DELETED;
+  }
+
+  public void delete() {
+    this.visibilityStatus = BuilderStoreVisibilityStatus.DELETED;
+  }
+
+  public void increaseLikeCount() {
+    this.likeCount++;
+  }
+
+  public void decreaseLikeCount() {
+    if (likeCount > 0) {
+      this.likeCount--;
+    }
+  }
+
+  public void increaseCommentCount() {
+    this.commentCount++;
+  }
+
+  public void decreaseCommentCount(long count) {
+    this.commentCount = Math.max(0, this.commentCount - count);
+  }
 }
