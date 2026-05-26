@@ -54,17 +54,19 @@ public class BuildingCommandService {
   @Transactional
   public Building resolveOrCreate(
       CreateBuildingCommand command, Region region, CommercialArea commercialArea) {
+    Long regionId = region.getId();
+    Long commercialAreaId = commercialArea.getId();
     Point location = toPoint(command.latitude(), command.longitude());
     return buildingRepository
         .findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(
-            command.regionId(), command.commercialAreaId(), command.address())
+            regionId, commercialAreaId, command.address())
         .or(
             () ->
                 location == null
                     ? java.util.Optional.empty()
                     : buildingRepository.findNearestWithinDistance(
-                        command.regionId(),
-                        command.commercialAreaId(),
+                        regionId,
+                        commercialAreaId,
                         command.latitude(),
                         command.longitude(),
                         SAME_BUILDING_DISTANCE_METERS))

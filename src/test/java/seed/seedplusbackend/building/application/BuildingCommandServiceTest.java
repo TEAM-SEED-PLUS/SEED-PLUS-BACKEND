@@ -42,9 +42,19 @@ class BuildingCommandServiceTest {
   void create_savesBuildingWithLocation() {
     var region = RegionFixture.seoulGangnamYeoksamLegalDong();
     var commercialArea = CommercialAreaFixture.developedActive("Gangnam");
+    ReflectionTestUtils.setField(region, "id", 1L);
+    ReflectionTestUtils.setField(commercialArea, "id", 2L);
     given(regionRepository.findById(1L)).willReturn(Optional.of(region));
     given(commercialAreaRepository.findByIdAndStatusNot(any(), any()))
         .willReturn(Optional.of(commercialArea));
+    given(
+            buildingRepository.findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(
+                1L, 2L, "123 Teheran-ro"))
+        .willReturn(Optional.empty());
+    given(
+            buildingRepository.findNearestWithinDistance(
+                1L, 2L, new BigDecimal("37.5012"), new BigDecimal("127.0364"), 5.0))
+        .willReturn(Optional.empty());
     given(buildingRepository.save(any(Building.class)))
         .willAnswer(
             invocation -> {
@@ -77,6 +87,8 @@ class BuildingCommandServiceTest {
   void resolveOrCreate_returnsExistingBuilding_whenAddressMatches() {
     var region = RegionFixture.seoulGangnamYeoksamLegalDong();
     var commercialArea = CommercialAreaFixture.developedActive("Gangnam");
+    ReflectionTestUtils.setField(region, "id", 1L);
+    ReflectionTestUtils.setField(commercialArea, "id", 2L);
     Building existing = BuildingFixture.seoulGangnamBuilding(region, commercialArea);
     given(regionRepository.findById(1L)).willReturn(Optional.of(region));
     given(commercialAreaRepository.findByIdAndStatusNot(any(), any()))
@@ -99,6 +111,8 @@ class BuildingCommandServiceTest {
   void resolveOrCreate_returnsNearestBuilding_whenLocationMatches() {
     var region = RegionFixture.seoulGangnamYeoksamLegalDong();
     var commercialArea = CommercialAreaFixture.developedActive("Gangnam");
+    ReflectionTestUtils.setField(region, "id", 1L);
+    ReflectionTestUtils.setField(commercialArea, "id", 2L);
     Building existing = BuildingFixture.seoulGangnamBuilding(region, commercialArea);
     given(regionRepository.findById(1L)).willReturn(Optional.of(region));
     given(commercialAreaRepository.findByIdAndStatusNot(any(), any()))
@@ -115,6 +129,39 @@ class BuildingCommandServiceTest {
     Building result = buildingCommandService.resolveOrCreate(command());
 
     assertThat(result).isSameAs(existing);
+    verify(buildingRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("resolveOrCreate uses resolved entity ids when checking duplicates")
+  void resolveOrCreate_usesResolvedEntityIds_whenCheckingDuplicates() {
+    var region = RegionFixture.seoulGangnamYeoksamLegalDong();
+    var commercialArea = CommercialAreaFixture.developedActive("Gangnam");
+    ReflectionTestUtils.setField(region, "id", 1L);
+    ReflectionTestUtils.setField(commercialArea, "id", 2L);
+    Building existing = BuildingFixture.seoulGangnamBuilding(region, commercialArea);
+    CreateBuildingCommand command =
+        new CreateBuildingCommand(
+            100L,
+            200L,
+            "123 Teheran-ro",
+            "Seed Building",
+            15,
+            new BigDecimal("12345.67"),
+            new BigDecimal("37.5012"),
+            new BigDecimal("127.0364"));
+    given(
+            buildingRepository.findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(
+                1L, 2L, "123 Teheran-ro"))
+        .willReturn(Optional.of(existing));
+
+    Building result = buildingCommandService.resolveOrCreate(command, region, commercialArea);
+
+    assertThat(result).isSameAs(existing);
+    verify(buildingRepository)
+        .findFirstByRegion_IdAndCommercialArea_IdAndAddressOrderByIdAsc(1L, 2L, "123 Teheran-ro");
+    verify(buildingRepository, never())
+        .findNearestWithinDistance(any(), any(), any(), any(), anyDouble());
     verify(buildingRepository, never()).save(any());
   }
 

@@ -1,6 +1,7 @@
 package seed.seedplusbackend.builderstore.presentation;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -142,7 +143,16 @@ class BuilderStoreControllerTest {
       SecurityContextHolder.clearContext();
     }
 
-    verify(builderStoreCommandService).create(eq(9L), any(CreateBuilderStoreCommand.class));
+    verify(builderStoreCommandService)
+        .create(
+            eq(9L),
+            argThat(
+                command ->
+                    command != null
+                        && command.building() != null
+                        && Long.valueOf(1L).equals(command.regionId())
+                        && Long.valueOf(1L).equals(command.commercialAreaId())
+                        && "123 Teheran-ro".equals(command.building().address())));
   }
 
   @Test
