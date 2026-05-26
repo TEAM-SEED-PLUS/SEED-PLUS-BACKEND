@@ -15,5 +15,11 @@ public interface BuilderStoreLikeJpaRepository
   Optional<BuilderStoreLike> findById(Long id);
 
   @Override
+  Optional<BuilderStoreLike> findByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
+
+  @Override
+  boolean existsByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
+
+  @Override
   void deleteById(Long id);
 }
