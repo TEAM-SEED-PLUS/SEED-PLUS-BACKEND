@@ -1,5 +1,6 @@
 package seed.seedplusbackend.builderstore.infrastructure.repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreImage;
@@ -13,6 +14,15 @@ public interface BuilderStoreImageJpaRepository
 
   @Override
   Optional<BuilderStoreImage> findById(Long id);
+
+  @Override
+  List<BuilderStoreImage> findByBuilderStore_IdOrderByDisplayOrderAscIdAsc(Long builderStoreId);
+
+  @Override
+  void deleteByBuilderStore_Id(Long builderStoreId);
+
+  @Override
+  void flush();
 
   @Override
   void deleteById(Long id);
