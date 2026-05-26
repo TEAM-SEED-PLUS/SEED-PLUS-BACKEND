@@ -2,15 +2,20 @@ package seed.seedplusbackend.building.presentation;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import seed.seedplusbackend.building.presentation.dto.BuildingDetailResponse;
 import seed.seedplusbackend.building.presentation.dto.BuildingResponse;
+import seed.seedplusbackend.building.presentation.dto.CreateBuildingRequest;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.response.PageResponse;
@@ -44,4 +49,18 @@ public interface BuildingApi {
   ResponseEntity<ApiResponse<BuildingDetailResponse>> getBuilding(
       @Parameter(description = "건물 ID", example = "1") @PathVariable(name = "buildingId")
           Long buildingId);
+
+  @Operation(
+      summary = "건물 등록",
+      operationId = "createBuilding",
+      security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiErrorCodeExamples({
+    ErrorCode.INVALID_PARAMETER,
+    ErrorCode.UNAUTHORIZED,
+    ErrorCode.NOT_FOUND_REGION,
+    ErrorCode.NOT_FOUND_COMMERCIAL_AREA
+  })
+  @PostMapping
+  ResponseEntity<ApiResponse<BuildingResponse>> createBuilding(
+      @Valid @RequestBody CreateBuildingRequest request);
 }

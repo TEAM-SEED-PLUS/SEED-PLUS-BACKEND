@@ -55,10 +55,17 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         HttpMethod.GET,
+                        "/api/v1/regions",
+                        "/api/v1/regions/**",
                         "/api/v1/industries",
                         "/api/v1/industries/**",
+                        "/api/v1/buildings",
+                        "/api/v1/buildings/**",
                         "/api/v1/stores",
                         "/api/v1/stores/**",
+                        "/api/v1/builder-stores",
+                        "/api/v1/builder-stores/*",
+                        "/api/v1/builder-stores/*/comments",
                         "/api/v1/commercial-areas",
                         "/api/v1/commercial-areas/**")
                     .permitAll()

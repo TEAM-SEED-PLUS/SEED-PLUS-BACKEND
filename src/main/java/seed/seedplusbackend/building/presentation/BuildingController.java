@@ -1,18 +1,23 @@
 package seed.seedplusbackend.building.presentation;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import seed.seedplusbackend.building.application.BuildingCommandService;
 import seed.seedplusbackend.building.application.BuildingQueryService;
 import seed.seedplusbackend.building.application.query.BuildingSearchQuery;
 import seed.seedplusbackend.building.presentation.dto.BuildingDetailResponse;
 import seed.seedplusbackend.building.presentation.dto.BuildingResponse;
+import seed.seedplusbackend.building.presentation.dto.CreateBuildingRequest;
 import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.response.PageResponse;
 
@@ -23,6 +28,7 @@ import seed.seedplusbackend.global.response.PageResponse;
 public class BuildingController implements BuildingApi {
 
   private final BuildingQueryService buildingQueryService;
+  private final BuildingCommandService buildingCommandService;
 
   @Override
   public ResponseEntity<ApiResponse<PageResponse<BuildingResponse>>> getBuildings(
@@ -44,5 +50,15 @@ public class BuildingController implements BuildingApi {
     return ResponseEntity.ok(
         ApiResponse.success(
             BuildingDetailResponse.from(buildingQueryService.getBuilding(buildingId))));
+  }
+
+  @Override
+  public ResponseEntity<ApiResponse<BuildingResponse>> createBuilding(
+      @Valid @RequestBody CreateBuildingRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(
+            ApiResponse.success(
+                HttpStatus.CREATED,
+                BuildingResponse.from(buildingCommandService.create(request.toCommand()))));
   }
 }
