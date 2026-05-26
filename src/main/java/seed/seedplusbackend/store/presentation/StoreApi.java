@@ -1,5 +1,6 @@
 package seed.seedplusbackend.store.presentation;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,7 @@ import seed.seedplusbackend.metrics.presentation.dto.StoreOperationMetricRespons
 import seed.seedplusbackend.store.presentation.dto.PagedStoreResponse;
 import seed.seedplusbackend.store.presentation.dto.StoreDetailResponse;
 
+@Hidden
 @Tag(name = "점포", description = "점포 API")
 public interface StoreApi {
 
