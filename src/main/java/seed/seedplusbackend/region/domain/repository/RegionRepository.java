@@ -10,6 +10,8 @@ public interface RegionRepository {
 
   Optional<Region> findById(Long id);
 
+  Optional<Region> findByCode(String code);
+
   List<Region> findAll();
 
   boolean existsById(Long id);

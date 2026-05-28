@@ -14,5 +14,8 @@ public interface RegionJpaRepository extends JpaRepository<Region, Long>, Region
   Optional<Region> findById(Long id);
 
   @Override
+  Optional<Region> findByCode(String code);
+
+  @Override
   void deleteById(Long id);
 }

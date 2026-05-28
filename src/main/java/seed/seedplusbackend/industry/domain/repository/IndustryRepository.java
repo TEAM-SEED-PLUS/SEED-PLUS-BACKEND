@@ -13,6 +13,8 @@ public interface IndustryRepository {
 
   Optional<Industry> findByIdAndStatus(Long id, IndustryStatus status);
 
+  Optional<Industry> findByIndustryCodeAndStatus(String industryCode, IndustryStatus status);
+
   List<Industry> findAll();
 
   List<Industry> findByStatusOrderByIdAsc(IndustryStatus status);
