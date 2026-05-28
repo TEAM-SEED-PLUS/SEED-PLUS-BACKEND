@@ -27,6 +27,7 @@ import seed.seedplusbackend.industry.domain.entity.Industry;
 import seed.seedplusbackend.industry.domain.entity.IndustryLevel;
 import seed.seedplusbackend.industry.domain.entity.IndustryStatus;
 import seed.seedplusbackend.industry.domain.repository.IndustryRepository;
+import seed.seedplusbackend.region.application.RegionResolver;
 import seed.seedplusbackend.region.domain.entity.Region;
 import seed.seedplusbackend.region.domain.entity.RegionCodeType;
 import seed.seedplusbackend.region.domain.repository.RegionRepository;
@@ -45,7 +46,10 @@ class AnalysisServiceTest {
   void setUp() {
     analysisService =
         new AnalysisService(
-            analysisLambdaClient, new CaffeineCacheStore(), regionRepository, industryRepository);
+            analysisLambdaClient,
+            new CaffeineCacheStore(),
+            new RegionResolver(regionRepository),
+            industryRepository);
   }
 
   @Test
@@ -70,7 +74,8 @@ class AnalysisServiceTest {
             new BigDecimal("2000"),
             3);
     ProfitAnalysisResult result = profitResult();
-    given(regionRepository.findByCode("1168010100")).willReturn(java.util.Optional.of(region()));
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
     given(industryRepository.findByIndustryCodeAndStatus("I561", IndustryStatus.ACTIVE))
         .willReturn(java.util.Optional.of(industry("I561", "Cafe")));
     given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(result);
@@ -94,7 +99,8 @@ class AnalysisServiceTest {
   void calculateSurvival_returnsCachedResult_whenSameInputRequestedAgain() {
     SurvivalAnalysisCommand command = survivalCommand();
     SurvivalAnalysisResult result = survivalResult();
-    given(regionRepository.findByCode("1168010100")).willReturn(java.util.Optional.of(region()));
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
     given(industryRepository.findByIndustryCodeAndStatus("I562", IndustryStatus.ACTIVE))
         .willReturn(java.util.Optional.of(industry("I562", "Restaurant")));
     given(analysisLambdaClient.requestSurvival(anySurvivalLambdaCommand())).willReturn(result);
@@ -126,7 +132,8 @@ class AnalysisServiceTest {
             new BigDecimal("2000"),
             3);
     ProfitAnalysisResult result = profitResult();
-    given(regionRepository.findByCode("1168010100")).willReturn(java.util.Optional.of(region()));
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
     given(industryRepository.findByIndustryCodeAndStatus("I561", IndustryStatus.ACTIVE))
         .willReturn(java.util.Optional.of(industry("I561", "Cafe")));
     given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand()))

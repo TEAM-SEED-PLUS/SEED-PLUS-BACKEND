@@ -3,7 +3,6 @@ package seed.seedplusbackend.analysis.application;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import seed.seedplusbackend.analysis.application.command.ProfitAnalysisCommand;
@@ -20,8 +19,7 @@ import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.industry.domain.entity.Industry;
 import seed.seedplusbackend.industry.domain.entity.IndustryStatus;
 import seed.seedplusbackend.industry.domain.repository.IndustryRepository;
-import seed.seedplusbackend.region.domain.entity.Region;
-import seed.seedplusbackend.region.domain.repository.RegionRepository;
+import seed.seedplusbackend.region.application.RegionResolver;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +27,7 @@ public class AnalysisService {
 
   private final AnalysisLambdaClient analysisLambdaClient;
   private final CacheStore cacheStore;
-  private final RegionRepository regionRepository;
+  private final RegionResolver regionResolver;
   private final IndustryRepository industryRepository;
 
   public ProfitAnalysisResult calculateProfit(Long userId, ProfitAnalysisCommand command) {
@@ -68,11 +66,11 @@ public class AnalysisService {
   }
 
   private ProfitAnalysisLambdaCommand toLambda(ProfitAnalysisCommand command) {
-    Region region = getRegion(command.regionCode());
+    String regionName = regionResolver.resolveLegalDongName(command.regionCode());
     Industry industry = getIndustry(command.industryCode());
     return new ProfitAnalysisLambdaCommand(
         industry.getName(),
-        regionName(region),
+        regionName,
         command.area(),
         command.invest(),
         command.rent(),
@@ -81,10 +79,10 @@ public class AnalysisService {
   }
 
   private SurvivalAnalysisLambdaCommand toLambda(SurvivalAnalysisCommand command) {
-    Region region = getRegion(command.regionCode());
+    String regionName = regionResolver.resolveLegalDongName(command.regionCode());
     Industry industry = getIndustry(command.industryCode());
     return new SurvivalAnalysisLambdaCommand(
-        regionName(region),
+        regionName,
         industry.getName(),
         command.area(),
         command.rent(),
@@ -99,23 +97,10 @@ public class AnalysisService {
         command.avgSalesAmt());
   }
 
-  private Region getRegion(String regionCode) {
-    return regionRepository
-        .findByCode(regionCode)
-        .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_REGION));
-  }
-
   private Industry getIndustry(String industryCode) {
     return industryRepository
         .findByIndustryCodeAndStatus(industryCode, IndustryStatus.ACTIVE)
         .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_INDUSTRY));
-  }
-
-  private String regionName(Region region) {
-    return Stream.of(region.getSido(), region.getSigungu(), region.getDong())
-        .filter(value -> value != null && !value.isBlank())
-        .reduce((left, right) -> left + " " + right)
-        .orElse("");
   }
 
   private String profitCacheKey(ProfitAnalysisCommand command) {
