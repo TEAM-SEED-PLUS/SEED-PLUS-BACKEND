@@ -18,6 +18,20 @@ spring:
 app:
   base-url: http://localhost:8080
 
+external:
+  rest-client:
+    connect-timeout-millis: 3000
+    read-timeout-millis: 5000
+
+analysis:
+  lambda:
+    profit:
+      endpoint: https://profit.example/dev/
+      api-key: test-profit-api-key
+    survival:
+      endpoint: https://survival.example/dev/
+      api-key: test-survival-api-key
+
 jwt:
   secret: test-secret-key-for-junit-testing-only-do-not-use-in-prod
   access-token:

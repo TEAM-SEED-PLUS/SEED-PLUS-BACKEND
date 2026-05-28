@@ -78,6 +78,10 @@ public enum ErrorCode {
 
   // 9000: Metrics
   NOT_FOUND_METRIC(HttpStatus.NOT_FOUND, 9000, "메트릭 데이터를 찾을 수 없습니다."),
+
+  // 9100: Analysis
+  ANALYSIS_FUNCTION_CALL_FAILED(
+      HttpStatus.BAD_GATEWAY, 9100, "External analysis function call failed."),
   ;
 
   private final HttpStatus httpStatus;
