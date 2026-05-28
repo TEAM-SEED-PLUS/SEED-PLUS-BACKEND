@@ -3,6 +3,7 @@ package seed.seedplusbackend.region.domain.repository;
 import java.util.List;
 import java.util.Optional;
 import seed.seedplusbackend.region.domain.entity.Region;
+import seed.seedplusbackend.region.domain.entity.RegionCodeType;
 
 public interface RegionRepository {
 
@@ -11,6 +12,8 @@ public interface RegionRepository {
   Optional<Region> findById(Long id);
 
   Optional<Region> findByCode(String code);
+
+  Optional<Region> findByCodeAndCodeType(String code, RegionCodeType codeType);
 
   List<Region> findAll();
 
