@@ -1,9 +1,17 @@
 name: Prod CD Pipeline (Backend)
 
 on:
-  push:
-    branches: ["main"]
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "ECR image tag to deploy"
+        required: true
+        type: string
 
 permissions:
   id-token: write
@@ -11,6 +19,7 @@ permissions:
 
 jobs:
   deploy-to-aws:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -57,7 +66,7 @@ jobs:
             -e "target_app=backend \
                 ecr_registry=${{ secrets.ECR_REGISTRY }} \
                 ecr_repository=${{ secrets.ECR_REPOSITORY }} \
-                image_tag=${{ github.sha }} \
+                image_tag=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.image_tag || github.event.pull_request.head.sha }} \
                 aws_region=ap-northeast-2 \
                 app_env_content='${{ secrets.ENV_FILE_PROD }}'" \
             playbooks/aws_be_deploy.yml
