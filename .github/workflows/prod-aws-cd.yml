@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Resolve image tag from merged PR
-        id: pr
+      - name: Resolve image tag
+        id: resolve-image
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -31,28 +31,29 @@ jobs:
               return;
             }
 
-            const { owner, repo } = context.repo;
-            const commitSha = context.sha;
+            const message = context.payload.head_commit?.message || '';
+            const match = message.match(/Merge pull request #(\d+) from /);
 
-            const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+            if (!match) {
+              core.setFailed(`Cannot extract PR number from head commit message: ${message}`);
+              return;
+            }
+
+            const prNumber = Number(match[1]);
+            const { owner, repo } = context.repo;
+
+            const pr = await github.rest.pulls.get({
               owner,
               repo,
-              commit_sha: commitSha
+              pull_number: prNumber
             });
 
-            if (!prs.data || prs.data.length === 0) {
-              core.setFailed(`No pull request associated with commit ${commitSha}`);
+            if (!pr.data || !pr.data.head || !pr.data.head.sha) {
+              core.setFailed(`Cannot resolve head SHA from PR #${prNumber}`);
               return;
             }
 
-            const mergedPr = prs.data.find(pr => pr.merged_at && pr.base.ref === 'main');
-
-            if (!mergedPr) {
-              core.setFailed(`No merged PR to main associated with commit ${commitSha}`);
-              return;
-            }
-
-            core.setOutput('image_tag', mergedPr.head.sha);
+            core.setOutput('image_tag', pr.data.head.sha);
 
       - name: Checkout Infra Repository
         uses: actions/checkout@v4
@@ -97,7 +98,7 @@ jobs:
             -e "target_app=backend \
                 ecr_registry=${{ secrets.ECR_REGISTRY }} \
                 ecr_repository=${{ secrets.ECR_REPOSITORY }} \
-                image_tag=${{ steps.pr.outputs.image_tag }} \
+                image_tag=${{ steps.resolve-image.outputs.image_tag }} \
                 aws_region=ap-northeast-2 \
                 app_env_content='${{ secrets.ENV_FILE_PROD }}'" \
             playbooks/aws_be_deploy.yml
