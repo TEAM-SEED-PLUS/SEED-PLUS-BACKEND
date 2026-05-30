@@ -1,0 +1,49 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    clean-disabled: false
+
+app:
+  base-url: http://localhost:8080
+
+external:
+  rest-client:
+    connect-timeout-millis: 3000
+    read-timeout-millis: 5000
+
+analysis:
+  lambda:
+    profit:
+      endpoint: https://profit.example/dev/
+      api-key: test-profit-api-key
+    survival:
+      endpoint: https://survival.example/dev/
+      api-key: test-survival-api-key
+
+jwt:
+  secret: test-secret-key-for-junit-testing-only-do-not-use-in-prod
+  access-token:
+    expire-time: 86400000
+  refresh-token:
+    expire-time: 259200000
+
+cors:
+  allowed-origins: http://localhost:3000
+  allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+
+logging:
+  level:
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN

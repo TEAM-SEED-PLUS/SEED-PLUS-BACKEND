@@ -1,4 +1,4 @@
-package seed.seedplusbackend.global.qeurydsl;
+package seed.seedplusbackend.global.querydsl;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;

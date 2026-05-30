@@ -1,6 +1,6 @@
 package seed.seedplusbackend.global.swagger;
 
-
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.examples.Example;
@@ -9,13 +9,13 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springdoc.core.customizers.OperationCustomizer;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerMethod;
@@ -24,27 +24,22 @@ import seed.seedplusbackend.global.error.ErrorResponse;
 import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExample;
 import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 
-
 @Configuration
 public class SwaggerConfig {
 
-  @Value("${app.base-url}")
-  private String baseUrl;
-
-  @Value("${server.port}")
-  private String port;
-
   @Bean
-  public OpenAPI retrivrOpenAPI() {
+  public OpenAPI retrieveOpenAPI() {
     return new OpenAPI()
-        .info(new Info()
-            .title("SEED-PLUS API")
-            .description("SEED-PLUS API 문서")
-            .version("v1.0.0")
-        )
-        .servers(List.of(
-            new Server().url(baseUrl + ":" + port).description("Server")
-        ));
+        .info(new Info().title("SEED-PLUS API").description("SEED-PLUS API 문서").version("v1.0.0"))
+        .components(
+            new Components()
+                .addSecuritySchemes(
+                    "bearerAuth",
+                    new SecurityScheme()
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT")))
+        .servers(List.of(new Server().url("/").description("Server")));
   }
 
   @Bean
@@ -72,14 +67,16 @@ public class SwaggerConfig {
       operation.setResponses(responses);
     }
 
-    Map<Integer, List<ExampleHolder>> grouped = Arrays.stream(errorCodes)
-        .map(errorCode -> ExampleHolder.builder()
-            .holder(getSwaggerExample(errorCode))
-            .code(errorCode.getHttpStatus().value())
-            .name(errorCode.name())
-            .build()
-        )
-        .collect(Collectors.groupingBy(ExampleHolder::getCode));
+    Map<Integer, List<ExampleHolder>> grouped =
+        Arrays.stream(errorCodes)
+            .map(
+                errorCode ->
+                    ExampleHolder.builder()
+                        .holder(getSwaggerExample(errorCode))
+                        .code(errorCode.getHttpStatus().value())
+                        .name(errorCode.name())
+                        .build())
+            .collect(Collectors.groupingBy(ExampleHolder::getCode));
 
     addExamplesToResponses(responses, grouped);
   }
@@ -91,11 +88,12 @@ public class SwaggerConfig {
       operation.setResponses(responses);
     }
 
-    ExampleHolder exampleHolder = ExampleHolder.builder()
-        .holder(getSwaggerExample(errorCode))
-        .name(errorCode.name())
-        .code(errorCode.getHttpStatus().value())
-        .build();
+    ExampleHolder exampleHolder =
+        ExampleHolder.builder()
+            .holder(getSwaggerExample(errorCode))
+            .name(errorCode.name())
+            .code(errorCode.getHttpStatus().value())
+            .build();
 
     addExamplesToResponses(responses, exampleHolder);
   }
@@ -107,20 +105,21 @@ public class SwaggerConfig {
     return example;
   }
 
-  private void addExamplesToResponses(ApiResponses responses,
-      Map<Integer, List<ExampleHolder>> statusWithExampleHolders) {
+  private void addExamplesToResponses(
+      ApiResponses responses, Map<Integer, List<ExampleHolder>> statusWithExampleHolders) {
 
-    statusWithExampleHolders.forEach((status, holders) -> {
-      Content content = new Content();
-      MediaType mediaType = new MediaType();
-      ApiResponse apiResponse = new ApiResponse();
+    statusWithExampleHolders.forEach(
+        (status, holders) -> {
+          Content content = new Content();
+          MediaType mediaType = new MediaType();
+          ApiResponse apiResponse = new ApiResponse();
 
-      holders.forEach(h -> mediaType.addExamples(h.getName(), h.getHolder()));
+          holders.forEach(h -> mediaType.addExamples(h.getName(), h.getHolder()));
 
-      content.addMediaType("application/json", mediaType);
-      apiResponse.setContent(content);
-      responses.addApiResponse(String.valueOf(status), apiResponse);
-    });
+          content.addMediaType("application/json", mediaType);
+          apiResponse.setContent(content);
+          responses.addApiResponse(String.valueOf(status), apiResponse);
+        });
   }
 
   private void addExamplesToResponses(ApiResponses responses, ExampleHolder exampleHolder) {
