@@ -34,24 +34,24 @@ public class CommercialEstimatedSalesCollectService {
       CommercialEstimatedSalesCollectCommand command) {
     if (isRunning(command)) {
       return new CommercialEstimatedSalesCollectResult(
-          DATA_TYPE,
-          command.stdrYyquCd(),
-          0L,
-          0L,
-          true,
-          CommercialDataCollectStatus.RUNNING,
-          "이미 수집이 진행 중인 기준년분기입니다.");
+              DATA_TYPE,
+              command.stdrYyquCd(),
+              0L,
+              0L,
+              true,
+              CommercialDataCollectStatus.RUNNING,
+              "이미 수집이 진행 중인 기준년분기입니다.");
     }
 
     if (isAlreadyCollected(command)) {
       return new CommercialEstimatedSalesCollectResult(
-          DATA_TYPE,
-          command.stdrYyquCd(),
-          0L,
-          0L,
-          true,
-          CommercialDataCollectStatus.COMPLETED,
-          "이미 수집 완료된 기준년분기입니다. 재수집이 필요하면 force=true로 요청하세요.");
+              DATA_TYPE,
+              command.stdrYyquCd(),
+              0L,
+              0L,
+              true,
+              CommercialDataCollectStatus.COMPLETED,
+              "이미 수집 완료된 기준년분기입니다. 재수집이 필요하면 force=true로 요청하세요.");
     }
 
     CommercialDataCollectHistory history = prepareHistory(command);
@@ -60,71 +60,76 @@ public class CommercialEstimatedSalesCollectService {
     long totalCount = 0L;
     long fetchedCount = 0L;
 
-    while (true) {
-      int endIndex = startIndex + PAGE_SIZE - 1;
+    try {
+      while (true) {
+        int endIndex = startIndex + PAGE_SIZE - 1;
 
-      CommercialEstimatedSalesPageResult pageResult =
-          fetchWithRetry(command.stdrYyquCd(), startIndex, endIndex);
+        CommercialEstimatedSalesPageResult pageResult =
+                fetchWithRetry(command.stdrYyquCd(), startIndex, endIndex);
 
-      if (pageResult == null) {
-        history.fail(totalCount, fetchedCount, startIndex, "서울시 추정매출 OpenAPI 요청 실패");
+        if (pageResult == null) {
+          throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+        }
+
+        totalCount = pageResult.totalCount();
+
+        if (pageResult.rows().isEmpty()) {
+          break;
+        }
+
+        storePort.upsertAll(pageResult.rows());
+
+        fetchedCount += pageResult.rows().size();
+
+        history.updateProgress(totalCount, fetchedCount, startIndex);
         historyRepository.save(history);
 
-        log.warn(
-            "[CommercialEstimatedSalesCollectService] 작업 실패, 사유=서울시 추정매출 OpenAPI 요청 실패 기준년분기={}",
-            command.stdrYyquCd());
+        if (fetchedCount >= totalCount) {
+          break;
+        }
 
-        throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+        if (!sleepWithJitter()) {
+          throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+        }
+
+        startIndex += PAGE_SIZE;
       }
 
-      totalCount = pageResult.totalCount();
-
-      if (pageResult.rows().isEmpty()) {
-        break;
-      }
-
-      storePort.upsertAll(pageResult.rows());
-
-      fetchedCount += pageResult.rows().size();
-
-      history.updateProgress(totalCount, fetchedCount, startIndex);
+      history.complete(totalCount, fetchedCount);
       historyRepository.save(history);
 
-      if (fetchedCount >= totalCount) {
-        break;
+      log.info(
+              "[CommercialEstimatedSalesCollectService] 작업 완료 기준년분기={} 전체건수={} 수집건수={}",
+              command.stdrYyquCd(),
+              totalCount,
+              fetchedCount);
+
+      return new CommercialEstimatedSalesCollectResult(
+              DATA_TYPE,
+              command.stdrYyquCd(),
+              totalCount,
+              fetchedCount,
+              false,
+              CommercialDataCollectStatus.COMPLETED,
+              "서울시 상권 추정매출 데이터 수집이 완료되었습니다.");
+    } catch (Exception exception) {
+      history.fail(totalCount, fetchedCount, startIndex, resolveErrorMessage(exception));
+      historyRepository.save(history);
+
+      log.warn(
+              "[CommercialEstimatedSalesCollectService] 작업 실패 기준년분기={} 전체건수={} 수집건수={} 시작인덱스={}",
+              command.stdrYyquCd(),
+              totalCount,
+              fetchedCount,
+              startIndex,
+              exception);
+
+      if (exception instanceof ApplicationException applicationException) {
+        throw applicationException;
       }
 
-      if (!sleepWithJitter()) {
-        history.fail(totalCount, fetchedCount, startIndex, "수집 작업이 중단되었습니다.");
-        historyRepository.save(history);
-
-        log.warn(
-            "[CommercialEstimatedSalesCollectService] 작업 실패, 사유=수집 작업 중단 기준년분기={}",
-            command.stdrYyquCd());
-
-        throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
-      }
-
-      startIndex += PAGE_SIZE;
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
     }
-
-    history.complete(totalCount, fetchedCount);
-    historyRepository.save(history);
-
-    log.info(
-        "[CommercialEstimatedSalesCollectService] 작업 완료 기준년분기={} 전체건수={} 수집건수={}",
-        command.stdrYyquCd(),
-        totalCount,
-        fetchedCount);
-
-    return new CommercialEstimatedSalesCollectResult(
-        DATA_TYPE,
-        command.stdrYyquCd(),
-        totalCount,
-        fetchedCount,
-        false,
-        CommercialDataCollectStatus.COMPLETED,
-        "서울시 상권 추정매출 데이터 수집이 완료되었습니다.");
   }
 
   private boolean isAlreadyCollected(CommercialEstimatedSalesCollectCommand command) {
@@ -215,5 +220,17 @@ public class CommercialEstimatedSalesCollectService {
 
     return historyRepository.save(
         CommercialDataCollectHistory.start(DATA_TYPE, command.stdrYyquCd()));
+  }
+
+  private String resolveErrorMessage(Exception exception) {
+    if (exception instanceof ApplicationException) {
+      return exception.getMessage();
+    }
+
+    if (exception.getMessage() == null || exception.getMessage().isBlank()) {
+      return "서울시 추정매출 데이터 수집 중 알 수 없는 오류가 발생했습니다.";
+    }
+
+    return exception.getMessage();
   }
 }
