@@ -231,6 +231,6 @@ public class CommercialEstimatedSalesJdbcRepository implements CommercialEstimat
       return 0L;
     }
 
-    return value.longValue();
+    return value.longValueExact();
   }
 }
