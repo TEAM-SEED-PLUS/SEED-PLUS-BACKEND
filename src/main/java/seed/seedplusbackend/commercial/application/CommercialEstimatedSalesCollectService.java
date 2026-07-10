@@ -32,6 +32,17 @@ public class CommercialEstimatedSalesCollectService {
 
   public CommercialEstimatedSalesCollectResult collect(
       CommercialEstimatedSalesCollectCommand command) {
+    if (isRunning(command)) {
+      return new CommercialEstimatedSalesCollectResult(
+          DATA_TYPE,
+          command.stdrYyquCd(),
+          0L,
+          0L,
+          true,
+          CommercialDataCollectStatus.RUNNING,
+          "이미 수집이 진행 중인 기준년분기입니다.");
+    }
+
     if (isAlreadyCollected(command)) {
       return new CommercialEstimatedSalesCollectResult(
           DATA_TYPE,
@@ -43,9 +54,7 @@ public class CommercialEstimatedSalesCollectService {
           "이미 수집 완료된 기준년분기입니다. 재수집이 필요하면 force=true로 요청하세요.");
     }
 
-    CommercialDataCollectHistory history =
-        CommercialDataCollectHistory.start(DATA_TYPE, command.stdrYyquCd());
-    historyRepository.save(history);
+    CommercialDataCollectHistory history = prepareHistory(command);
 
     int startIndex = 1;
     long totalCount = 0L;
@@ -180,5 +189,31 @@ public class CommercialEstimatedSalesCollectService {
       Thread.currentThread().interrupt();
       return false;
     }
+  }
+
+  private boolean isRunning(CommercialEstimatedSalesCollectCommand command) {
+    return historyRepository.existsByDataTypeAndTargetKeyAndStatus(
+        DATA_TYPE, command.stdrYyquCd(), CommercialDataCollectStatus.RUNNING);
+  }
+
+  private CommercialDataCollectHistory prepareHistory(
+      CommercialEstimatedSalesCollectCommand command) {
+    if (command.force()) {
+      return historyRepository
+          .findByDataTypeAndTargetKeyAndStatus(
+              DATA_TYPE, command.stdrYyquCd(), CommercialDataCollectStatus.COMPLETED)
+          .map(
+              history -> {
+                history.restart();
+                return historyRepository.save(history);
+              })
+          .orElseGet(
+              () ->
+                  historyRepository.save(
+                      CommercialDataCollectHistory.start(DATA_TYPE, command.stdrYyquCd())));
+    }
+
+    return historyRepository.save(
+        CommercialDataCollectHistory.start(DATA_TYPE, command.stdrYyquCd()));
   }
 }

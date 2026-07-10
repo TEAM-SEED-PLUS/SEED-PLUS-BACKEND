@@ -94,4 +94,15 @@ public class CommercialDataCollectHistory {
     this.finishedAt = OffsetDateTime.now();
     this.updatedAt = OffsetDateTime.now();
   }
+
+  public void restart() {
+    this.status = CommercialDataCollectStatus.RUNNING;
+    this.totalCount = 0L;
+    this.fetchedCount = 0L;
+    this.lastStartIndex = 1L;
+    this.errorMessage = null;
+    this.startedAt = OffsetDateTime.now();
+    this.finishedAt = null;
+    this.updatedAt = OffsetDateTime.now();
+  }
 }
