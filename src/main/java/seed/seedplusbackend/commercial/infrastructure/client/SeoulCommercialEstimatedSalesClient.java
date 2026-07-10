@@ -3,16 +3,22 @@ package seed.seedplusbackend.commercial.infrastructure.client;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import seed.seedplusbackend.commercial.application.port.SeoulCommercialEstimatedSalesClientPort;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesPageResult;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesRowResult;
+import seed.seedplusbackend.global.error.ApplicationException;
+import seed.seedplusbackend.global.error.ErrorCode;
 
 @Component
 @RequiredArgsConstructor
 public class SeoulCommercialEstimatedSalesClient
     implements SeoulCommercialEstimatedSalesClientPort {
+
+  private static final String SUCCESS_CODE = "INFO-000";
+  private static final String NO_DATA_CODE = "INFO-200";
 
   private final SeoulCommercialOpenApiProperties properties;
 
@@ -36,20 +42,53 @@ public class SeoulCommercialEstimatedSalesClient
                             stdrYyquCd)
                         .build())
             .retrieve()
+            .onStatus(
+                HttpStatusCode::isError,
+                (request, clientResponse) -> {
+                  throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+                })
             .body(SeoulCommercialEstimatedSalesApiResponse.class);
 
-    if (response == null || response.body() == null) {
+    SeoulCommercialEstimatedSalesApiResponse.Body body = validateAndGetBody(response);
+
+    if (isNoData(body)) {
       return new CommercialEstimatedSalesPageResult(0, Collections.emptyList());
     }
 
     List<CommercialEstimatedSalesRowResult> rows =
-        response.body().rows() == null
+        body.rows() == null
             ? Collections.emptyList()
-            : response.body().rows().stream().map(this::toResult).toList();
+            : body.rows().stream().map(this::toResult).toList();
 
-    int totalCount = response.body().totalCount() == null ? 0 : response.body().totalCount();
+    int totalCount = body.totalCount() == null ? 0 : body.totalCount();
 
     return new CommercialEstimatedSalesPageResult(totalCount, rows);
+  }
+
+  private SeoulCommercialEstimatedSalesApiResponse.Body validateAndGetBody(
+      SeoulCommercialEstimatedSalesApiResponse response) {
+    if (response == null || response.body() == null) {
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_INVALID_RESPONSE);
+    }
+
+    SeoulCommercialEstimatedSalesApiResponse.Body body = response.body();
+    SeoulCommercialEstimatedSalesApiResponse.Result result = body.result();
+
+    if (result == null) {
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_INVALID_RESPONSE);
+    }
+
+    String code = result.code();
+
+    if (SUCCESS_CODE.equals(code) || NO_DATA_CODE.equals(code)) {
+      return body;
+    }
+
+    throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+  }
+
+  private boolean isNoData(SeoulCommercialEstimatedSalesApiResponse.Body body) {
+    return NO_DATA_CODE.equals(body.result().code());
   }
 
   private CommercialEstimatedSalesRowResult toResult(
