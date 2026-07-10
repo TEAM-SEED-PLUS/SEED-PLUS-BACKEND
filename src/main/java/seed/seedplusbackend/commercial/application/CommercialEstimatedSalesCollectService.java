@@ -12,6 +12,7 @@ import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSal
 import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectHistory;
 import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectStatus;
 import seed.seedplusbackend.commercial.domain.repository.CommercialDataCollectHistoryRepository;
+import seed.seedplusbackend.commercial.infrastructure.client.SeoulCommercialOpenApiProperties;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 
@@ -21,14 +22,11 @@ import seed.seedplusbackend.global.error.ErrorCode;
 public class CommercialEstimatedSalesCollectService {
 
   private static final String DATA_TYPE = "SEOUL_COMMERCIAL_ESTIMATED_SALES";
-  private static final int PAGE_SIZE = 1000;
-  private static final int MAX_RETRY_COUNT = 3;
-  private static final long MIN_JITTER_MILLIS = 300L;
-  private static final long MAX_JITTER_MILLIS = 1200L;
 
   private final SeoulCommercialEstimatedSalesClientPort clientPort;
   private final CommercialEstimatedSalesStorePort storePort;
   private final CommercialDataCollectHistoryRepository historyRepository;
+  private final SeoulCommercialOpenApiProperties properties;
 
   public CommercialEstimatedSalesCollectResult collect(
       CommercialEstimatedSalesCollectCommand command) {
@@ -62,7 +60,7 @@ public class CommercialEstimatedSalesCollectService {
 
     try {
       while (true) {
-        int endIndex = startIndex + PAGE_SIZE - 1;
+        int endIndex = startIndex + properties.pageSize() - 1;
 
         CommercialEstimatedSalesPageResult pageResult =
                 fetchWithRetry(command.stdrYyquCd(), startIndex, endIndex);
@@ -92,7 +90,7 @@ public class CommercialEstimatedSalesCollectService {
           throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
         }
 
-        startIndex += PAGE_SIZE;
+        startIndex += properties.pageSize();
       }
 
       history.complete(totalCount, fetchedCount);
@@ -140,7 +138,7 @@ public class CommercialEstimatedSalesCollectService {
 
   private CommercialEstimatedSalesPageResult fetchWithRetry(
       String stdrYyquCd, int startIndex, int endIndex) {
-    for (int retryCount = 0; retryCount <= MAX_RETRY_COUNT; retryCount++) {
+    for (int retryCount = 0; retryCount <= properties.maxRetryCount(); retryCount++) {
       try {
         return clientPort.fetchByQuarter(stdrYyquCd, startIndex, endIndex);
       } catch (ApplicationException exception) {
@@ -162,7 +160,7 @@ public class CommercialEstimatedSalesCollectService {
             retryCount,
             exception);
 
-        if (retryCount == MAX_RETRY_COUNT || !sleepBackoff(retryCount)) {
+        if (retryCount == properties.maxRetryCount() || !sleepBackoff(retryCount)) {
           return null;
         }
       }
@@ -183,7 +181,7 @@ public class CommercialEstimatedSalesCollectService {
   }
 
   private long randomJitterMillis() {
-    return ThreadLocalRandom.current().nextLong(MIN_JITTER_MILLIS, MAX_JITTER_MILLIS + 1);
+    return ThreadLocalRandom.current().nextLong(properties.minJitterMillis(), properties.maxJitterMillis() + 1);
   }
 
   private boolean sleep(long millis) {
