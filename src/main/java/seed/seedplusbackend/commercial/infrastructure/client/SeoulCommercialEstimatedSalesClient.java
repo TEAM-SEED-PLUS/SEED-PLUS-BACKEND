@@ -60,12 +60,16 @@ public class SeoulCommercialEstimatedSalesClient
       return new CommercialEstimatedSalesPageResult(0, Collections.emptyList());
     }
 
-    List<CommercialEstimatedSalesRowResult> rows =
-        body.rows() == null
-            ? Collections.emptyList()
-            : body.rows().stream().map(this::toResult).toList();
+    if (body.totalCount() == null) {
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_INVALID_RESPONSE);
+    }
 
-    int totalCount = body.totalCount() == null ? 0 : body.totalCount();
+    List<CommercialEstimatedSalesRowResult> rows =
+            body.rows() == null
+                    ? Collections.emptyList()
+                    : body.rows().stream().map(this::toResult).toList();
+
+    int totalCount = body.totalCount();
 
     return new CommercialEstimatedSalesPageResult(totalCount, rows);
   }

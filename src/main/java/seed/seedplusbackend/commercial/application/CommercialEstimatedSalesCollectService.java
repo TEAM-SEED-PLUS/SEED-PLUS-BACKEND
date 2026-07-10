@@ -90,7 +90,7 @@ public class CommercialEstimatedSalesCollectService {
           throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
         }
 
-        startIndex += properties.pageSize();
+        startIndex += pageResult.rows().size();
       }
 
       history.complete(totalCount, fetchedCount);
