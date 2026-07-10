@@ -32,24 +32,24 @@ public class CommercialEstimatedSalesCollectService {
       CommercialEstimatedSalesCollectCommand command) {
     if (isRunning(command)) {
       return new CommercialEstimatedSalesCollectResult(
-              DATA_TYPE,
-              command.stdrYyquCd(),
-              0L,
-              0L,
-              true,
-              CommercialDataCollectStatus.RUNNING,
-              "이미 수집이 진행 중인 기준년분기입니다.");
+          DATA_TYPE,
+          command.stdrYyquCd(),
+          0L,
+          0L,
+          true,
+          CommercialDataCollectStatus.RUNNING,
+          "이미 수집이 진행 중인 기준년분기입니다.");
     }
 
     if (isAlreadyCollected(command)) {
       return new CommercialEstimatedSalesCollectResult(
-              DATA_TYPE,
-              command.stdrYyquCd(),
-              0L,
-              0L,
-              true,
-              CommercialDataCollectStatus.COMPLETED,
-              "이미 수집 완료된 기준년분기입니다. 재수집이 필요하면 force=true로 요청하세요.");
+          DATA_TYPE,
+          command.stdrYyquCd(),
+          0L,
+          0L,
+          true,
+          CommercialDataCollectStatus.COMPLETED,
+          "이미 수집 완료된 기준년분기입니다. 재수집이 필요하면 force=true로 요청하세요.");
     }
 
     CommercialDataCollectHistory history = prepareHistory(command);
@@ -63,7 +63,7 @@ public class CommercialEstimatedSalesCollectService {
         int endIndex = startIndex + properties.pageSize() - 1;
 
         CommercialEstimatedSalesPageResult pageResult =
-                fetchWithRetry(command.stdrYyquCd(), startIndex, endIndex);
+            fetchWithRetry(command.stdrYyquCd(), startIndex, endIndex);
 
         if (pageResult == null) {
           throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
@@ -97,30 +97,30 @@ public class CommercialEstimatedSalesCollectService {
       historyRepository.save(history);
 
       log.info(
-              "[CommercialEstimatedSalesCollectService] 작업 완료 기준년분기={} 전체건수={} 수집건수={}",
-              command.stdrYyquCd(),
-              totalCount,
-              fetchedCount);
+          "[CommercialEstimatedSalesCollectService] 작업 완료 기준년분기={} 전체건수={} 수집건수={}",
+          command.stdrYyquCd(),
+          totalCount,
+          fetchedCount);
 
       return new CommercialEstimatedSalesCollectResult(
-              DATA_TYPE,
-              command.stdrYyquCd(),
-              totalCount,
-              fetchedCount,
-              false,
-              CommercialDataCollectStatus.COMPLETED,
-              "서울시 상권 추정매출 데이터 수집이 완료되었습니다.");
+          DATA_TYPE,
+          command.stdrYyquCd(),
+          totalCount,
+          fetchedCount,
+          false,
+          CommercialDataCollectStatus.COMPLETED,
+          "서울시 상권 추정매출 데이터 수집이 완료되었습니다.");
     } catch (Exception exception) {
       history.fail(totalCount, fetchedCount, startIndex, resolveErrorMessage(exception));
       historyRepository.save(history);
 
       log.warn(
-              "[CommercialEstimatedSalesCollectService] 작업 실패 기준년분기={} 전체건수={} 수집건수={} 시작인덱스={}",
-              command.stdrYyquCd(),
-              totalCount,
-              fetchedCount,
-              startIndex,
-              exception);
+          "[CommercialEstimatedSalesCollectService] 작업 실패 기준년분기={} 전체건수={} 수집건수={} 시작인덱스={}",
+          command.stdrYyquCd(),
+          totalCount,
+          fetchedCount,
+          startIndex,
+          exception);
 
       if (exception instanceof ApplicationException applicationException) {
         throw applicationException;
@@ -181,7 +181,8 @@ public class CommercialEstimatedSalesCollectService {
   }
 
   private long randomJitterMillis() {
-    return ThreadLocalRandom.current().nextLong(properties.minJitterMillis(), properties.maxJitterMillis() + 1);
+    return ThreadLocalRandom.current()
+        .nextLong(properties.minJitterMillis(), properties.maxJitterMillis() + 1);
   }
 
   private boolean sleep(long millis) {
