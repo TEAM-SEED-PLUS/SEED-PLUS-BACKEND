@@ -12,6 +12,8 @@ import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSal
 import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectHistory;
 import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectStatus;
 import seed.seedplusbackend.commercial.domain.repository.CommercialDataCollectHistoryRepository;
+import seed.seedplusbackend.global.error.ApplicationException;
+import seed.seedplusbackend.global.error.ErrorCode;
 
 @Slf4j
 @Service
@@ -63,14 +65,7 @@ public class CommercialEstimatedSalesCollectService {
             "[CommercialEstimatedSalesCollectService] 작업 실패, 사유=서울시 추정매출 OpenAPI 요청 실패 기준년분기={}",
             command.stdrYyquCd());
 
-        return new CommercialEstimatedSalesCollectResult(
-            DATA_TYPE,
-            command.stdrYyquCd(),
-            totalCount,
-            fetchedCount,
-            false,
-            CommercialDataCollectStatus.FAILED,
-            "서울시 추정매출 OpenAPI 요청에 실패했습니다.");
+        throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
       }
 
       totalCount = pageResult.totalCount();
@@ -98,14 +93,7 @@ public class CommercialEstimatedSalesCollectService {
             "[CommercialEstimatedSalesCollectService] 작업 실패, 사유=수집 작업 중단 기준년분기={}",
             command.stdrYyquCd());
 
-        return new CommercialEstimatedSalesCollectResult(
-            DATA_TYPE,
-            command.stdrYyquCd(),
-            totalCount,
-            fetchedCount,
-            false,
-            CommercialDataCollectStatus.FAILED,
-            "수집 작업이 중단되었습니다.");
+        throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
       }
 
       startIndex += PAGE_SIZE;
@@ -147,7 +135,8 @@ public class CommercialEstimatedSalesCollectService {
             stdrYyquCd,
             startIndex,
             endIndex,
-            retryCount);
+            retryCount,
+            exception);
 
         if (retryCount == MAX_RETRY_COUNT || !sleepBackoff(retryCount)) {
           return null;
