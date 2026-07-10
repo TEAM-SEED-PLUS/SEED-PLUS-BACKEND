@@ -129,6 +129,16 @@ public class CommercialEstimatedSalesCollectService {
     for (int retryCount = 0; retryCount <= MAX_RETRY_COUNT; retryCount++) {
       try {
         return clientPort.fetchByQuarter(stdrYyquCd, startIndex, endIndex);
+      } catch (ApplicationException exception) {
+        log.warn(
+            "[CommercialEstimatedSalesCollectService] 서울시 추정매출 OpenAPI 비재시도 오류 기준년분기={} 시작인덱스={} 종료인덱스={} 재시도횟수={}",
+            stdrYyquCd,
+            startIndex,
+            endIndex,
+            retryCount,
+            exception);
+
+        throw exception;
       } catch (Exception exception) {
         log.warn(
             "[CommercialEstimatedSalesCollectService] 서울시 추정매출 OpenAPI 요청 실패 기준년분기={} 시작인덱스={} 종료인덱스={} 재시도횟수={}",
