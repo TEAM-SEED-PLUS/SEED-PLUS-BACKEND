@@ -69,3 +69,15 @@ logging:
     org.hibernate.SQL: ${LOG_LEVEL_SQL:WARN}
   pattern:
     level: "%5p [requestId:%X{requestId:-}]"
+
+seoul:
+  commercial:
+    open-api:
+      key: ${SEOUL_OPEN_API_KEY}
+      base-url: http://openapi.seoul.go.kr:8088
+      service-name: VwsmTrdarSelngQq
+      type: json
+      page-size: 1000
+      min-jitter-millis: 300
+      max-jitter-millis: 1200
+      max-retry-count: 3
