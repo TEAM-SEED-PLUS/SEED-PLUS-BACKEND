@@ -2,7 +2,7 @@ package seed.seedplusbackend.commercial.application.result;
 
 import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectStatus;
 
-public record CommercialEstimatedSalesCollectResult(
+public record CommercialDataCollectResult(
     String dataType,
     String targetKey,
     long totalCount,

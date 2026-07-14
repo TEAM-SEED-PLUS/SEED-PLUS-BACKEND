@@ -81,3 +81,12 @@ seoul:
       min-jitter-millis: 300
       max-jitter-millis: 1200
       max-retry-count: 3
+
+small-business:
+  store:
+    open-api:
+      service-key: ${SMALL_BUSINESS_STORE_API_KEY}
+      base-url: https://apis.data.go.kr/B553077/api/open/sdsc2
+      endpoint: storeListInArea
+      type: json
+      page-size: 1000
