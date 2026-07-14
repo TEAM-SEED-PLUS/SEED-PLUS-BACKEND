@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
@@ -70,15 +71,49 @@ class SmallBusinessStoreProviderTest {
     verify(storePort, never()).upsertAll(anyString(), anyList());
   }
 
+  @Test
+  @DisplayName("일시적인 요청 실패는 재시도한 뒤 저장한다")
+  void collect_retriesRequestFailure() {
+    SmallBusinessStoreCollectCommand command = command();
+    SmallBusinessStoreRowResult row = mock(SmallBusinessStoreRowResult.class);
+    given(clientPort.fetch(command, 1, 2))
+        .willThrow(new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED))
+        .willReturn(new SmallBusinessStorePageResult(1, List.of(row)));
+
+    provider(2).collect(command, (total, fetched, cursor) -> {});
+
+    verify(clientPort, times(2)).fetch(command, 1, 2);
+    verify(storePort).upsertAll("9151", List.of(row));
+  }
+
+  @Test
+  @DisplayName("응답 형식 오류는 재시도하지 않는다")
+  void collect_doesNotRetryInvalidResponse() {
+    SmallBusinessStoreCollectCommand command = command();
+    ApplicationException exception =
+        new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_INVALID_RESPONSE);
+    given(clientPort.fetch(command, 1, 2)).willThrow(exception);
+
+    assertThatThrownBy(() -> provider(2).collect(command, (total, fetched, cursor) -> {}))
+        .isSameAs(exception);
+
+    verify(clientPort).fetch(command, 1, 2);
+    verify(storePort, never()).upsertAll(anyString(), anyList());
+  }
+
   private SmallBusinessStoreCollectCommand command() {
     return new SmallBusinessStoreCollectCommand("9151", "Q", "Q12", "Q12A01", false);
   }
 
   private SmallBusinessStoreProvider provider() {
+    return provider(0);
+  }
+
+  private SmallBusinessStoreProvider provider(int maxRetryCount) {
     return new SmallBusinessStoreProvider(
         clientPort,
         storePort,
         new SmallBusinessStoreOpenApiProperties(
-            "key", "http://localhost", "storeListInArea", "json", 2, 0, 0));
+            "key", "http://localhost", "storeListInArea", "json", 2, 0, maxRetryCount));
   }
 }
