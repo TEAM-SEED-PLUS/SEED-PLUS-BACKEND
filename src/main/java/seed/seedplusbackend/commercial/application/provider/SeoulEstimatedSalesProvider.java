@@ -38,9 +38,6 @@ public class SeoulEstimatedSalesProvider implements CommercialDataProvider {
       CommercialEstimatedSalesPageResult page =
           fetchWithRetry(salesCommand.stdrYyquCd(), startIndex, endIndex);
 
-      if (page == null) {
-        throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
-      }
       if (page.rows().isEmpty()) {
         progress.update(page.totalCount(), fetchedCount, startIndex);
         return;
@@ -66,21 +63,29 @@ public class SeoulEstimatedSalesProvider implements CommercialDataProvider {
       try {
         return clientPort.fetchByQuarter(quarter, startIndex, endIndex);
       } catch (ApplicationException exception) {
-        throw exception;
-      } catch (Exception exception) {
+        if (!isRetryable(exception) || retryCount == properties.maxRetryCount()) {
+          throw exception;
+        }
         log.warn(
-            "서울시 추정매출 요청 실패 quarter={} start={} retry={}",
+            "서울시 추정매출 요청 재시도 quarter={} start={} retry={}",
             quarter,
             startIndex,
-            retryCount,
+            retryCount + 1,
             exception);
-        if (retryCount == properties.maxRetryCount()
-            || !sleep(500L * (1L << retryCount) + randomJitterMillis())) {
-          return null;
-        }
+        pauseBeforeRetry(retryCount);
       }
     }
-    return null;
+    throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+  }
+
+  private boolean isRetryable(ApplicationException exception) {
+    return exception.getErrorCode() == ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED;
+  }
+
+  private void pauseBeforeRetry(int retryCount) {
+    if (!sleep(500L * (1L << retryCount) + randomJitterMillis())) {
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+    }
   }
 
   private CommercialEstimatedSalesCollectCommand cast(CommercialDataCollectCommand command) {

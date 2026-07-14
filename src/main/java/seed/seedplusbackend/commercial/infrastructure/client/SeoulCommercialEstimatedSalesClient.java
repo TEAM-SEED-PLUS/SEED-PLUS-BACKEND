@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import seed.seedplusbackend.commercial.application.port.SeoulCommercialEstimatedSalesClientPort;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesPageResult;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesRowResult;
@@ -29,30 +30,37 @@ public class SeoulCommercialEstimatedSalesClient
   @Override
   public CommercialEstimatedSalesPageResult fetchByQuarter(
       String stdrYyquCd, int startIndex, int endIndex) {
-    SeoulCommercialEstimatedSalesApiResponse response =
-        RestClient.builder()
-            .baseUrl(properties.baseUrl())
-            .requestFactory(createRequestFactory())
-            .build()
-            .get()
-            .uri(
-                uriBuilder ->
-                    uriBuilder
-                        .pathSegment(
-                            properties.key(),
-                            properties.type(),
-                            properties.serviceName(),
-                            String.valueOf(startIndex),
-                            String.valueOf(endIndex),
-                            stdrYyquCd)
-                        .build())
-            .retrieve()
-            .onStatus(
-                HttpStatusCode::isError,
-                (request, clientResponse) -> {
-                  throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
-                })
-            .body(SeoulCommercialEstimatedSalesApiResponse.class);
+    SeoulCommercialEstimatedSalesApiResponse response;
+    try {
+      response =
+          RestClient.builder()
+              .baseUrl(properties.baseUrl())
+              .requestFactory(createRequestFactory())
+              .build()
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .pathSegment(
+                              properties.key(),
+                              properties.type(),
+                              properties.serviceName(),
+                              String.valueOf(startIndex),
+                              String.valueOf(endIndex),
+                              stdrYyquCd)
+                          .build())
+              .retrieve()
+              .onStatus(
+                  HttpStatusCode::isError,
+                  (request, clientResponse) -> {
+                    throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+                  })
+              .body(SeoulCommercialEstimatedSalesApiResponse.class);
+    } catch (ApplicationException exception) {
+      throw exception;
+    } catch (RestClientException exception) {
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED, exception);
+    }
 
     SeoulCommercialEstimatedSalesApiResponse.Body body = validateAndGetBody(response);
 
