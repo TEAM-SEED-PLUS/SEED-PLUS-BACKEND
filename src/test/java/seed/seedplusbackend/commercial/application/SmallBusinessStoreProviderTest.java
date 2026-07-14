@@ -79,6 +79,6 @@ class SmallBusinessStoreProviderTest {
         clientPort,
         storePort,
         new SmallBusinessStoreOpenApiProperties(
-            "key", "http://localhost", "storeListInArea", "json", 2));
+            "key", "http://localhost", "storeListInArea", "json", 2, 0, 0));
   }
 }

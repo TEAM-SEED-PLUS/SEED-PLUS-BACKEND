@@ -1,6 +1,7 @@
 package seed.seedplusbackend.commercial.application.provider;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import seed.seedplusbackend.commercial.application.command.CommercialDataCollectCommand;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
@@ -8,10 +9,15 @@ import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClient
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreStorePort;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStorePageResult;
 import seed.seedplusbackend.commercial.infrastructure.client.SmallBusinessStoreOpenApiProperties;
+import seed.seedplusbackend.global.error.ApplicationException;
+import seed.seedplusbackend.global.error.ErrorCode;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SmallBusinessStoreProvider implements CommercialDataProvider {
+
+  private static final long MAX_BACKOFF_MILLIS = 30_000L;
 
   private final SmallBusinessStoreClientPort clientPort;
   private final SmallBusinessStoreStorePort storePort;
@@ -29,8 +35,7 @@ public class SmallBusinessStoreProvider implements CommercialDataProvider {
     long fetchedCount = 0;
 
     while (true) {
-      SmallBusinessStorePageResult page =
-          clientPort.fetch(storeCommand, pageNumber, properties.pageSize());
+      SmallBusinessStorePageResult page = fetchWithRetry(storeCommand, pageNumber);
 
       if (page.rows().isEmpty()) {
         progress.update(page.totalCount(), fetchedCount, pageNumber);
@@ -45,6 +50,55 @@ public class SmallBusinessStoreProvider implements CommercialDataProvider {
         return;
       }
       pageNumber++;
+    }
+  }
+
+  private SmallBusinessStorePageResult fetchWithRetry(
+      SmallBusinessStoreCollectCommand command, int pageNumber) {
+    for (int retryCount = 0; retryCount <= properties.maxRetryCount(); retryCount++) {
+      try {
+        return clientPort.fetch(command, pageNumber, properties.pageSize());
+      } catch (ApplicationException exception) {
+        if (!isRetryable(exception) || retryCount == properties.maxRetryCount()) {
+          throw exception;
+        }
+        logRetry(command, pageNumber, retryCount, exception);
+      }
+
+      pause(backoffMillis(retryCount));
+    }
+
+    throw new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED);
+  }
+
+  private boolean isRetryable(ApplicationException exception) {
+    return exception.getErrorCode() == ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED;
+  }
+
+  private void logRetry(
+      SmallBusinessStoreCollectCommand command,
+      int pageNumber,
+      int retryCount,
+      RuntimeException exception) {
+    log.warn(
+        "소상공인 상가정보 요청 재시도 commercialAreaCode={} page={} retry={}",
+        command.commercialAreaCode(),
+        pageNumber,
+        retryCount + 1,
+        exception);
+  }
+
+  private long backoffMillis(int retryCount) {
+    long exponentialBackoff = properties.initialBackoffMillis() * (1L << retryCount);
+    return Math.min(exponentialBackoff, MAX_BACKOFF_MILLIS);
+  }
+
+  private void pause(long millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException exception) {
+      Thread.currentThread().interrupt();
+      throw new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED, exception);
     }
   }
 

@@ -90,3 +90,5 @@ small-business:
       endpoint: storeListInArea
       type: json
       page-size: 1000
+      initial-backoff-millis: ${SMALL_BUSINESS_STORE_INITIAL_BACKOFF_MS:500}
+      max-retry-count: ${SMALL_BUSINESS_STORE_MAX_RETRY_COUNT:3}

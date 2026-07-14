@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriBuilder;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClientPort;
@@ -34,20 +35,28 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
   @Override
   public SmallBusinessStorePageResult fetch(
       SmallBusinessStoreCollectCommand command, int pageNumber, int numberOfRows) {
-    SmallBusinessStoreApiEnvelope envelope =
-        RestClient.builder()
-            .baseUrl(properties.baseUrl())
-            .requestFactory(requestFactory())
-            .build()
-            .get()
-            .uri(uriBuilder -> buildUri(uriBuilder, command, pageNumber, numberOfRows).build())
-            .retrieve()
-            .onStatus(
-                HttpStatusCode::isError,
-                (request, clientResponse) -> {
-                  throw new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED);
-                })
-            .body(SmallBusinessStoreApiEnvelope.class);
+    SmallBusinessStoreApiEnvelope envelope;
+    try {
+      envelope =
+          RestClient.builder()
+              .baseUrl(properties.baseUrl())
+              .requestFactory(requestFactory())
+              .build()
+              .get()
+              .uri(uriBuilder -> buildUri(uriBuilder, command, pageNumber, numberOfRows).build())
+              .retrieve()
+              .onStatus(
+                  HttpStatusCode::isError,
+                  (request, clientResponse) -> {
+                    throw new ApplicationException(
+                        ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED);
+                  })
+              .body(SmallBusinessStoreApiEnvelope.class);
+    } catch (ApplicationException exception) {
+      throw exception;
+    } catch (RestClientException exception) {
+      throw new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED, exception);
+    }
 
     SmallBusinessStoreApiResponse response = envelope == null ? null : envelope.unwrap();
     if (isNoData(response)) {

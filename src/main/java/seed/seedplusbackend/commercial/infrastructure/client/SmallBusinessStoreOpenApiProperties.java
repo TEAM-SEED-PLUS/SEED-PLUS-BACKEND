@@ -13,4 +13,6 @@ public record SmallBusinessStoreOpenApiProperties(
     @NotBlank String baseUrl,
     @NotBlank String endpoint,
     @NotBlank String type,
-    @Min(1) @Max(1000) int pageSize) {}
+    @Min(1) @Max(1000) int pageSize,
+    @Min(0) long initialBackoffMillis,
+    @Min(0) @Max(5) int maxRetryCount) {}
