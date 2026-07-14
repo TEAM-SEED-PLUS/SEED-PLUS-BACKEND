@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import seed.seedplusbackend.commercial.application.command.CommercialDataCollectCommand;
+import seed.seedplusbackend.commercial.application.port.CommercialDataCollectClaimPort;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataProvider;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataProviderRegistry;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataType;
@@ -21,25 +22,16 @@ public class CommercialDataCollectService {
 
   private final CommercialDataProviderRegistry providerRegistry;
   private final CommercialDataCollectHistoryRepository historyRepository;
+  private final CommercialDataCollectClaimPort claimPort;
 
   public CommercialDataCollectResult collect(CommercialDataCollectCommand command) {
     CommercialDataType dataType = command.dataType();
     String historyKey = dataType.historyKey();
 
-    if (historyRepository.existsByDataTypeAndTargetKeyAndStatus(
-        historyKey, command.targetKey(), CommercialDataCollectStatus.RUNNING)) {
-      return skipped(command, CommercialDataCollectStatus.RUNNING, "이미 수집이 진행 중입니다.");
+    CommercialDataCollectHistory history = tryClaim(command);
+    if (history == null) {
+      return skipClaimedTarget(command);
     }
-    if (!command.force()
-        && historyRepository.existsByDataTypeAndTargetKeyAndStatus(
-            historyKey, command.targetKey(), CommercialDataCollectStatus.COMPLETED)) {
-      return skipped(
-          command,
-          CommercialDataCollectStatus.COMPLETED,
-          "이미 수집한 조건입니다. 다시 수집하려면 force=true로 요청하세요.");
-    }
-
-    CommercialDataCollectHistory history = prepareHistory(command);
     long[] progressState = {0L, 0L, 1L};
 
     try {
@@ -81,24 +73,23 @@ public class CommercialDataCollectService {
     }
   }
 
-  private CommercialDataCollectHistory prepareHistory(CommercialDataCollectCommand command) {
+  private CommercialDataCollectHistory tryClaim(CommercialDataCollectCommand command) {
+    return claimPort
+        .tryClaim(command.dataType().historyKey(), command.targetKey(), command.force())
+        .flatMap(historyRepository::findById)
+        .orElse(null);
+  }
+
+  private CommercialDataCollectResult skipClaimedTarget(CommercialDataCollectCommand command) {
     String dataType = command.dataType().historyKey();
-    if (command.force()) {
-      return historyRepository
-          .findByDataTypeAndTargetKeyAndStatus(
-              dataType, command.targetKey(), CommercialDataCollectStatus.COMPLETED)
-          .map(
-              history -> {
-                history.restart();
-                return historyRepository.save(history);
-              })
-          .orElseGet(
-              () ->
-                  historyRepository.save(
-                      CommercialDataCollectHistory.start(dataType, command.targetKey())));
+    if (historyRepository.existsByDataTypeAndTargetKeyAndStatus(
+        dataType, command.targetKey(), CommercialDataCollectStatus.RUNNING)) {
+      return skipped(command, CommercialDataCollectStatus.RUNNING, "이미 동일한 수집이 진행 중입니다.");
     }
-    return historyRepository.save(
-        CommercialDataCollectHistory.start(dataType, command.targetKey()));
+    return skipped(
+        command,
+        CommercialDataCollectStatus.COMPLETED,
+        "이미 완료된 수집 조건입니다. 다시 수집하려면 force=true로 요청하세요.");
   }
 
   private CommercialDataCollectResult skipped(

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.port.CommercialDataCollectClaimPort;
 import seed.seedplusbackend.commercial.application.provider.CollectProgress;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataProvider;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataProviderRegistry;
@@ -38,10 +40,23 @@ class CommercialDataCollectServiceTest {
   @Mock private CommercialDataProviderRegistry providerRegistry;
   @Mock private CommercialDataProvider provider;
   @Mock private CommercialDataCollectHistoryRepository historyRepository;
+  @Mock private CommercialDataCollectClaimPort claimPort;
 
   @BeforeEach
   void setUp() {
-    service = new CommercialDataCollectService(providerRegistry, historyRepository);
+    service = new CommercialDataCollectService(providerRegistry, historyRepository, claimPort);
+    CommercialDataCollectHistory claimedHistory =
+        CommercialDataCollectHistory.start("SMALL_BUSINESS_STORE", command(false).targetKey());
+    org.mockito.Mockito.lenient()
+        .when(
+            claimPort.tryClaim(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.anyBoolean()))
+        .thenReturn(Optional.of(1L));
+    org.mockito.Mockito.lenient()
+        .when(historyRepository.findById(1L))
+        .thenReturn(Optional.of(claimedHistory));
     org.mockito.Mockito.lenient()
         .when(historyRepository.save(org.mockito.ArgumentMatchers.any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
@@ -75,15 +90,12 @@ class CommercialDataCollectServiceTest {
   @DisplayName("이미 수집한 조건은 Provider를 실행하지 않는다")
   void collect_skipsCompletedTarget() {
     SmallBusinessStoreCollectCommand command = command(false);
+    given(claimPort.tryClaim("SMALL_BUSINESS_STORE", command.targetKey(), command.force()))
+        .willReturn(Optional.empty());
     given(
             historyRepository.existsByDataTypeAndTargetKeyAndStatus(
                 "SMALL_BUSINESS_STORE", command.targetKey(), CommercialDataCollectStatus.RUNNING))
         .willReturn(false);
-    given(
-            historyRepository.existsByDataTypeAndTargetKeyAndStatus(
-                "SMALL_BUSINESS_STORE", command.targetKey(), CommercialDataCollectStatus.COMPLETED))
-        .willReturn(true);
-
     CommercialDataCollectResult result = service.collect(command);
 
     assertThat(result.skipped()).isTrue();
@@ -110,7 +122,7 @@ class CommercialDataCollectServiceTest {
 
     ArgumentCaptor<CommercialDataCollectHistory> historyCaptor =
         ArgumentCaptor.forClass(CommercialDataCollectHistory.class);
-    verify(historyRepository, times(3)).save(historyCaptor.capture());
+    verify(historyRepository, times(2)).save(historyCaptor.capture());
     CommercialDataCollectHistory failedHistory = historyCaptor.getValue();
     assertThat(failedHistory.getStatus()).isEqualTo(CommercialDataCollectStatus.FAILED);
     assertThat(failedHistory.getTotalCount()).isEqualTo(10L);

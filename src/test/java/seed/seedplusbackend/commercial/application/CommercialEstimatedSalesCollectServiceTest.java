@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.commercial.application.command.CommercialEstimatedSalesCollectCommand;
+import seed.seedplusbackend.commercial.application.port.CommercialDataCollectClaimPort;
 import seed.seedplusbackend.commercial.application.port.CommercialEstimatedSalesStorePort;
 import seed.seedplusbackend.commercial.application.port.SeoulCommercialEstimatedSalesClientPort;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataProviderRegistry;
@@ -21,6 +23,7 @@ import seed.seedplusbackend.commercial.application.provider.SeoulEstimatedSalesP
 import seed.seedplusbackend.commercial.application.result.CommercialDataCollectResult;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesPageResult;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesRowResult;
+import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectHistory;
 import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectStatus;
 import seed.seedplusbackend.commercial.domain.repository.CommercialDataCollectHistoryRepository;
 import seed.seedplusbackend.commercial.infrastructure.client.SeoulCommercialOpenApiProperties;
@@ -37,6 +40,7 @@ class CommercialEstimatedSalesCollectServiceTest {
   @Mock private SeoulCommercialEstimatedSalesClientPort clientPort;
   @Mock private CommercialEstimatedSalesStorePort storePort;
   @Mock private CommercialDataCollectHistoryRepository historyRepository;
+  @Mock private CommercialDataCollectClaimPort claimPort;
 
   @BeforeEach
   void setUp() {
@@ -47,7 +51,20 @@ class CommercialEstimatedSalesCollectServiceTest {
         new SeoulEstimatedSalesProvider(clientPort, storePort, properties);
     service =
         new CommercialDataCollectService(
-            new CommercialDataProviderRegistry(List.of(provider)), historyRepository);
+            new CommercialDataProviderRegistry(List.of(provider)), historyRepository, claimPort);
+
+    CommercialDataCollectHistory claimedHistory =
+        CommercialDataCollectHistory.start(DATA_TYPE, QUARTER);
+    org.mockito.Mockito.lenient()
+        .when(
+            claimPort.tryClaim(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.anyBoolean()))
+        .thenReturn(Optional.of(1L));
+    org.mockito.Mockito.lenient()
+        .when(historyRepository.findById(1L))
+        .thenReturn(Optional.of(claimedHistory));
 
     // 저장된 이력을 그대로 돌려준다.
     org.mockito.Mockito.lenient()
@@ -80,15 +97,11 @@ class CommercialEstimatedSalesCollectServiceTest {
   @Test
   @DisplayName("이미 수집한 분기는 다시 수집하지 않는다")
   void collect_skipsAlreadyCollectedQuarter() {
+    given(claimPort.tryClaim(DATA_TYPE, QUARTER, false)).willReturn(Optional.empty());
     given(
             historyRepository.existsByDataTypeAndTargetKeyAndStatus(
                 DATA_TYPE, QUARTER, CommercialDataCollectStatus.RUNNING))
         .willReturn(false);
-    given(
-            historyRepository.existsByDataTypeAndTargetKeyAndStatus(
-                DATA_TYPE, QUARTER, CommercialDataCollectStatus.COMPLETED))
-        .willReturn(true);
-
     CommercialDataCollectResult result =
         service.collect(new CommercialEstimatedSalesCollectCommand(QUARTER, false));
 
