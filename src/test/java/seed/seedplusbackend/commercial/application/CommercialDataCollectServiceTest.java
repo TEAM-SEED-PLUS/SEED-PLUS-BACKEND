@@ -1,23 +1,33 @@
 package seed.seedplusbackend.commercial.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.provider.CollectProgress;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataProvider;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataProviderRegistry;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataType;
 import seed.seedplusbackend.commercial.application.result.CommercialDataCollectResult;
+import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectHistory;
 import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectStatus;
 import seed.seedplusbackend.commercial.domain.repository.CommercialDataCollectHistoryRepository;
+import seed.seedplusbackend.global.error.ApplicationException;
+import seed.seedplusbackend.global.error.ErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("공공데이터 공통 수집 서비스")
@@ -78,6 +88,36 @@ class CommercialDataCollectServiceTest {
 
     assertThat(result.skipped()).isTrue();
     verify(providerRegistry, never()).get(org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
+  @DisplayName("외부 API 호출에 실패하면 실패 이력을 저장하고 예외를 전달한다")
+  void collect_savesFailedHistory_whenApiCallFails() {
+    SmallBusinessStoreCollectCommand command = command(false);
+    ApplicationException apiException =
+        new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED);
+    given(providerRegistry.get(CommercialDataType.SMALL_BUSINESS_STORE)).willReturn(provider);
+    willAnswer(
+            invocation -> {
+              CollectProgress progress = invocation.getArgument(1);
+              progress.update(10, 2, 1);
+              throw apiException;
+            })
+        .given(provider)
+        .collect(eq(command), any());
+
+    assertThatThrownBy(() -> service.collect(command)).isSameAs(apiException);
+
+    ArgumentCaptor<CommercialDataCollectHistory> historyCaptor =
+        ArgumentCaptor.forClass(CommercialDataCollectHistory.class);
+    verify(historyRepository, times(3)).save(historyCaptor.capture());
+    CommercialDataCollectHistory failedHistory = historyCaptor.getValue();
+    assertThat(failedHistory.getStatus()).isEqualTo(CommercialDataCollectStatus.FAILED);
+    assertThat(failedHistory.getTotalCount()).isEqualTo(10L);
+    assertThat(failedHistory.getFetchedCount()).isEqualTo(2L);
+    assertThat(failedHistory.getLastStartIndex()).isEqualTo(1L);
+    assertThat(failedHistory.getErrorMessage())
+        .isEqualTo(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED.getMessage());
   }
 
   private SmallBusinessStoreCollectCommand command(boolean force) {
