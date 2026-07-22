@@ -2,8 +2,11 @@ package seed.seedplusbackend.commercial.infrastructure.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URI;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
 
 @DisplayName("소상공인 상가정보 API 클라이언트")
 class SmallBusinessStoreClientTest {
@@ -24,5 +27,41 @@ class SmallBusinessStoreClientTest {
     String decodedKey = "abc+def/ghi==";
 
     assertThat(SmallBusinessStoreClient.decodeServiceKey(decodedKey)).isEqualTo(decodedKey);
+  }
+
+  @Test
+  @DisplayName("인증키의 +를 퍼센트 인코딩해 요청 URI를 만든다")
+  void buildUri_encodesPlusInServiceKey() {
+    SmallBusinessStoreClient client = client("abc%2Bdef%2Fghi%3D%3D");
+
+    URI uri =
+        client.buildUri(
+            new DefaultUriBuilderFactory("https://example.com").builder(),
+            new SmallBusinessStoreCollectCommand("A001", null, null, null, false),
+            1,
+            100);
+
+    assertThat(uri.getRawQuery()).contains("serviceKey=abc%2Bdef%2Fghi%3D%3D");
+  }
+
+  @Test
+  @DisplayName("디코딩된 인증키의 +도 퍼센트 인코딩해 요청 URI를 만든다")
+  void buildUri_encodesPlusInDecodedServiceKey() {
+    SmallBusinessStoreClient client = client("abc+def/ghi==");
+
+    URI uri =
+        client.buildUri(
+            new DefaultUriBuilderFactory("https://example.com").builder(),
+            new SmallBusinessStoreCollectCommand("A001", null, null, null, false),
+            1,
+            100);
+
+    assertThat(uri.getRawQuery()).contains("serviceKey=abc%2Bdef%2Fghi%3D%3D");
+  }
+
+  private SmallBusinessStoreClient client(String serviceKey) {
+    return new SmallBusinessStoreClient(
+        new SmallBusinessStoreOpenApiProperties(
+            serviceKey, "https://example.com", "stores", "json", 100, 100, 3));
   }
 }

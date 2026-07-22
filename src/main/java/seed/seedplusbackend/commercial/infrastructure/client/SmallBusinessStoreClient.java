@@ -1,5 +1,6 @@
 package seed.seedplusbackend.commercial.infrastructure.client;
 
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -43,7 +44,7 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
               .requestFactory(requestFactory())
               .build()
               .get()
-              .uri(uriBuilder -> buildUri(uriBuilder, command, pageNumber, numberOfRows).build())
+              .uri(uriBuilder -> buildUri(uriBuilder, command, pageNumber, numberOfRows))
               .retrieve()
               .onStatus(
                   HttpStatusCode::isError,
@@ -71,14 +72,14 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
     return new SmallBusinessStorePageResult(body.totalCount(), rows);
   }
 
-  private UriBuilder buildUri(
+  URI buildUri(
       UriBuilder builder,
       SmallBusinessStoreCollectCommand command,
       int pageNumber,
       int numberOfRows) {
     builder
         .pathSegment(properties.endpoint())
-        .queryParam("serviceKey", decodeServiceKey(properties.serviceKey()))
+        .queryParam("serviceKey", "{serviceKey}")
         .queryParam("key", command.commercialAreaCode())
         .queryParam("numOfRows", numberOfRows)
         .queryParam("pageNo", pageNumber)
@@ -86,7 +87,7 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
     addQueryParam(builder, "indsLclsCd", command.largeIndustryCode());
     addQueryParam(builder, "indsMclsCd", command.mediumIndustryCode());
     addQueryParam(builder, "indsSclsCd", command.smallIndustryCode());
-    return builder;
+    return builder.build(decodeServiceKey(properties.serviceKey()));
   }
 
   private void addQueryParam(UriBuilder builder, String name, String value) {
