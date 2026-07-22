@@ -80,6 +80,15 @@ class CommercialDataCollectClaimJdbcAdapterTest extends AbstractPostgresContaine
     assertThat(runningCount("SMALL_BUSINESS_STORE", targetKey)).isEqualTo(1);
   }
 
+  @Test
+  @DisplayName("파일 중복 확인에 사용하는 SHA-256 해시를 대상 키로 저장한다")
+  void tryClaim_acceptsSha256TargetKey() {
+    String fileHash = "a".repeat(64);
+
+    assertThat(claimPort.tryClaim("REB_SMALL_RETAIL_RENT", fileHash, false)).isPresent();
+    assertThat(runningCount("REB_SMALL_RETAIL_RENT", fileHash)).isEqualTo(1);
+  }
+
   private Integer runningCount(String dataType, String targetKey) {
     return jdbcTemplate.queryForObject(
         """
