@@ -3,13 +3,11 @@ package seed.seedplusbackend.commercial.infrastructure.client;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -24,15 +22,19 @@ import seed.seedplusbackend.global.error.ErrorCode;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
 
   private static final String SUCCESS_CODE = "00";
   private static final String NO_DATA_CODE = "03";
-  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
-  private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
-
+  private final RestClient restClient;
   private final SmallBusinessStoreOpenApiProperties properties;
+
+  public SmallBusinessStoreClient(
+      @Qualifier("externalRestClientBuilder") RestClient.Builder restClientBuilder,
+      SmallBusinessStoreOpenApiProperties properties) {
+    this.restClient = restClientBuilder.clone().baseUrl(properties.baseUrl()).build();
+    this.properties = properties;
+  }
 
   @Override
   public SmallBusinessStorePageResult fetch(
@@ -40,10 +42,7 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
     SmallBusinessStoreApiEnvelope envelope;
     try {
       envelope =
-          RestClient.builder()
-              .baseUrl(properties.baseUrl())
-              .requestFactory(requestFactory())
-              .build()
+          restClient
               .get()
               .uri(uriBuilder -> buildUri(uriBuilder, command, pageNumber, numberOfRows))
               .retrieve()
@@ -127,13 +126,6 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
 
   static SmallBusinessStoreApiRequestException requestException(HttpStatusCode statusCode) {
     return new SmallBusinessStoreApiRequestException(statusCode.is5xxServerError());
-  }
-
-  private SimpleClientHttpRequestFactory requestFactory() {
-    SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-    factory.setConnectTimeout(CONNECT_TIMEOUT);
-    factory.setReadTimeout(READ_TIMEOUT);
-    return factory;
   }
 
   private SmallBusinessStoreRowResult toResult(SmallBusinessStoreApiResponse.Item item) {

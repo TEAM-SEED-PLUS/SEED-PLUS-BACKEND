@@ -6,6 +6,7 @@ import java.net.URI;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
 
@@ -77,6 +78,7 @@ class SmallBusinessStoreClientTest {
 
   private SmallBusinessStoreClient client(String serviceKey) {
     return new SmallBusinessStoreClient(
+        RestClient.builder(),
         new SmallBusinessStoreOpenApiProperties(
             serviceKey, "https://example.com", "stores", "json", 100, 100, 3));
   }
