@@ -23,6 +23,7 @@ public class SmallBusinessStoreProvider implements CommercialDataProvider {
   private final SmallBusinessStoreClientPort clientPort;
   private final SmallBusinessStoreStorePort storePort;
   private final SmallBusinessStoreOpenApiProperties properties;
+  private final ExternalApiRetryExecutor retryExecutor;
 
   @Override
   public CommercialDataType supports() {
@@ -56,20 +57,14 @@ public class SmallBusinessStoreProvider implements CommercialDataProvider {
 
   private SmallBusinessStorePageResult fetchWithRetry(
       SmallBusinessStoreCollectCommand command, int pageNumber) {
-    for (int retryCount = 0; retryCount <= properties.maxRetryCount(); retryCount++) {
-      try {
-        return clientPort.fetch(command, pageNumber, properties.pageSize());
-      } catch (ApplicationException exception) {
-        if (!isRetryable(exception) || retryCount == properties.maxRetryCount()) {
-          throw exception;
-        }
-        logRetry(command, pageNumber, retryCount, exception);
-      }
-
-      pause(backoffMillis(retryCount));
-    }
-
-    throw new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED);
+    return retryExecutor.execute(
+        () -> clientPort.fetch(command, pageNumber, properties.pageSize()),
+        properties.maxRetryCount(),
+        this::isRetryable,
+        this::backoffMillis,
+        (retryCount, exception) -> logRetry(command, pageNumber, retryCount, exception),
+        exception ->
+            new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED, exception));
   }
 
   private boolean isRetryable(ApplicationException exception) {
@@ -95,15 +90,6 @@ public class SmallBusinessStoreProvider implements CommercialDataProvider {
   private long backoffMillis(int retryCount) {
     long exponentialBackoff = properties.initialBackoffMillis() * (1L << retryCount);
     return Math.min(exponentialBackoff, MAX_BACKOFF_MILLIS);
-  }
-
-  private void pause(long millis) {
-    try {
-      Thread.sleep(millis);
-    } catch (InterruptedException exception) {
-      Thread.currentThread().interrupt();
-      throw new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED, exception);
-    }
   }
 
   private SmallBusinessStoreCollectCommand cast(CommercialDataCollectCommand command) {

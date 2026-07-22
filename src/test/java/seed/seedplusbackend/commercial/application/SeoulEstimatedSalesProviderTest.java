@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.commercial.application.command.CommercialEstimatedSalesCollectCommand;
 import seed.seedplusbackend.commercial.application.port.CommercialEstimatedSalesStorePort;
 import seed.seedplusbackend.commercial.application.port.SeoulCommercialEstimatedSalesClientPort;
+import seed.seedplusbackend.commercial.application.provider.ExternalApiRetryExecutor;
 import seed.seedplusbackend.commercial.application.provider.SeoulEstimatedSalesProvider;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesPageResult;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesRowResult;
@@ -67,6 +68,7 @@ class SeoulEstimatedSalesProviderTest {
         clientPort,
         storePort,
         new SeoulCommercialOpenApiProperties(
-            "key", "http://localhost", "VwsmTrdarSelngQq", "json", 2, 0, 0, 2));
+            "key", "http://localhost", "VwsmTrdarSelngQq", "json", 2, 0, 0, 2),
+        new ExternalApiRetryExecutor());
   }
 }

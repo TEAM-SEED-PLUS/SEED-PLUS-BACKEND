@@ -21,6 +21,7 @@ public class SeoulEstimatedSalesProvider implements CommercialDataProvider {
   private final SeoulCommercialEstimatedSalesClientPort clientPort;
   private final CommercialEstimatedSalesStorePort storePort;
   private final SeoulCommercialOpenApiProperties properties;
+  private final ExternalApiRetryExecutor retryExecutor;
 
   @Override
   public CommercialDataType supports() {
@@ -59,33 +60,23 @@ public class SeoulEstimatedSalesProvider implements CommercialDataProvider {
 
   private CommercialEstimatedSalesPageResult fetchWithRetry(
       String quarter, int startIndex, int endIndex) {
-    for (int retryCount = 0; retryCount <= properties.maxRetryCount(); retryCount++) {
-      try {
-        return clientPort.fetchByQuarter(quarter, startIndex, endIndex);
-      } catch (ApplicationException exception) {
-        if (!isRetryable(exception) || retryCount == properties.maxRetryCount()) {
-          throw exception;
-        }
-        log.warn(
-            "서울시 추정매출 요청 재시도 quarter={} start={} retry={}",
-            quarter,
-            startIndex,
-            retryCount + 1,
-            exception);
-        pauseBeforeRetry(retryCount);
-      }
-    }
-    throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+    return retryExecutor.execute(
+        () -> clientPort.fetchByQuarter(quarter, startIndex, endIndex),
+        properties.maxRetryCount(),
+        this::isRetryable,
+        retryCount -> 500L * (1L << retryCount) + randomJitterMillis(),
+        (retryCount, exception) ->
+            log.warn(
+                "서울시 추정매출 요청 재시도 quarter={} start={} retry={}",
+                quarter,
+                startIndex,
+                retryCount + 1,
+                exception),
+        exception -> new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED, exception));
   }
 
   private boolean isRetryable(ApplicationException exception) {
     return exception.getErrorCode() == ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED;
-  }
-
-  private void pauseBeforeRetry(int retryCount) {
-    if (!sleep(500L * (1L << retryCount) + randomJitterMillis())) {
-      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
-    }
   }
 
   private CommercialEstimatedSalesCollectCommand cast(CommercialDataCollectCommand command) {

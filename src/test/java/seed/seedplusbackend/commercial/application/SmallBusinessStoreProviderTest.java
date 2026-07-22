@@ -21,6 +21,7 @@ import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCol
 import seed.seedplusbackend.commercial.application.exception.SmallBusinessStoreApiRequestException;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClientPort;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreStorePort;
+import seed.seedplusbackend.commercial.application.provider.ExternalApiRetryExecutor;
 import seed.seedplusbackend.commercial.application.provider.SmallBusinessStoreProvider;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStorePageResult;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStoreRowResult;
@@ -129,6 +130,7 @@ class SmallBusinessStoreProviderTest {
         clientPort,
         storePort,
         new SmallBusinessStoreOpenApiProperties(
-            "key", "http://localhost", "storeListInArea", "json", 2, 0, maxRetryCount));
+            "key", "http://localhost", "storeListInArea", "json", 2, 0, maxRetryCount),
+        new ExternalApiRetryExecutor());
   }
 }
