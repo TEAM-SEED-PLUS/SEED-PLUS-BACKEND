@@ -15,6 +15,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriBuilder;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.exception.SmallBusinessStoreApiRequestException;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClientPort;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStorePageResult;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStoreRowResult;
@@ -49,14 +50,13 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
               .onStatus(
                   HttpStatusCode::isError,
                   (request, clientResponse) -> {
-                    throw new ApplicationException(
-                        ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED);
+                    throw requestException(clientResponse.getStatusCode());
                   })
               .body(SmallBusinessStoreApiEnvelope.class);
     } catch (ApplicationException exception) {
       throw exception;
     } catch (RestClientException exception) {
-      throw new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED, exception);
+      throw new SmallBusinessStoreApiRequestException(true, exception);
     }
 
     SmallBusinessStoreApiResponse response = envelope == null ? null : envelope.unwrap();
@@ -123,6 +123,10 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
     return serviceKey.contains("%")
         ? URLDecoder.decode(serviceKey, StandardCharsets.UTF_8)
         : serviceKey;
+  }
+
+  static SmallBusinessStoreApiRequestException requestException(HttpStatusCode statusCode) {
+    return new SmallBusinessStoreApiRequestException(statusCode.is5xxServerError());
   }
 
   private SimpleClientHttpRequestFactory requestFactory() {

@@ -5,11 +5,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
 
 @DisplayName("소상공인 상가정보 API 클라이언트")
 class SmallBusinessStoreClientTest {
+
+  @Test
+  @DisplayName("4xx 응답은 재시도하지 않는 요청 실패로 변환한다")
+  void requestException_doesNotRetryClientError() {
+    assertThat(SmallBusinessStoreClient.requestException(HttpStatus.UNAUTHORIZED).isRetryable())
+        .isFalse();
+  }
+
+  @Test
+  @DisplayName("5xx 응답은 재시도 가능한 요청 실패로 변환한다")
+  void requestException_retriesServerError() {
+    assertThat(
+            SmallBusinessStoreClient.requestException(HttpStatus.SERVICE_UNAVAILABLE).isRetryable())
+        .isTrue();
+  }
 
   @Test
   @DisplayName("공공데이터포털 인코딩 인증키를 한 번 복원한다")

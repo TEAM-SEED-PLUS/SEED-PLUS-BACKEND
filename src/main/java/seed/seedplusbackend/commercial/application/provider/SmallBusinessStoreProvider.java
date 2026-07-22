@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import seed.seedplusbackend.commercial.application.command.CommercialDataCollectCommand;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.exception.SmallBusinessStoreApiRequestException;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClientPort;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreStorePort;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStorePageResult;
@@ -72,6 +73,9 @@ public class SmallBusinessStoreProvider implements CommercialDataProvider {
   }
 
   private boolean isRetryable(ApplicationException exception) {
+    if (exception instanceof SmallBusinessStoreApiRequestException requestException) {
+      return requestException.isRetryable();
+    }
     return exception.getErrorCode() == ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED;
   }
 

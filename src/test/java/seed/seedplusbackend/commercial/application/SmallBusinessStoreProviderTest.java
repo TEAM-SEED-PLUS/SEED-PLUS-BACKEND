@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.exception.SmallBusinessStoreApiRequestException;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClientPort;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreStorePort;
 import seed.seedplusbackend.commercial.application.provider.SmallBusinessStoreProvider;
@@ -92,6 +93,20 @@ class SmallBusinessStoreProviderTest {
     SmallBusinessStoreCollectCommand command = command();
     ApplicationException exception =
         new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_INVALID_RESPONSE);
+    given(clientPort.fetch(command, 1, 2)).willThrow(exception);
+
+    assertThatThrownBy(() -> provider(2).collect(command, (total, fetched, cursor) -> {}))
+        .isSameAs(exception);
+
+    verify(clientPort).fetch(command, 1, 2);
+    verify(storePort, never()).upsertAll(anyString(), anyList());
+  }
+
+  @Test
+  @DisplayName("재시도할 수 없는 요청 실패는 즉시 전달한다")
+  void collect_doesNotRetryNonRetryableRequestFailure() {
+    SmallBusinessStoreCollectCommand command = command();
+    ApplicationException exception = new SmallBusinessStoreApiRequestException(false);
     given(clientPort.fetch(command, 1, 2)).willThrow(exception);
 
     assertThatThrownBy(() -> provider(2).collect(command, (total, fetched, cursor) -> {}))
