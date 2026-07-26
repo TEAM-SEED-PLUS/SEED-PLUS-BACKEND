@@ -10,6 +10,9 @@ public interface CommercialDataCollectHistoryJpaRepository
         CommercialDataCollectHistoryRepository {
 
   @Override
+  java.util.Optional<CommercialDataCollectHistory> findById(Long id);
+
+  @Override
   boolean existsByDataTypeAndTargetKeyAndStatus(
       String dataType, String targetKey, CommercialDataCollectStatus status);
 }

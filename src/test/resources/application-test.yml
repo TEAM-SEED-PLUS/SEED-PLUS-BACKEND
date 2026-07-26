@@ -32,6 +32,15 @@ analysis:
       endpoint: https://survival.example/dev/
       api-key: test-survival-api-key
 
+small-business:
+  store:
+    open-api:
+      service-key: test-service-key
+      base-url: http://localhost
+      endpoint: storeListInArea
+      type: json
+      page-size: 1000
+
 jwt:
   secret: test-secret-key-for-junit-testing-only-do-not-use-in-prod
   access-token:

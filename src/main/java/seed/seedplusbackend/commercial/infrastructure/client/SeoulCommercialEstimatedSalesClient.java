@@ -1,13 +1,12 @@
 package seed.seedplusbackend.commercial.infrastructure.client;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import seed.seedplusbackend.commercial.application.port.SeoulCommercialEstimatedSalesClientPort;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesPageResult;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesRowResult;
@@ -15,44 +14,52 @@ import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 
 @Component
-@RequiredArgsConstructor
 public class SeoulCommercialEstimatedSalesClient
     implements SeoulCommercialEstimatedSalesClientPort {
 
   private static final String SUCCESS_CODE = "INFO-000";
   private static final String NO_DATA_CODE = "INFO-200";
-  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
-  private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
-
+  private final RestClient restClient;
   private final SeoulCommercialOpenApiProperties properties;
+
+  public SeoulCommercialEstimatedSalesClient(
+      @Qualifier("externalRestClientBuilder") RestClient.Builder restClientBuilder,
+      SeoulCommercialOpenApiProperties properties) {
+    this.restClient = restClientBuilder.clone().baseUrl(properties.baseUrl()).build();
+    this.properties = properties;
+  }
 
   @Override
   public CommercialEstimatedSalesPageResult fetchByQuarter(
       String stdrYyquCd, int startIndex, int endIndex) {
-    SeoulCommercialEstimatedSalesApiResponse response =
-        RestClient.builder()
-            .baseUrl(properties.baseUrl())
-            .requestFactory(createRequestFactory())
-            .build()
-            .get()
-            .uri(
-                uriBuilder ->
-                    uriBuilder
-                        .pathSegment(
-                            properties.key(),
-                            properties.type(),
-                            properties.serviceName(),
-                            String.valueOf(startIndex),
-                            String.valueOf(endIndex),
-                            stdrYyquCd)
-                        .build())
-            .retrieve()
-            .onStatus(
-                HttpStatusCode::isError,
-                (request, clientResponse) -> {
-                  throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
-                })
-            .body(SeoulCommercialEstimatedSalesApiResponse.class);
+    SeoulCommercialEstimatedSalesApiResponse response;
+    try {
+      response =
+          restClient
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .pathSegment(
+                              properties.key(),
+                              properties.type(),
+                              properties.serviceName(),
+                              String.valueOf(startIndex),
+                              String.valueOf(endIndex),
+                              stdrYyquCd)
+                          .build())
+              .retrieve()
+              .onStatus(
+                  HttpStatusCode::isError,
+                  (request, clientResponse) -> {
+                    throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+                  })
+              .body(SeoulCommercialEstimatedSalesApiResponse.class);
+    } catch (ApplicationException exception) {
+      throw exception;
+    } catch (RestClientException exception) {
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED, exception);
+    }
 
     SeoulCommercialEstimatedSalesApiResponse.Body body = validateAndGetBody(response);
 
@@ -98,13 +105,6 @@ public class SeoulCommercialEstimatedSalesClient
 
   private boolean isNoData(SeoulCommercialEstimatedSalesApiResponse.Body body) {
     return NO_DATA_CODE.equals(body.result().code());
-  }
-
-  private SimpleClientHttpRequestFactory createRequestFactory() {
-    SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-    factory.setConnectTimeout(CONNECT_TIMEOUT);
-    factory.setReadTimeout(READ_TIMEOUT);
-    return factory;
   }
 
   private CommercialEstimatedSalesRowResult toResult(

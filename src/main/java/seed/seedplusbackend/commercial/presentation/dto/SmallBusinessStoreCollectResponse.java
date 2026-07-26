@@ -2,7 +2,7 @@ package seed.seedplusbackend.commercial.presentation.dto;
 
 import seed.seedplusbackend.commercial.application.result.CommercialDataCollectResult;
 
-public record CommercialEstimatedSalesCollectResponse(
+public record SmallBusinessStoreCollectResponse(
     String dataType,
     String targetKey,
     long totalCount,
@@ -11,8 +11,8 @@ public record CommercialEstimatedSalesCollectResponse(
     String status,
     String message) {
 
-  public static CommercialEstimatedSalesCollectResponse from(CommercialDataCollectResult result) {
-    return new CommercialEstimatedSalesCollectResponse(
+  public static SmallBusinessStoreCollectResponse from(CommercialDataCollectResult result) {
+    return new SmallBusinessStoreCollectResponse(
         result.dataType(),
         result.targetKey(),
         result.totalCount(),

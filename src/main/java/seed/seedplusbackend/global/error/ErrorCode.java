@@ -86,6 +86,14 @@ public enum ErrorCode {
   // 9200: External Open API
   SEOUL_OPEN_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 9200, "서울시 OpenAPI 요청에 실패했습니다."),
   SEOUL_OPEN_API_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, 9201, "서울시 OpenAPI 응답 형식이 올바르지 않습니다."),
+
+  // 9300: Small Business Store OpenAPI
+  SMALL_BUSINESS_STORE_API_REQUEST_FAILED(
+      HttpStatus.BAD_GATEWAY, 9300, "소상공인 상가정보 OpenAPI 요청에 실패했습니다."),
+  SMALL_BUSINESS_STORE_API_INVALID_RESPONSE(
+      HttpStatus.BAD_GATEWAY, 9301, "소상공인 상가정보 OpenAPI 응답 형식이 올바르지 않습니다."),
+  COMMERCIAL_DATA_PROVIDER_FAILED(
+      HttpStatus.INTERNAL_SERVER_ERROR, 9302, "공공데이터 Provider 실행에 실패했습니다."),
   ;
 
   private final HttpStatus httpStatus;

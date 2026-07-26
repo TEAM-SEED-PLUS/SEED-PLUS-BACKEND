@@ -6,6 +6,8 @@ import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectStatus
 
 public interface CommercialDataCollectHistoryRepository {
 
+  Optional<CommercialDataCollectHistory> findById(Long id);
+
   boolean existsByDataTypeAndTargetKeyAndStatus(
       String dataType, String targetKey, CommercialDataCollectStatus status);
 
