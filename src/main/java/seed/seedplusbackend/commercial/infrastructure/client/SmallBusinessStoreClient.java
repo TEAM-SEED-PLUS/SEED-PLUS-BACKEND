@@ -1,19 +1,19 @@
 package seed.seedplusbackend.commercial.infrastructure.client;
 
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriBuilder;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.exception.SmallBusinessStoreApiRequestException;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClientPort;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStorePageResult;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStoreRowResult;
@@ -22,15 +22,19 @@ import seed.seedplusbackend.global.error.ErrorCode;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
 
   private static final String SUCCESS_CODE = "00";
   private static final String NO_DATA_CODE = "03";
-  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
-  private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
-
+  private final RestClient restClient;
   private final SmallBusinessStoreOpenApiProperties properties;
+
+  public SmallBusinessStoreClient(
+      @Qualifier("externalRestClientBuilder") RestClient.Builder restClientBuilder,
+      SmallBusinessStoreOpenApiProperties properties) {
+    this.restClient = restClientBuilder.clone().baseUrl(properties.baseUrl()).build();
+    this.properties = properties;
+  }
 
   @Override
   public SmallBusinessStorePageResult fetch(
@@ -38,24 +42,20 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
     SmallBusinessStoreApiEnvelope envelope;
     try {
       envelope =
-          RestClient.builder()
-              .baseUrl(properties.baseUrl())
-              .requestFactory(requestFactory())
-              .build()
+          restClient
               .get()
-              .uri(uriBuilder -> buildUri(uriBuilder, command, pageNumber, numberOfRows).build())
+              .uri(uriBuilder -> buildUri(uriBuilder, command, pageNumber, numberOfRows))
               .retrieve()
               .onStatus(
                   HttpStatusCode::isError,
                   (request, clientResponse) -> {
-                    throw new ApplicationException(
-                        ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED);
+                    throw requestException(clientResponse.getStatusCode());
                   })
               .body(SmallBusinessStoreApiEnvelope.class);
     } catch (ApplicationException exception) {
       throw exception;
     } catch (RestClientException exception) {
-      throw new ApplicationException(ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED, exception);
+      throw new SmallBusinessStoreApiRequestException(true, exception);
     }
 
     SmallBusinessStoreApiResponse response = envelope == null ? null : envelope.unwrap();
@@ -71,14 +71,14 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
     return new SmallBusinessStorePageResult(body.totalCount(), rows);
   }
 
-  private UriBuilder buildUri(
+  URI buildUri(
       UriBuilder builder,
       SmallBusinessStoreCollectCommand command,
       int pageNumber,
       int numberOfRows) {
     builder
         .pathSegment(properties.endpoint())
-        .queryParam("serviceKey", decodeServiceKey(properties.serviceKey()))
+        .queryParam("serviceKey", "{serviceKey}")
         .queryParam("key", command.commercialAreaCode())
         .queryParam("numOfRows", numberOfRows)
         .queryParam("pageNo", pageNumber)
@@ -86,7 +86,7 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
     addQueryParam(builder, "indsLclsCd", command.largeIndustryCode());
     addQueryParam(builder, "indsMclsCd", command.mediumIndustryCode());
     addQueryParam(builder, "indsSclsCd", command.smallIndustryCode());
-    return builder;
+    return builder.build(decodeServiceKey(properties.serviceKey()));
   }
 
   private void addQueryParam(UriBuilder builder, String name, String value) {
@@ -124,11 +124,8 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
         : serviceKey;
   }
 
-  private SimpleClientHttpRequestFactory requestFactory() {
-    SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-    factory.setConnectTimeout(CONNECT_TIMEOUT);
-    factory.setReadTimeout(READ_TIMEOUT);
-    return factory;
+  static SmallBusinessStoreApiRequestException requestException(HttpStatusCode statusCode) {
+    return new SmallBusinessStoreApiRequestException(statusCode.is5xxServerError());
   }
 
   private SmallBusinessStoreRowResult toResult(SmallBusinessStoreApiResponse.Item item) {

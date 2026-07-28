@@ -19,6 +19,7 @@ import seed.seedplusbackend.commercial.application.port.CommercialDataCollectCla
 import seed.seedplusbackend.commercial.application.port.CommercialEstimatedSalesStorePort;
 import seed.seedplusbackend.commercial.application.port.SeoulCommercialEstimatedSalesClientPort;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataProviderRegistry;
+import seed.seedplusbackend.commercial.application.provider.ExternalApiRetryExecutor;
 import seed.seedplusbackend.commercial.application.provider.SeoulEstimatedSalesProvider;
 import seed.seedplusbackend.commercial.application.result.CommercialDataCollectResult;
 import seed.seedplusbackend.commercial.application.result.CommercialEstimatedSalesPageResult;
@@ -48,7 +49,8 @@ class CommercialEstimatedSalesCollectServiceTest {
         new SeoulCommercialOpenApiProperties(
             "test-key", "http://localhost", "VwsmTrdarSelngQq", "json", 2, 0, 0, 0);
     SeoulEstimatedSalesProvider provider =
-        new SeoulEstimatedSalesProvider(clientPort, storePort, properties);
+        new SeoulEstimatedSalesProvider(
+            clientPort, storePort, properties, new ExternalApiRetryExecutor());
     service =
         new CommercialDataCollectService(
             new CommercialDataProviderRegistry(List.of(provider)), historyRepository, claimPort);

@@ -18,8 +18,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.exception.SmallBusinessStoreApiRequestException;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClientPort;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreStorePort;
+import seed.seedplusbackend.commercial.application.provider.ExternalApiRetryExecutor;
 import seed.seedplusbackend.commercial.application.provider.SmallBusinessStoreProvider;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStorePageResult;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStoreRowResult;
@@ -101,6 +103,20 @@ class SmallBusinessStoreProviderTest {
     verify(storePort, never()).upsertAll(anyString(), anyList());
   }
 
+  @Test
+  @DisplayName("재시도할 수 없는 요청 실패는 즉시 전달한다")
+  void collect_doesNotRetryNonRetryableRequestFailure() {
+    SmallBusinessStoreCollectCommand command = command();
+    ApplicationException exception = new SmallBusinessStoreApiRequestException(false);
+    given(clientPort.fetch(command, 1, 2)).willThrow(exception);
+
+    assertThatThrownBy(() -> provider(2).collect(command, (total, fetched, cursor) -> {}))
+        .isSameAs(exception);
+
+    verify(clientPort).fetch(command, 1, 2);
+    verify(storePort, never()).upsertAll(anyString(), anyList());
+  }
+
   private SmallBusinessStoreCollectCommand command() {
     return new SmallBusinessStoreCollectCommand("9151", "Q", "Q12", "Q12A01", false);
   }
@@ -114,6 +130,7 @@ class SmallBusinessStoreProviderTest {
         clientPort,
         storePort,
         new SmallBusinessStoreOpenApiProperties(
-            "key", "http://localhost", "storeListInArea", "json", 2, 0, maxRetryCount));
+            "key", "http://localhost", "storeListInArea", "json", 2, 0, maxRetryCount),
+        new ExternalApiRetryExecutor());
   }
 }

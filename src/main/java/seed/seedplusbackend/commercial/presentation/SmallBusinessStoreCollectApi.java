@@ -20,7 +20,9 @@ public interface SmallBusinessStoreCollectApi {
   @Operation(summary = "상권 내 상가정보 수동 수집", operationId = "collectSmallBusinessStores")
   @ApiErrorCodeExamples({
     ErrorCode.INVALID_PARAMETER,
-    ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED
+    ErrorCode.SMALL_BUSINESS_STORE_API_REQUEST_FAILED,
+    ErrorCode.SMALL_BUSINESS_STORE_API_INVALID_RESPONSE,
+    ErrorCode.COMMERCIAL_DATA_PROVIDER_FAILED
   })
   @PostMapping("/collect")
   ResponseEntity<ApiResponse<SmallBusinessStoreCollectResponse>> collect(

@@ -1,11 +1,9 @@
 package seed.seedplusbackend.commercial.infrastructure.client;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -16,16 +14,20 @@ import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 
 @Component
-@RequiredArgsConstructor
 public class SeoulCommercialEstimatedSalesClient
     implements SeoulCommercialEstimatedSalesClientPort {
 
   private static final String SUCCESS_CODE = "INFO-000";
   private static final String NO_DATA_CODE = "INFO-200";
-  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
-  private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
-
+  private final RestClient restClient;
   private final SeoulCommercialOpenApiProperties properties;
+
+  public SeoulCommercialEstimatedSalesClient(
+      @Qualifier("externalRestClientBuilder") RestClient.Builder restClientBuilder,
+      SeoulCommercialOpenApiProperties properties) {
+    this.restClient = restClientBuilder.clone().baseUrl(properties.baseUrl()).build();
+    this.properties = properties;
+  }
 
   @Override
   public CommercialEstimatedSalesPageResult fetchByQuarter(
@@ -33,10 +35,7 @@ public class SeoulCommercialEstimatedSalesClient
     SeoulCommercialEstimatedSalesApiResponse response;
     try {
       response =
-          RestClient.builder()
-              .baseUrl(properties.baseUrl())
-              .requestFactory(createRequestFactory())
-              .build()
+          restClient
               .get()
               .uri(
                   uriBuilder ->
@@ -106,13 +105,6 @@ public class SeoulCommercialEstimatedSalesClient
 
   private boolean isNoData(SeoulCommercialEstimatedSalesApiResponse.Body body) {
     return NO_DATA_CODE.equals(body.result().code());
-  }
-
-  private SimpleClientHttpRequestFactory createRequestFactory() {
-    SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-    factory.setConnectTimeout(CONNECT_TIMEOUT);
-    factory.setReadTimeout(READ_TIMEOUT);
-    return factory;
   }
 
   private CommercialEstimatedSalesRowResult toResult(
