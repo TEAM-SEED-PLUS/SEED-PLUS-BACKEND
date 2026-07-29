@@ -92,3 +92,16 @@ small-business:
       page-size: 1000
       initial-backoff-millis: ${SMALL_BUSINESS_STORE_INITIAL_BACKOFF_MS:500}
       max-retry-count: ${SMALL_BUSINESS_STORE_MAX_RETRY_COUNT:3}
+
+kosis:
+  business-survival:
+    open-api:
+      key: ${KOSIS_API_KEY}
+      base-url: https://kosis.kr
+      endpoint: /openapi/Param/statisticsParameterData.do
+      organization-id: "101"
+      table-id: DT_2BD1003
+      initial-backoff-millis: ${KOSIS_INITIAL_BACKOFF_MS:500}
+      min-jitter-millis: ${KOSIS_MIN_JITTER_MS:300}
+      max-jitter-millis: ${KOSIS_MAX_JITTER_MS:1200}
+      max-retry-count: ${KOSIS_MAX_RETRY_COUNT:3}

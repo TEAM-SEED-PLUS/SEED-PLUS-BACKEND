@@ -98,6 +98,10 @@ public enum ErrorCode {
   // 9400: REB Small Retail Rent File
   REB_RENT_FILE_INVALID(HttpStatus.BAD_REQUEST, 9400, "한국부동산원 임대료 파일 형식이 올바르지 않습니다."),
   REB_RENT_FILE_IMPORT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 9401, "한국부동산원 임대료 파일 적재에 실패했습니다."),
+
+  // 9500: KOSIS OpenAPI
+  KOSIS_OPEN_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 9500, "KOSIS OpenAPI 요청에 실패했습니다."),
+  KOSIS_OPEN_API_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, 9501, "KOSIS OpenAPI 응답 형식이 올바르지 않습니다."),
   ;
 
   private final HttpStatus httpStatus;
