@@ -1,9 +1,12 @@
 package seed.seedplusbackend.commercial.infrastructure.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -17,25 +20,27 @@ import seed.seedplusbackend.global.error.ErrorCode;
 @Component
 public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientPort {
 
-  private static final String OUTPUT_FIELDS =
-      "ORG_ID,TBL_ID,TBL_NM,C1,C1_NM,C1_OBJ_NM,ITM_ID,ITM_NM,UNIT_NM,"
-          + "PRD_SE,PRD_DE,DT,LST_CHN_DE";
+  private static final Set<String> SURVIVAL_RATE_ITEM_IDS =
+      Set.of("T01", "T02", "T03", "T04", "T05", "T06", "T07");
 
   private final RestClient restClient;
+  private final ObjectMapper objectMapper;
   private final KosisBusinessSurvivalOpenApiProperties properties;
 
   public KosisBusinessSurvivalClient(
       @Qualifier("externalRestClientBuilder") RestClient.Builder restClientBuilder,
+      ObjectMapper objectMapper,
       KosisBusinessSurvivalOpenApiProperties properties) {
     this.restClient = restClientBuilder.clone().baseUrl(properties.baseUrl()).build();
+    this.objectMapper = objectMapper;
     this.properties = properties;
   }
 
   @Override
   public List<KosisBusinessSurvivalRowResult> fetch(KosisBusinessSurvivalCollectCommand command) {
-    List<KosisBusinessSurvivalApiResponse> response;
+    String responseBody;
     try {
-      response =
+      responseBody =
           restClient
               .get()
               .uri(
@@ -51,8 +56,7 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
                         .queryParam("objL1", "ALL")
                         .queryParam("itmId", "ALL")
                         .queryParam("prdSe", "Y")
-                        .queryParam("prdInterval", "1")
-                        .queryParam("outputFields", OUTPUT_FIELDS);
+                        .queryParam("prdInterval", "1");
 
                     if (command.latestYearCount() != null) {
                       uriBuilder.queryParam("newEstPrdCnt", command.latestYearCount());
@@ -69,20 +73,25 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
                   (request, clientResponse) -> {
                     throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_REQUEST_FAILED);
                   })
-              .body(new ParameterizedTypeReference<>() {});
+              .body(String.class);
     } catch (ApplicationException exception) {
       throw exception;
     } catch (RestClientException exception) {
       throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_REQUEST_FAILED, exception);
     }
 
-    if (response == null) {
+    if (responseBody == null || responseBody.isBlank()) {
       throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE);
     }
 
     try {
-      return response.stream().map(this::toResult).toList();
-    } catch (RuntimeException exception) {
+      List<KosisBusinessSurvivalApiResponse> response =
+          objectMapper.readValue(responseBody, new TypeReference<>() {});
+      return response.stream()
+          .filter(row -> SURVIVAL_RATE_ITEM_IDS.contains(row.itemId()))
+          .map(this::toResult)
+          .toList();
+    } catch (JsonProcessingException | IllegalArgumentException exception) {
       throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE, exception);
     }
   }

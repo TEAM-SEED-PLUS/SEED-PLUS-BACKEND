@@ -1,6 +1,9 @@
 package seed.seedplusbackend.commercial.presentation;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,5 +32,37 @@ public interface KosisBusinessSurvivalCollectApi {
   })
   @PostMapping("/collect")
   ResponseEntity<ApiResponse<KosisBusinessSurvivalCollectResponse>> collect(
-      @Valid @RequestBody KosisBusinessSurvivalCollectRequest request);
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              description = "기간 조회 또는 최신 N개 연도 조회 중 하나를 선택합니다.",
+              required = true,
+              content =
+                  @Content(
+                      schema = @Schema(implementation = KosisBusinessSurvivalCollectRequest.class),
+                      examples = {
+                        @ExampleObject(
+                            name = "기간 조회",
+                            value =
+                                """
+                                {
+                                  "startYear": 2021,
+                                  "endYear": 2022,
+                                  "latestYearCount": null,
+                                  "force": false
+                                }
+                                """),
+                        @ExampleObject(
+                            name = "최신 N개 연도 조회",
+                            value =
+                                """
+                                {
+                                  "startYear": null,
+                                  "endYear": null,
+                                  "latestYearCount": 3,
+                                  "force": false
+                                }
+                                """)
+                      }))
+          @Valid
+          @RequestBody
+          KosisBusinessSurvivalCollectRequest request);
 }
