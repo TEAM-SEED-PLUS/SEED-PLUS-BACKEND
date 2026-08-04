@@ -25,7 +25,7 @@ RUN ./gradlew clean bootJar --no-daemon -x test
 # ============================
 # 2) Runtime Stage
 # ============================
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 RUN apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
