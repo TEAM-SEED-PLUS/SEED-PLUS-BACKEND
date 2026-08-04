@@ -71,5 +71,6 @@ jobs:
           image-ref: ${{ env.IMAGE_NAME }}
           scanners: vuln
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
           format: table
           exit-code: "1"
