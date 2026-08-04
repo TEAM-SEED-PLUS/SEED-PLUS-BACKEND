@@ -27,7 +27,6 @@ RUN ./gradlew clean bootJar --no-daemon -x test
 # ============================
 FROM eclipse-temurin:21-jre-alpine
 
-RUN apk add --no-cache tzdata && \
 RUN apk upgrade --no-cache && \
     apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
