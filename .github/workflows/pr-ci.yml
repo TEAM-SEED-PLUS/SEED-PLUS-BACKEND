@@ -2,15 +2,35 @@ name: PR CI(Backend)
 
 on:
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: backend:${{ github.sha }}
 
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+
+      - name: Scan Source Code for Secrets
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          format: table
+          exit-code: "1"
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -19,11 +39,37 @@ jobs:
           java-version: 21
           cache: gradle
 
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+
       - name: Grant execute permission for Gradle
         run: chmod +x gradlew
 
       - name: Spotless Check
-        run: ./gradlew spotlessCheck
+        run: ./gradlew spotlessCheck --no-daemon
 
-      - name: Clean Build
-        run: ./gradlew clean build
+      - name: Test and Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: test-reports-${{ github.run_id }}
+          path: |
+            build/test-results/test/
+            build/reports/tests/test/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Build Docker Image
+        run: docker build --tag "${IMAGE_NAME}" .
+
+      - name: Scan Docker Image for Vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          format: table
+          exit-code: "1"
