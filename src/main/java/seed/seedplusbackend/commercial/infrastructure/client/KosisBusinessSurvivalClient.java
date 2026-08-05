@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import seed.seedplusbackend.commercial.application.command.KosisBusinessSurvivalCollectCommand;
+import seed.seedplusbackend.commercial.application.exception.KosisBusinessSurvivalApiRequestException;
 import seed.seedplusbackend.commercial.application.port.KosisBusinessSurvivalClientPort;
 import seed.seedplusbackend.commercial.application.result.KosisBusinessSurvivalRowResult;
 import seed.seedplusbackend.global.error.ApplicationException;
@@ -76,13 +77,13 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
               .onStatus(
                   HttpStatusCode::isError,
                   (request, clientResponse) -> {
-                    throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_REQUEST_FAILED);
+                    throw requestException(clientResponse.getStatusCode());
                   })
               .body(byte[].class);
     } catch (ApplicationException exception) {
       throw exception;
     } catch (RestClientException exception) {
-      throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_REQUEST_FAILED, exception);
+      throw new KosisBusinessSurvivalApiRequestException(true, exception);
     }
 
     if (responseBytes == null || responseBytes.length == 0) {
@@ -178,5 +179,9 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
   private String logValue(String value) {
     String singleLine = value.replaceAll("[\\r\\n\\t]+", " ");
     return singleLine.length() <= 500 ? singleLine : singleLine.substring(0, 500) + "...";
+  }
+
+  static KosisBusinessSurvivalApiRequestException requestException(HttpStatusCode statusCode) {
+    return new KosisBusinessSurvivalApiRequestException(statusCode.is5xxServerError());
   }
 }

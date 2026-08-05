@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.commercial.application.command.KosisBusinessSurvivalCollectCommand;
+import seed.seedplusbackend.commercial.application.exception.KosisBusinessSurvivalApiRequestException;
 import seed.seedplusbackend.commercial.application.port.CommercialDataCollectClaimPort;
 import seed.seedplusbackend.commercial.application.port.KosisBusinessSurvivalClientPort;
 import seed.seedplusbackend.commercial.application.port.KosisBusinessSurvivalStorePort;
@@ -47,7 +49,7 @@ class KosisBusinessSurvivalCollectServiceTest {
   void setUp() {
     KosisBusinessSurvivalOpenApiProperties properties =
         new KosisBusinessSurvivalOpenApiProperties(
-            "key", "https://kosis.kr", "/openapi", "101", "DT_2BD1003", 0, 0, 0, 0);
+            "key", "https://kosis.kr", "/openapi", "101", "DT_2BD1003", 0, 0, 0, 2);
     KosisBusinessSurvivalProvider provider =
         new KosisBusinessSurvivalProvider(
             clientPort, storePort, properties, new ExternalApiRetryExecutor());
@@ -125,6 +127,23 @@ class KosisBusinessSurvivalCollectServiceTest {
     assertThat(history.getStatus()).isEqualTo(CommercialDataCollectStatus.FAILED);
     verify(storePort, never()).upsertAll(List.of());
     verify(historyRepository).save(history);
+  }
+
+  @Test
+  void collect_doesNotRetryClientError() {
+    KosisBusinessSurvivalCollectCommand command =
+        new KosisBusinessSurvivalCollectCommand(2021, 2022, null, false);
+    CommercialDataCollectHistory history =
+        CommercialDataCollectHistory.start(DATA_TYPE, TARGET_KEY);
+    given(claimPort.tryClaim(DATA_TYPE, TARGET_KEY, false)).willReturn(Optional.of(1L));
+    given(historyRepository.findById(1L)).willReturn(Optional.of(history));
+    given(clientPort.fetch(command)).willThrow(new KosisBusinessSurvivalApiRequestException(false));
+
+    assertThatThrownBy(() -> service.collect(command))
+        .isInstanceOf(KosisBusinessSurvivalApiRequestException.class);
+
+    verify(clientPort, times(1)).fetch(command);
+    assertThat(history.getStatus()).isEqualTo(CommercialDataCollectStatus.FAILED);
   }
 
   @Test

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
@@ -22,6 +23,20 @@ import seed.seedplusbackend.global.error.ErrorCode;
 
 @ExtendWith(OutputCaptureExtension.class)
 class KosisBusinessSurvivalClientTest {
+
+  @Test
+  void requestException_doesNotRetryClientError() {
+    assertThat(KosisBusinessSurvivalClient.requestException(HttpStatus.UNAUTHORIZED).isRetryable())
+        .isFalse();
+  }
+
+  @Test
+  void requestException_retriesServerError() {
+    assertThat(
+            KosisBusinessSurvivalClient.requestException(HttpStatus.SERVICE_UNAVAILABLE)
+                .isRetryable())
+        .isTrue();
+  }
 
   @Test
   void fetch_parsesJsonBodyEvenWhenKosisRespondsWithTextHtmlContentType() {

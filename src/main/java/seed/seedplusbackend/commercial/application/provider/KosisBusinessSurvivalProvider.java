@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import seed.seedplusbackend.commercial.application.command.CommercialDataCollectCommand;
 import seed.seedplusbackend.commercial.application.command.KosisBusinessSurvivalCollectCommand;
+import seed.seedplusbackend.commercial.application.exception.KosisBusinessSurvivalApiRequestException;
 import seed.seedplusbackend.commercial.application.port.KosisBusinessSurvivalClientPort;
 import seed.seedplusbackend.commercial.application.port.KosisBusinessSurvivalStorePort;
 import seed.seedplusbackend.commercial.application.result.KosisBusinessSurvivalRowResult;
@@ -60,6 +61,9 @@ public class KosisBusinessSurvivalProvider implements CommercialDataProvider {
   }
 
   private boolean isRetryable(ApplicationException exception) {
+    if (exception instanceof KosisBusinessSurvivalApiRequestException requestException) {
+      return requestException.isRetryable();
+    }
     return exception.getErrorCode() == ErrorCode.KOSIS_OPEN_API_REQUEST_FAILED;
   }
 
