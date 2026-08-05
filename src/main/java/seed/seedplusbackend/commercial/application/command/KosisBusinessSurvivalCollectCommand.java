@@ -1,10 +1,14 @@
 package seed.seedplusbackend.commercial.application.command;
 
+import java.time.Year;
+import java.time.ZoneId;
 import seed.seedplusbackend.commercial.application.provider.CommercialDataType;
 
 public record KosisBusinessSurvivalCollectCommand(
     Integer startYear, Integer endYear, Integer latestYearCount, boolean force)
     implements CommercialDataCollectCommand {
+
+  private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Seoul");
 
   public KosisBusinessSurvivalCollectCommand {
     boolean periodSearch = startYear != null || endYear != null;
@@ -24,7 +28,7 @@ public record KosisBusinessSurvivalCollectCommand(
   @Override
   public String targetKey() {
     return latestYearCount != null
-        ? "LATEST:" + latestYearCount
+        ? "LATEST:" + latestYearCount + ":" + Year.now(BUSINESS_ZONE).getValue()
         : "PERIOD:" + startYear + "-" + endYear;
   }
 }
