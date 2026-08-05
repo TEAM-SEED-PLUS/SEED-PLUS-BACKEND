@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import seed.seedplusbackend.commercial.application.port.RebSmallRetailRentStorePort;
 import seed.seedplusbackend.commercial.application.result.RebSmallRetailRentFileResult;
-import seed.seedplusbackend.commercial.application.result.RebSmallRetailRentPeriod;
 import seed.seedplusbackend.commercial.application.result.RebSmallRetailRentRowResult;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
@@ -28,7 +27,6 @@ public class RebSmallRetailRentJdbcRepository implements RebSmallRetailRentStore
       String sourceFileName, String sourceFileHash, RebSmallRetailRentFileResult file) {
     try {
       upsertAreas(file.rows());
-      deletePeriods(file.periods());
       insertMetrics(sourceFileName, sourceFileHash, file.rows());
     } catch (DataAccessException exception) {
       throw new ApplicationException(
@@ -68,27 +66,6 @@ public class RebSmallRetailRentJdbcRepository implements RebSmallRetailRentStore
         });
   }
 
-  private void deletePeriods(List<RebSmallRetailRentPeriod> periods) {
-    if (periods.isEmpty()) {
-      return;
-    }
-
-    String placeholders = String.join(", ", periods.stream().map(period -> "(?, ?)").toList());
-    Object[] parameters = new Object[periods.size() * 2];
-    int index = 0;
-    for (RebSmallRetailRentPeriod period : periods) {
-      parameters[index++] = period.year();
-      parameters[index++] = period.quarter();
-    }
-
-    jdbcTemplate.update(
-        "DELETE FROM reb_small_retail_rent_metrics "
-            + "WHERE (reference_year, reference_quarter) IN ("
-            + placeholders
-            + ")",
-        parameters);
-  }
-
   private void insertMetrics(
       String sourceFileName, String sourceFileHash, List<RebSmallRetailRentRowResult> rows) {
     String sql =
@@ -106,6 +83,15 @@ public class RebSmallRetailRentJdbcRepository implements RebSmallRetailRentStore
         SELECT reb_small_retail_rent_area_id, ?, ?, ?, ?, ?, now(), now()
         FROM reb_small_retail_rent_areas
         WHERE source_area_key = ?
+        ON CONFLICT (
+          reb_small_retail_rent_area_id, reference_year, reference_quarter
+        ) DO UPDATE SET
+          rent_per_square_meter_thousand_krw =
+            EXCLUDED.rent_per_square_meter_thousand_krw,
+          source_file_name = EXCLUDED.source_file_name,
+          source_file_hash = EXCLUDED.source_file_hash,
+          collected_at = now(),
+          updated_at = now()
         """;
 
     jdbcTemplate.batchUpdate(
