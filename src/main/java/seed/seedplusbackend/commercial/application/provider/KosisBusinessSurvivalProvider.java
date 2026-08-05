@@ -34,6 +34,11 @@ public class KosisBusinessSurvivalProvider implements CommercialDataProvider {
     KosisBusinessSurvivalCollectCommand kosisCommand = cast(command);
     List<KosisBusinessSurvivalRowResult> rows = fetchWithRetry(kosisCommand);
 
+    if (rows.isEmpty()) {
+      log.warn("KOSIS 신생기업 생존율 응답이 0건입니다. targetKey={}", kosisCommand.targetKey());
+      throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE);
+    }
+
     storePort.upsertAll(rows);
     progress.update(rows.size(), rows.size(), 1);
   }

@@ -27,6 +27,8 @@ import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectHistor
 import seed.seedplusbackend.commercial.domain.entity.CommercialDataCollectStatus;
 import seed.seedplusbackend.commercial.domain.repository.CommercialDataCollectHistoryRepository;
 import seed.seedplusbackend.commercial.infrastructure.client.KosisBusinessSurvivalOpenApiProperties;
+import seed.seedplusbackend.global.error.ApplicationException;
+import seed.seedplusbackend.global.error.ErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 class KosisBusinessSurvivalCollectServiceTest {
@@ -101,6 +103,28 @@ class KosisBusinessSurvivalCollectServiceTest {
     assertThat(result.skipped()).isTrue();
     assertThat(result.status()).isEqualTo(CommercialDataCollectStatus.RUNNING);
     verify(clientPort, never()).fetch(command);
+  }
+
+  @Test
+  void collect_failsWhenKosisReturnsNoRows() {
+    KosisBusinessSurvivalCollectCommand command =
+        new KosisBusinessSurvivalCollectCommand(2021, 2022, null, false);
+    CommercialDataCollectHistory history =
+        CommercialDataCollectHistory.start(DATA_TYPE, TARGET_KEY);
+    given(claimPort.tryClaim(DATA_TYPE, TARGET_KEY, false)).willReturn(Optional.of(1L));
+    given(historyRepository.findById(1L)).willReturn(Optional.of(history));
+    given(clientPort.fetch(command)).willReturn(List.of());
+
+    assertThatThrownBy(() -> service.collect(command))
+        .isInstanceOfSatisfying(
+            ApplicationException.class,
+            exception ->
+                assertThat(exception.getErrorCode())
+                    .isEqualTo(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE));
+
+    assertThat(history.getStatus()).isEqualTo(CommercialDataCollectStatus.FAILED);
+    verify(storePort, never()).upsertAll(List.of());
+    verify(historyRepository).save(history);
   }
 
   @Test
