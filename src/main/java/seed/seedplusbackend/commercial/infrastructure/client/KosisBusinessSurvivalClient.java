@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,9 +39,9 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
 
   @Override
   public List<KosisBusinessSurvivalRowResult> fetch(KosisBusinessSurvivalCollectCommand command) {
-    String responseBody;
+    byte[] responseBytes;
     try {
-      responseBody =
+      responseBytes =
           restClient
               .get()
               .uri(
@@ -73,14 +74,19 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
                   (request, clientResponse) -> {
                     throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_REQUEST_FAILED);
                   })
-              .body(String.class);
+              .body(byte[].class);
     } catch (ApplicationException exception) {
       throw exception;
     } catch (RestClientException exception) {
       throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_REQUEST_FAILED, exception);
     }
 
-    if (responseBody == null || responseBody.isBlank()) {
+    if (responseBytes == null || responseBytes.length == 0) {
+      throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE);
+    }
+
+    String responseBody = new String(responseBytes, StandardCharsets.UTF_8);
+    if (responseBody.isBlank()) {
       throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE);
     }
 

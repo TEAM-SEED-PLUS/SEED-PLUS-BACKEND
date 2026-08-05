@@ -5,6 +5,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -70,13 +71,16 @@ class KosisBusinessSurvivalClientTest {
                     "LST_CHN_DE": "2024-12-26"
                   }
                 ]
-                """,
+                """
+                    .getBytes(StandardCharsets.UTF_8),
                 MediaType.TEXT_HTML));
 
     List<KosisBusinessSurvivalRowResult> rows =
         client.fetch(new KosisBusinessSurvivalCollectCommand(2021, 2022, null, false));
 
     assertThat(rows).hasSize(1);
+    assertThat(rows.getFirst().industryName()).isEqualTo("전체");
+    assertThat(rows.getFirst().itemName()).isEqualTo("1년 생존율");
     assertThat(rows.getFirst().referenceYear()).isEqualTo(2022);
     assertThat(rows.getFirst().survivalRate()).isEqualByComparingTo("64.1");
     server.verify();
