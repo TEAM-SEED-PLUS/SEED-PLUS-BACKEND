@@ -2,6 +2,7 @@ package seed.seedplusbackend.commercial.infrastructure.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -94,10 +95,21 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
     }
 
     try {
+      JsonNode root = objectMapper.readTree(responseBody);
+      if (root != null && root.isObject() && root.has("err")) {
+        log.warn(
+            "KOSIS OpenAPI 오류 응답입니다. err={} errMsg={}",
+            logValue(root.path("err").asText()),
+            logValue(root.path("errMsg").asText()));
+        throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE);
+      }
+
       List<KosisBusinessSurvivalApiResponse> response =
           objectMapper.readValue(responseBody, new TypeReference<>() {});
       return toValidResults(response);
     } catch (JsonProcessingException exception) {
+      log.warn(
+          "KOSIS OpenAPI 응답 파싱에 실패했습니다. responsePreview={}", logValue(responseBody), exception);
       throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE, exception);
     }
   }
@@ -161,5 +173,10 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
 
   private boolean isBlank(String value) {
     return value == null || value.isBlank();
+  }
+
+  private String logValue(String value) {
+    String singleLine = value.replaceAll("[\\r\\n\\t]+", " ");
+    return singleLine.length() <= 500 ? singleLine : singleLine.substring(0, 500) + "...";
   }
 }

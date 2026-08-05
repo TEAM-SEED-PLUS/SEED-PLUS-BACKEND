@@ -1,6 +1,7 @@
 package seed.seedplusbackend.commercial.infrastructure.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.queryParam;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -8,12 +9,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import seed.seedplusbackend.commercial.application.command.KosisBusinessSurvivalCollectCommand;
 import seed.seedplusbackend.commercial.application.result.KosisBusinessSurvivalRowResult;
+import seed.seedplusbackend.global.error.ApplicationException;
+import seed.seedplusbackend.global.error.ErrorCode;
 
+@ExtendWith(OutputCaptureExtension.class)
 class KosisBusinessSurvivalClientTest {
 
   @Test
@@ -98,6 +105,46 @@ class KosisBusinessSurvivalClientTest {
     assertThat(rows.getFirst().itemName()).isEqualTo("1년 생존율");
     assertThat(rows.getFirst().referenceYear()).isEqualTo(2022);
     assertThat(rows.getFirst().survivalRate()).isEqualByComparingTo("64.1");
+    server.verify();
+  }
+
+  @Test
+  void fetch_logsKosisErrorResponse(CapturedOutput output) {
+    RestClient.Builder builder = RestClient.builder();
+    MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+    KosisBusinessSurvivalOpenApiProperties properties =
+        new KosisBusinessSurvivalOpenApiProperties(
+            "test-key",
+            "https://kosis.kr",
+            "/openapi/Param/statisticsParameterData.do",
+            "101",
+            "DT_2BD1003",
+            0,
+            0,
+            0,
+            0);
+    KosisBusinessSurvivalClient client =
+        new KosisBusinessSurvivalClient(builder, new ObjectMapper(), properties);
+    server
+        .expect(queryParam("startPrdDe", "2021"))
+        .andExpect(queryParam("endPrdDe", "2022"))
+        .andRespond(
+            withSuccess(
+                """
+                {"err":"20","errMsg":"일일 호출 한도를 초과했습니다."}
+                """
+                    .getBytes(StandardCharsets.UTF_8),
+                MediaType.TEXT_HTML));
+
+    assertThatThrownBy(
+            () -> client.fetch(new KosisBusinessSurvivalCollectCommand(2021, 2022, null, false)))
+        .isInstanceOfSatisfying(
+            ApplicationException.class,
+            exception ->
+                assertThat(exception.getErrorCode())
+                    .isEqualTo(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE));
+
+    assertThat(output).contains("err=20", "errMsg=일일 호출 한도를 초과했습니다.");
     server.verify();
   }
 }
