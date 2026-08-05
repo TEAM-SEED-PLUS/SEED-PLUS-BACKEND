@@ -272,6 +272,7 @@ public class RebSmallRetailRentCsvReader implements RebSmallRetailRentFileReader
   private Map<RebSmallRetailRentPeriod, Integer> findPeriodColumns(List<List<String>> headerRows) {
     int columnCount = headerRows.stream().mapToInt(List::size).max().orElse(0);
     Map<RebSmallRetailRentPeriod, Integer> columns = new LinkedHashMap<>();
+    Integer currentYear = null;
     for (int column = 0; column < columnCount; column++) {
       StringBuilder header = new StringBuilder();
       for (List<String> row : headerRows) {
@@ -280,11 +281,25 @@ public class RebSmallRetailRentCsvReader implements RebSmallRetailRentFileReader
           header.append(' ').append(value);
         }
       }
+
+      Matcher yearMatcher = YEAR_PATTERN.matcher(header);
+      if (yearMatcher.find()) {
+        currentYear = Integer.parseInt(yearMatcher.group(1));
+      }
+
       Matcher matcher = PERIOD_PATTERN.matcher(header);
       if (matcher.find()) {
         RebSmallRetailRentPeriod period =
             new RebSmallRetailRentPeriod(
                 Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+        columns.putIfAbsent(period, column);
+        continue;
+      }
+
+      Matcher quarterMatcher = QUARTER_PATTERN.matcher(header);
+      if (currentYear != null && quarterMatcher.find()) {
+        RebSmallRetailRentPeriod period =
+            new RebSmallRetailRentPeriod(currentYear, Integer.parseInt(quarterMatcher.group(1)));
         columns.putIfAbsent(period, column);
       }
     }
