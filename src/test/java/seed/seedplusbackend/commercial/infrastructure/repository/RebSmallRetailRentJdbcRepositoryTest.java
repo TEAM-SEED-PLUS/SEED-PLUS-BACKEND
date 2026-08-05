@@ -25,27 +25,40 @@ class RebSmallRetailRentJdbcRepositoryTest extends AbstractPostgresContainerTest
   @Autowired private JdbcTemplate jdbcTemplate;
 
   @Test
-  @DisplayName("수정 파일을 적재하면 포함된 분기를 통째로 교체한다")
-  void replace_replacesRowsInImportedPeriod() {
+  @DisplayName("수정 파일에 포함된 지역만 갱신하고 나머지 지역과 분기는 보존한다")
+  void replace_updatesOnlyRowsIncludedInFile() {
     RebSmallRetailRentPeriod period = new RebSmallRetailRentPeriod(2026, 1);
+    RebSmallRetailRentPeriod previousPeriod = new RebSmallRetailRentPeriod(2025, 4);
     storePort.replace(
         "first.csv",
         "first-hash",
         new RebSmallRetailRentFileResult(
-            List.of(period), List.of(row("national", "전국", "20.6"), row("seoul", "서울", "52.2"))));
+            List.of(previousPeriod, period),
+            List.of(
+                row("national", "전국", 2025, 4, "20.5"),
+                row("national", "전국", 2026, 1, "20.6"),
+                row("seoul", "서울", 2026, 1, "52.2"))));
 
     storePort.replace(
         "corrected.csv",
         "corrected-hash",
         new RebSmallRetailRentFileResult(List.of(period), List.of(row("national", "전국", "20.7"))));
 
-    assertThat(metricCount()).isEqualTo(1);
-    assertThat(rent("national")).isEqualByComparingTo("20.7");
-    assertThat(sourceFileName()).isEqualTo("corrected.csv");
+    assertThat(metricCount()).isEqualTo(3);
+    assertThat(rent("national", 2026, 1)).isEqualByComparingTo("20.7");
+    assertThat(rent("seoul", 2026, 1)).isEqualByComparingTo("52.2");
+    assertThat(rent("national", 2025, 4)).isEqualByComparingTo("20.5");
+    assertThat(sourceFileName("national", 2026, 1)).isEqualTo("corrected.csv");
   }
 
   private RebSmallRetailRentRowResult row(String key, String name, String rent) {
-    return new RebSmallRetailRentRowResult(key, 1, name, name, 1, 2026, 1, new BigDecimal(rent));
+    return row(key, name, 2026, 1, rent);
+  }
+
+  private RebSmallRetailRentRowResult row(
+      String key, String name, int year, int quarter, String rent) {
+    return new RebSmallRetailRentRowResult(
+        key, 1, name, name, 1, year, quarter, new BigDecimal(rent));
   }
 
   private Integer metricCount() {
@@ -53,7 +66,7 @@ class RebSmallRetailRentJdbcRepositoryTest extends AbstractPostgresContainerTest
         "SELECT COUNT(*) FROM reb_small_retail_rent_metrics", Integer.class);
   }
 
-  private BigDecimal rent(String sourceAreaKey) {
+  private BigDecimal rent(String sourceAreaKey, int year, int quarter) {
     return jdbcTemplate.queryForObject(
         """
         SELECT metric.rent_per_square_meter_thousand_krw
@@ -61,13 +74,29 @@ class RebSmallRetailRentJdbcRepositoryTest extends AbstractPostgresContainerTest
         JOIN reb_small_retail_rent_areas area
           ON area.reb_small_retail_rent_area_id = metric.reb_small_retail_rent_area_id
         WHERE area.source_area_key = ?
+          AND metric.reference_year = ?
+          AND metric.reference_quarter = ?
         """,
         BigDecimal.class,
-        sourceAreaKey);
+        sourceAreaKey,
+        year,
+        quarter);
   }
 
-  private String sourceFileName() {
+  private String sourceFileName(String sourceAreaKey, int year, int quarter) {
     return jdbcTemplate.queryForObject(
-        "SELECT source_file_name FROM reb_small_retail_rent_metrics", String.class);
+        """
+        SELECT metric.source_file_name
+        FROM reb_small_retail_rent_metrics metric
+        JOIN reb_small_retail_rent_areas area
+          ON area.reb_small_retail_rent_area_id = metric.reb_small_retail_rent_area_id
+        WHERE area.source_area_key = ?
+          AND metric.reference_year = ?
+          AND metric.reference_quarter = ?
+        """,
+        String.class,
+        sourceAreaKey,
+        year,
+        quarter);
   }
 }
