@@ -5,8 +5,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,7 @@ import seed.seedplusbackend.commercial.application.result.KosisBusinessSurvivalR
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 
+@Slf4j
 @Component
 public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientPort {
 
@@ -93,13 +96,37 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
     try {
       List<KosisBusinessSurvivalApiResponse> response =
           objectMapper.readValue(responseBody, new TypeReference<>() {});
-      return response.stream()
-          .filter(row -> SURVIVAL_RATE_ITEM_IDS.contains(row.itemId()))
-          .map(this::toResult)
-          .toList();
-    } catch (JsonProcessingException | IllegalArgumentException exception) {
+      return toValidResults(response);
+    } catch (JsonProcessingException exception) {
       throw new ApplicationException(ErrorCode.KOSIS_OPEN_API_INVALID_RESPONSE, exception);
     }
+  }
+
+  private List<KosisBusinessSurvivalRowResult> toValidResults(
+      List<KosisBusinessSurvivalApiResponse> response) {
+    List<KosisBusinessSurvivalRowResult> results = new ArrayList<>();
+    int skippedCount = 0;
+
+    for (KosisBusinessSurvivalApiResponse row : response) {
+      if (row == null) {
+        skippedCount++;
+        continue;
+      }
+      if (!SURVIVAL_RATE_ITEM_IDS.contains(row.itemId())) {
+        continue;
+      }
+
+      try {
+        results.add(toResult(row));
+      } catch (IllegalArgumentException exception) {
+        skippedCount++;
+      }
+    }
+
+    if (skippedCount > 0) {
+      log.warn("KOSIS 신생기업 생존율 응답에서 유효하지 않은 행을 제외했습니다. skippedCount={}", skippedCount);
+    }
+    return List.copyOf(results);
   }
 
   private KosisBusinessSurvivalRowResult toResult(KosisBusinessSurvivalApiResponse row) {

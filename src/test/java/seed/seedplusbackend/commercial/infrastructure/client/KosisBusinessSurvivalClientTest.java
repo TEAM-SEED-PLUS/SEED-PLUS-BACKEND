@@ -69,6 +69,21 @@ class KosisBusinessSurvivalClientTest {
                     "PRD_DE": "2022",
                     "DT": "64.1",
                     "LST_CHN_DE": "2024-12-26"
+                  },
+                  {
+                    "ORG_ID": "101",
+                    "TBL_ID": "DT_2BD1003",
+                    "TBL_NM": "산업별 신생기업 생존율",
+                    "C1": "0",
+                    "C1_NM": "전체",
+                    "C1_OBJ_NM": "산업별",
+                    "ITM_ID": "T02",
+                    "ITM_NM": "2년 생존율",
+                    "UNIT_NM": "%",
+                    "PRD_SE": "A",
+                    "PRD_DE": "2022",
+                    "DT": "-",
+                    "LST_CHN_DE": "2024-12-26"
                   }
                 ]
                 """
