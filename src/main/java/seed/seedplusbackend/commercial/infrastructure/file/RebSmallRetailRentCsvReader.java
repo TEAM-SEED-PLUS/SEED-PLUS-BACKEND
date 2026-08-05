@@ -215,7 +215,7 @@ public class RebSmallRetailRentCsvReader implements RebSmallRetailRentFileReader
         } else {
           Matcher quarterMatcher = QUARTER_PATTERN.matcher(value);
           if (quarterMatcher.matches()) {
-            quarterColumns.put(Integer.parseInt(quarterMatcher.group(1)), column);
+            quarterColumns.putIfAbsent(Integer.parseInt(quarterMatcher.group(1)), column);
           }
         }
       }

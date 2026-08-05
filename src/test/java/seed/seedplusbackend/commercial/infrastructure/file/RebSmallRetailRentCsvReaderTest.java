@@ -95,6 +95,22 @@ class RebSmallRetailRentCsvReaderTest {
             });
   }
 
+  @Test
+  @DisplayName("분기 블록이 반복되면 첫 번째 블록을 사용한다")
+  void read_usesFirstRepeatedQuarterBlock() {
+    String csv =
+        """
+        No,지역,지역,지역,항목,단위,통계자료,주기,1분기,2분기,3분기,4분기,1분기,2분기,3분기,4분기
+        1,전국,전국,전국,임대료,천원/㎡,원자료,2026년,20.1,20.2,20.3,20.4,5.1,5.2,5.3,5.4
+        """;
+
+    RebSmallRetailRentFileResult result = reader.read(csv.getBytes(StandardCharsets.UTF_8));
+
+    assertThat(result.rows()).hasSize(4);
+    assertThat(result.rows().getFirst().rentPerSquareMeterThousandKrw())
+        .isEqualByComparingTo("20.1");
+  }
+
   private String csv() {
     return """
         No,지역,,,2025년 4분기,2026년 1분기
