@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import seed.seedplusbackend.commercial.application.port.KosisBusinessSurvivalStorePort;
 import seed.seedplusbackend.commercial.application.result.KosisBusinessSurvivalRowResult;
 
@@ -38,6 +39,7 @@ public class KosisBusinessSurvivalJdbcRepository implements KosisBusinessSurviva
   private final JdbcTemplate jdbcTemplate;
 
   @Override
+  @Transactional
   public void upsertAll(List<KosisBusinessSurvivalRowResult> rows) {
     if (rows == null || rows.isEmpty()) {
       return;
