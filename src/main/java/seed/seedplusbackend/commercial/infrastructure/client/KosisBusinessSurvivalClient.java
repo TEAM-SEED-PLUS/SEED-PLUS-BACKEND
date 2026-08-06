@@ -34,7 +34,7 @@ public class KosisBusinessSurvivalClient implements KosisBusinessSurvivalClientP
   private final KosisBusinessSurvivalOpenApiProperties properties;
 
   public KosisBusinessSurvivalClient(
-      @Qualifier("externalRestClientBuilder") RestClient.Builder restClientBuilder,
+      @Qualifier("kosisBusinessSurvivalRestClientBuilder") RestClient.Builder restClientBuilder,
       ObjectMapper objectMapper,
       KosisBusinessSurvivalOpenApiProperties properties) {
     this.restClient = restClientBuilder.clone().baseUrl(properties.baseUrl()).build();

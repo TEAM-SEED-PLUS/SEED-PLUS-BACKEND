@@ -101,6 +101,8 @@ kosis:
       endpoint: /openapi/Param/statisticsParameterData.do
       organization-id: "101"
       table-id: DT_2BD1003
+      connect-timeout-millis: ${KOSIS_CONNECT_TIMEOUT_MS:3000}
+      read-timeout-millis: ${KOSIS_READ_TIMEOUT_MS:30000}
       initial-backoff-millis: ${KOSIS_INITIAL_BACKOFF_MS:500}
       min-jitter-millis: ${KOSIS_MIN_JITTER_MS:300}
       max-jitter-millis: ${KOSIS_MAX_JITTER_MS:1200}
