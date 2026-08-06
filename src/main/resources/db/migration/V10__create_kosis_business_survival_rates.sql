@@ -26,14 +26,3 @@ CREATE TABLE kosis_business_survival_rates (
 
 CREATE INDEX idx_kosis_business_survival_year_industry
     ON kosis_business_survival_rates(reference_year, industry_code);
-
--- KOSIS 산업분류와 서비스 내부 업종의 연결은 데이터 확인 후 수동으로 적재한다.
-CREATE TABLE kosis_industry_mappings (
-    kosis_industry_code VARCHAR(50) PRIMARY KEY,
-    industry_id BIGINT NOT NULL REFERENCES industries(industry_id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ
-);
-
-CREATE UNIQUE INDEX uq_kosis_industry_mappings_industry
-    ON kosis_industry_mappings(industry_id);
