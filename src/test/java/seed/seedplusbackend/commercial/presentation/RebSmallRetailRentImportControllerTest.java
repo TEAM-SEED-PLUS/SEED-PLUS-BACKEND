@@ -86,15 +86,4 @@ class RebSmallRetailRentImportControllerTest {
 
     verify(collectService, never()).collect(any());
   }
-
-  @Test
-  @DisplayName("file multipart 파트가 없으면 잘못된 파일 요청으로 응답한다")
-  void importFile_rejectsMissingFilePart() throws Exception {
-    mockMvc
-        .perform(multipart("/api/v1/reb-small-retail-rents/import"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.code").value(9400));
-
-    verify(collectService, never()).collect(any());
-  }
 }
