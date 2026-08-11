@@ -72,6 +72,7 @@ public class SecurityConfig {
                         "/api/v1/commercial-areas/**")
                     .permitAll()
                     .requestMatchers(
+                        "/actuator/health",
                         "/api/v1/auth/csrf",
                         "/api/v1/auth/signup",
                         "/api/v1/auth/login",
