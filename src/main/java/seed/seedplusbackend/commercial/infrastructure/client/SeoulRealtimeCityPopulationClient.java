@@ -102,7 +102,11 @@ public class SeoulRealtimeCityPopulationClient implements SeoulRealtimeCityPopul
     if (resultNodes.getLength() == 0) {
       throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_INVALID_RESPONSE);
     }
-    String code = childText((Element) resultNodes.item(0), "CODE");
+    Element result = (Element) resultNodes.item(0);
+    String code = childText(result, "RESULT.CODE");
+    if (code == null) {
+      code = childText(result, "CODE");
+    }
     if (!SUCCESS_CODE.equals(code)) {
       throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
     }
