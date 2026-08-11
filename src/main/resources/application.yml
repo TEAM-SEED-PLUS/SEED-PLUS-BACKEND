@@ -76,6 +76,18 @@ logging:
     level: "%5p [requestId:%X{requestId:-}]"
 
 seoul:
+  realtime-city:
+    open-api:
+      key: ${SEOUL_OPEN_API_KEY}
+      base-url: http://openapi.seoul.go.kr:8088
+      service-name: citydata
+      type: xml
+      start-index: 1
+      end-index: 5
+      initial-backoff-millis: ${SEOUL_REALTIME_CITY_INITIAL_BACKOFF_MS:500}
+      min-jitter-millis: ${SEOUL_REALTIME_CITY_MIN_JITTER_MS:300}
+      max-jitter-millis: ${SEOUL_REALTIME_CITY_MAX_JITTER_MS:1200}
+      max-retry-count: ${SEOUL_REALTIME_CITY_MAX_RETRY_COUNT:3}
   sdot:
     open-api:
       key: ${SEOUL_OPEN_API_KEY}
