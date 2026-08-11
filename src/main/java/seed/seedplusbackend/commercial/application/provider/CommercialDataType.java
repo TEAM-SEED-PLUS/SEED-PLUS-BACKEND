@@ -2,7 +2,8 @@ package seed.seedplusbackend.commercial.application.provider;
 
 public enum CommercialDataType {
   SEOUL_ESTIMATED_SALES("SEOUL_COMMERCIAL_ESTIMATED_SALES", "서울시 상권 추정매출"),
-  SMALL_BUSINESS_STORE("SMALL_BUSINESS_STORE", "소상공인 상가정보");
+  SMALL_BUSINESS_STORE("SMALL_BUSINESS_STORE", "소상공인 상가정보"),
+  REB_SMALL_RETAIL_RENT("REB_SMALL_RETAIL_RENT", "한국부동산원 소규모상가 임대료");
 
   private final String historyKey;
   private final String displayName;

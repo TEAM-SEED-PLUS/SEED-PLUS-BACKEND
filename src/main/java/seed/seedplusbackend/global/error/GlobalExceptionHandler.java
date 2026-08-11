@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -99,6 +101,21 @@ public class GlobalExceptionHandler {
     String detail = "parameter=%s".formatted(e.getParameterName());
     log.warn("[GlobalExceptionHandler] 필수 요청 파라미터 누락, 사유={}", detail);
     return createErrorResponse(ErrorCode.MISSING_REQUIRED_PARAMETER, detail);
+  }
+
+  @ExceptionHandler(MissingServletRequestPartException.class)
+  public ResponseEntity<ErrorResponse> handleMissingServletRequestPartException(
+      MissingServletRequestPartException e) {
+    String detail = "part=%s".formatted(e.getRequestPartName());
+    log.warn("[GlobalExceptionHandler] 필수 multipart 요청 파트 누락, 사유={}", detail);
+    return createErrorResponse(ErrorCode.REB_RENT_FILE_INVALID, detail);
+  }
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(
+      MaxUploadSizeExceededException e) {
+    log.warn("[GlobalExceptionHandler] 업로드 파일 크기 초과, maxUploadSize={}", e.getMaxUploadSize());
+    return createErrorResponse(ErrorCode.REB_RENT_FILE_INVALID, "파일 크기는 10MB 이하여야 합니다.");
   }
 
   @ExceptionHandler(MissingRequestHeaderException.class)
