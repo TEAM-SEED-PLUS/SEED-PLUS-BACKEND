@@ -80,7 +80,7 @@ seoul:
     open-api:
       key: ${SEOUL_OPEN_API_KEY}
       base-url: http://openapi.seoul.go.kr:8088
-      service-name: citydata
+      service-name: citydata_ppltn
       type: xml
       start-index: 1
       end-index: 5
