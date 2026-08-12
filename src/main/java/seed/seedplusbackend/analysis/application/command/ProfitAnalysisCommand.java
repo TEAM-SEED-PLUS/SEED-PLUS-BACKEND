@@ -3,6 +3,7 @@ package seed.seedplusbackend.analysis.application.command;
 import java.math.BigDecimal;
 
 public record ProfitAnalysisCommand(
+    String storeName,
     String industryCode,
     String regionCode,
     BigDecimal area,
@@ -12,6 +13,7 @@ public record ProfitAnalysisCommand(
     Integer staff) {
 
   public ProfitAnalysisCommand {
+    storeName = normalize(storeName);
     industryCode = normalize(industryCode);
     regionCode = normalize(regionCode);
   }

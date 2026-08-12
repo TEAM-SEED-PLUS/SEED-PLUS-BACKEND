@@ -10,6 +10,7 @@ import seed.seedplusbackend.analysis.application.command.ProfitAnalysisCommand;
 
 @Schema(description = "Profit analysis request")
 public record ProfitAnalysisRequest(
+    @Schema(description = "상가명", example = "강남스타카페") @NotBlank String storeName,
     @Schema(description = "업종 코드", example = "I101") @NotBlank String industryCode,
     @Schema(description = "지역 코드. regions.code 값이며 행정구역 코드를 사용합니다.", example = "1168000000")
         @NotBlank
@@ -21,6 +22,7 @@ public record ProfitAnalysisRequest(
     @Schema(example = "3") @NotNull @PositiveOrZero Integer staff) {
 
   public ProfitAnalysisCommand toCommand() {
-    return new ProfitAnalysisCommand(industryCode, regionCode, area, invest, rent, premium, staff);
+    return new ProfitAnalysisCommand(
+        storeName, industryCode, regionCode, area, invest, rent, premium, staff);
   }
 }
