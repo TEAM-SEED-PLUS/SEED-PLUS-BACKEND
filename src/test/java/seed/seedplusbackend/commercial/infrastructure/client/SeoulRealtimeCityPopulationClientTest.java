@@ -23,7 +23,7 @@ class SeoulRealtimeCityPopulationClientTest {
     MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
     SeoulRealtimeCityPopulationClient client = client(builder);
     server
-        .expect(requestTo("http://openapi.seoul.go.kr:8088/test-key/xml/citydata/1/5/POI009"))
+        .expect(requestTo("http://openapi.seoul.go.kr:8088/test-key/xml/citydata_ppltn/1/5/POI009"))
         .andRespond(
             withSuccess(sampleXml().getBytes(StandardCharsets.UTF_8), MediaType.APPLICATION_XML));
 
@@ -46,7 +46,7 @@ class SeoulRealtimeCityPopulationClientTest {
     MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
     SeoulRealtimeCityPopulationClient client = client(builder);
     server
-        .expect(requestTo("http://openapi.seoul.go.kr:8088/test-key/xml/citydata/1/5/POI999"))
+        .expect(requestTo("http://openapi.seoul.go.kr:8088/test-key/xml/citydata_ppltn/1/5/POI999"))
         .andRespond(
             withSuccess(
                 "<RESULT><CODE>ERROR-300</CODE><MESSAGE>잘못된 요청입니다.</MESSAGE></RESULT>"
@@ -66,7 +66,16 @@ class SeoulRealtimeCityPopulationClientTest {
     return new SeoulRealtimeCityPopulationClient(
         builder,
         new SeoulRealtimeCityOpenApiProperties(
-            "test-key", "http://openapi.seoul.go.kr:8088", "citydata", "xml", 1, 5, 0, 0, 0, 0));
+            "test-key",
+            "http://openapi.seoul.go.kr:8088",
+            "citydata_ppltn",
+            "xml",
+            1,
+            5,
+            0,
+            0,
+            0,
+            0));
   }
 
   private String sampleXml() {

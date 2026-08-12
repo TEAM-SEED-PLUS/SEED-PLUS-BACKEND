@@ -99,13 +99,18 @@ public class SeoulRealtimeCityPopulationClient implements SeoulRealtimeCityPopul
 
   private void validateResult(Document document) {
     NodeList resultNodes = document.getElementsByTagName("RESULT");
-    if (resultNodes.getLength() == 0) {
-      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_INVALID_RESPONSE);
+    String code = null;
+    if (resultNodes.getLength() > 0 && resultNodes.item(0) instanceof Element result) {
+      code = childText(result, "RESULT.CODE");
+      if (code == null) {
+        code = childText(result, "CODE");
+      }
     }
-    Element result = (Element) resultNodes.item(0);
-    String code = childText(result, "RESULT.CODE");
     if (code == null) {
-      code = childText(result, "CODE");
+      code = documentText(document, "RESULT.CODE");
+    }
+    if (code == null) {
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_INVALID_RESPONSE);
     }
     if (!SUCCESS_CODE.equals(code)) {
       throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
@@ -113,10 +118,13 @@ public class SeoulRealtimeCityPopulationClient implements SeoulRealtimeCityPopul
   }
 
   private SeoulRealtimeCityPopulationResult parsePopulation(Document document) {
-    NodeList nodes = document.getElementsByTagName("LIVE_PPLTN_STTS");
+    NodeList nodes = document.getElementsByTagName("AREA_PPLTN_MIN");
     for (int index = 0; index < nodes.getLength(); index++) {
       Node node = nodes.item(index);
-      if (node instanceof Element element && hasText(element, "AREA_PPLTN_MIN")) {
+      Node parent = node.getParentNode();
+      if (parent instanceof Element element
+          && hasText(element, "AREA_CD")
+          && hasText(element, "AREA_PPLTN_MAX")) {
         return toResult(element);
       }
     }
@@ -185,6 +193,15 @@ public class SeoulRealtimeCityPopulationClient implements SeoulRealtimeCityPopul
 
   private String childText(Element element, String tagName) {
     NodeList nodes = element.getElementsByTagName(tagName);
+    if (nodes.getLength() == 0) {
+      return null;
+    }
+    String value = nodes.item(0).getTextContent();
+    return value == null || value.isBlank() ? null : value.trim();
+  }
+
+  private String documentText(Document document, String tagName) {
+    NodeList nodes = document.getElementsByTagName(tagName);
     if (nodes.getLength() == 0) {
       return null;
     }
