@@ -60,6 +60,9 @@ class RestClientAnalysisLambdaClientTest {
 
     assertThat(result.result().monthlyProfit()).isEqualByComparingTo(new BigDecimal("499"));
     assertThat(result.assumptions().regionMultiplier()).isEqualByComparingTo("1.3");
+    assertThat(result.dynamicMetrics().storeMarketFactor()).isEqualByComparingTo("1.18");
+    assertThat(result.dataSources()).containsExactly("source");
+    assertThat(result.fallbackUsed()).isFalse();
     server.verify();
   }
 
@@ -83,6 +86,9 @@ class RestClientAnalysisLambdaClientTest {
 
     assertThat(result.survival().survival1Year()).isEqualTo("40 ~ 55%");
     assertThat(result.scoreBreakdown().s6_rentBurden()).isEqualByComparingTo("-20");
+    assertThat(result.dynamicMetrics().traffic()).isEqualByComparingTo("4");
+    assertThat(result.dataSources()).containsExactly("source");
+    assertThat(result.fallbackUsed()).isTrue();
     server.verify();
   }
 
@@ -173,6 +179,14 @@ class RestClientAnalysisLambdaClientTest {
             "fixedOverheadRate": 8,
             "staffCostPerPerson": 250
           },
+          "dynamicMetrics": {
+            "baseRevenue": 80,
+            "regionMultiplier": 1.3,
+            "storeMarketFactor": 1.18,
+            "avgSalesAmt": 3000,
+            "competitorCount": 18,
+            "competitorDensity": 0.45
+          },
           "result": {
             "monthlyRev": 3120,
             "staffCost": 750,
@@ -188,7 +202,10 @@ class RestClientAnalysisLambdaClientTest {
             "totalInvest": 7000.0,
             "paybackMonths": 14,
             "propertyScore": 81
-          }
+          },
+          "dataSources": ["source"],
+          "warnings": [],
+          "fallbackUsed": false
         }
         """;
   }
@@ -218,6 +235,17 @@ class RestClientAnalysisLambdaClientTest {
             "vitalityScore": 62,
             "stabilityIndex": 75
           },
+          "dynamicMetrics": {
+            "avgSalesAmt": 3000,
+            "avgSales": 3,
+            "salesGrowth": 4,
+            "density": 3,
+            "vacancy": 2,
+            "traffic": 4,
+            "churn": 1,
+            "closureRate": 8.0,
+            "newBusinessRate": 12.0
+          },
           "scoreBreakdown": {
             "s1_salesStability": 15,
             "s2_salesGrowth": 2,
@@ -234,7 +262,10 @@ class RestClientAnalysisLambdaClientTest {
             "grade": "caution",
             "survival1Year": "40 ~ 55%",
             "survival3Year": "20 ~ 35%"
-          }
+          },
+          "dataSources": ["source"],
+          "warnings": [],
+          "fallbackUsed": true
         }
         """;
   }
