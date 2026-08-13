@@ -48,7 +48,7 @@ class RestClientAnalysisLambdaClientTest {
         .expect(
             once(),
             requestTo(
-                "https://profit.example/dev/?storeName=star&industry=food&region=gangnam&area=30"
+                "https://profit.example/dev/profit?storeName=star&industry=food&region=gangnam&area=30"
                     + "&invest=5000&rent=300&premium=2000&staff=3&THSMON_SELNG_AMT=3120000000"
                     + "&storeCountInTrdar=104&guAvgSalesAmt=3500000&cityAvgSalesAmt=2900000"
                     + "&storeZoneOne=100&storeListInArea=300&storeListInRadius=50"
@@ -70,7 +70,7 @@ class RestClientAnalysisLambdaClientTest {
         .expect(
             once(),
             requestTo(
-                "https://survival.example/dev/?storeName=star&industry=cafe&region=gangnam&area=40"
+                "https://survival.example/dev/survival?storeName=star&industry=cafe&region=gangnam&area=40"
                     + "&invest=8000&rent=250&premium=2000&staff=3&startupType=new"
                     + "&THSMON_SELNG_AMT=3120000000&storeCountInTrdar=104&salesGrowthRate=5.2"
                     + "&storeDensity=42&vacancyRate=8.0&trafficIndex=14000&survivalRate=68"
@@ -93,7 +93,7 @@ class RestClientAnalysisLambdaClientTest {
         .expect(
             once(),
             requestTo(
-                "https://profit.example/dev/?storeName=star&industry=food&region=gangnam&area=30"
+                "https://profit.example/dev/profit?storeName=star&industry=food&region=gangnam&area=30"
                     + "&invest=5000&rent=300&premium=2000&staff=3&THSMON_SELNG_AMT=3120000000"
                     + "&storeCountInTrdar=104&guAvgSalesAmt=3500000&cityAvgSalesAmt=2900000"
                     + "&storeZoneOne=100&storeListInArea=300&storeListInRadius=50"

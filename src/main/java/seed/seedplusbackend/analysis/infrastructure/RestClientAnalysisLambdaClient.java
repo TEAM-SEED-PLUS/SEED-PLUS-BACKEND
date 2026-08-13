@@ -79,7 +79,7 @@ public class RestClientAnalysisLambdaClient implements AnalysisLambdaClient {
 
   private URI profitUri(ProfitAnalysisLambdaCommand command) {
     UriComponentsBuilder builder =
-        UriComponentsBuilder.fromUriString(properties.profit().endpoint())
+        endpointBuilder(properties.profit().endpoint(), "profit")
             .queryParam("storeName", command.storeName())
             .queryParam("industry", command.industry())
             .queryParam("region", command.region())
@@ -103,7 +103,7 @@ public class RestClientAnalysisLambdaClient implements AnalysisLambdaClient {
 
   private URI survivalUri(SurvivalAnalysisLambdaCommand command) {
     UriComponentsBuilder builder =
-        UriComponentsBuilder.fromUriString(properties.survival().endpoint())
+        endpointBuilder(properties.survival().endpoint(), "survival")
             .queryParam("storeName", command.storeName())
             .queryParam("industry", command.industry())
             .queryParam("region", command.region())
@@ -130,6 +130,15 @@ public class RestClientAnalysisLambdaClient implements AnalysisLambdaClient {
 
   private void add(UriComponentsBuilder builder, String name, Object value) {
     if (value != null) builder.queryParam(name, value);
+  }
+
+  private UriComponentsBuilder endpointBuilder(String endpoint, String functionPath) {
+    String normalized =
+        endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
+    if (!normalized.endsWith("/" + functionPath)) {
+      normalized += "/" + functionPath;
+    }
+    return UriComponentsBuilder.fromUriString(normalized);
   }
 
   private void addSources(UriComponentsBuilder builder, List<String> sources) {
