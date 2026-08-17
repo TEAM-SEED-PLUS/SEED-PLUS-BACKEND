@@ -48,24 +48,21 @@ class RestClientAnalysisLambdaClientTest {
         .expect(
             once(),
             requestTo(
-                "https://profit.example/dev/?industry=food&region=gangnam&area=30"
-                    + "&invest=5000&rent=300&premium=2000&staff=3"))
+                "https://profit.example/dev/profit?storeName=star&industry=food&region=gangnam&area=30"
+                    + "&invest=5000&rent=300&premium=2000&staff=3&THSMON_SELNG_AMT=3120000000"
+                    + "&storeCountInTrdar=104&guAvgSalesAmt=3500000&cityAvgSalesAmt=2900000"
+                    + "&storeZoneOne=100&storeListInArea=300&storeListInRadius=50"
+                    + "&competitorCount=18&fallbackUsed=false&dataSources=%5B%22source%22%5D"))
         .andExpect(header("x-api-key", "profit-key"))
         .andRespond(withSuccess(profitResponseJson(), MediaType.APPLICATION_JSON));
 
-    ProfitAnalysisResult result =
-        client.requestProfit(
-            new ProfitAnalysisLambdaCommand(
-                "food",
-                "gangnam",
-                new BigDecimal("30"),
-                new BigDecimal("5000"),
-                new BigDecimal("300"),
-                new BigDecimal("2000"),
-                3));
+    ProfitAnalysisResult result = client.requestProfit(profitCommand());
 
     assertThat(result.result().monthlyProfit()).isEqualByComparingTo(new BigDecimal("499"));
     assertThat(result.assumptions().regionMultiplier()).isEqualByComparingTo("1.3");
+    assertThat(result.dynamicMetrics().storeMarketFactor()).isEqualByComparingTo("1.18");
+    assertThat(result.dataSources()).containsExactly("source");
+    assertThat(result.fallbackUsed()).isFalse();
     server.verify();
   }
 
@@ -76,9 +73,12 @@ class RestClientAnalysisLambdaClientTest {
         .expect(
             once(),
             requestTo(
-                "https://survival.example/dev/?region=gangnam&industry=cafe&area=40"
-                    + "&rent=250&deposit=2000&avgSales=4&salesGrowth=3&density=4"
-                    + "&vacancy=2&traffic=4&churn=2&startupType=transfer&avgSalesAmt=4200"))
+                "https://survival.example/dev/survival?storeName=star&industry=cafe&region=gangnam&area=40"
+                    + "&invest=8000&rent=250&premium=2000&staff=3&startupType=new"
+                    + "&THSMON_SELNG_AMT=3120000000&storeCountInTrdar=104&salesGrowthRate=5.2"
+                    + "&storeDensity=42&vacancyRate=8.0&trafficIndex=14000&survivalRate=68"
+                    + "&closedBusinesses=120&activeBusinesses=1500&newBusinesses=180"
+                    + "&fallbackUsed=true&dataSources=%5B%22source%22%5D"))
         .andExpect(header("x-api-key", "survival-key"))
         .andRespond(withSuccess(survivalResponseJson(), MediaType.APPLICATION_JSON));
 
@@ -86,6 +86,9 @@ class RestClientAnalysisLambdaClientTest {
 
     assertThat(result.survival().survival1Year()).isEqualTo("40 ~ 55%");
     assertThat(result.scoreBreakdown().s6_rentBurden()).isEqualByComparingTo("-20");
+    assertThat(result.dynamicMetrics().traffic()).isEqualByComparingTo("4");
+    assertThat(result.dataSources()).containsExactly("source");
+    assertThat(result.fallbackUsed()).isTrue();
     server.verify();
   }
 
@@ -96,22 +99,15 @@ class RestClientAnalysisLambdaClientTest {
         .expect(
             once(),
             requestTo(
-                "https://profit.example/dev/?industry=food&region=gangnam"
-                    + "&area=30&invest=5000&rent=300&premium=2000&staff=3"))
+                "https://profit.example/dev/profit?storeName=star&industry=food&region=gangnam&area=30"
+                    + "&invest=5000&rent=300&premium=2000&staff=3&THSMON_SELNG_AMT=3120000000"
+                    + "&storeCountInTrdar=104&guAvgSalesAmt=3500000&cityAvgSalesAmt=2900000"
+                    + "&storeZoneOne=100&storeListInArea=300&storeListInRadius=50"
+                    + "&competitorCount=18&fallbackUsed=false&dataSources=%5B%22source%22%5D"))
         .andExpect(header("x-api-key", "profit-key"))
         .andRespond(withStatus(HttpStatus.BAD_GATEWAY));
 
-    assertThatThrownBy(
-            () ->
-                client.requestProfit(
-                    new ProfitAnalysisLambdaCommand(
-                        "food",
-                        "gangnam",
-                        new BigDecimal("30"),
-                        new BigDecimal("5000"),
-                        new BigDecimal("300"),
-                        new BigDecimal("2000"),
-                        3)))
+    assertThatThrownBy(() -> client.requestProfit(profitCommand()))
         .isInstanceOf(ApplicationException.class);
 
     server.verify();
@@ -119,19 +115,48 @@ class RestClientAnalysisLambdaClientTest {
 
   private SurvivalAnalysisLambdaCommand survivalCommand() {
     return new SurvivalAnalysisLambdaCommand(
-        "gangnam",
+        "star",
         "cafe",
+        "gangnam",
         new BigDecimal("40"),
+        new BigDecimal("8000"),
         new BigDecimal("250"),
         new BigDecimal("2000"),
-        new BigDecimal("4"),
-        new BigDecimal("3"),
-        new BigDecimal("4"),
-        new BigDecimal("2"),
-        new BigDecimal("4"),
-        new BigDecimal("2"),
-        "transfer",
-        new BigDecimal("4200"));
+        3,
+        3120000000L,
+        104,
+        new BigDecimal("5.2"),
+        42,
+        new BigDecimal("8.0"),
+        14000,
+        new BigDecimal("68"),
+        new BigDecimal("120"),
+        new BigDecimal("1500"),
+        new BigDecimal("180"),
+        true,
+        java.util.List.of("source"));
+  }
+
+  private ProfitAnalysisLambdaCommand profitCommand() {
+    return new ProfitAnalysisLambdaCommand(
+        "star",
+        "food",
+        "gangnam",
+        new BigDecimal("30"),
+        new BigDecimal("5000"),
+        new BigDecimal("300"),
+        new BigDecimal("2000"),
+        3,
+        3120000000L,
+        104,
+        new BigDecimal("3500000"),
+        new BigDecimal("2900000"),
+        100,
+        300,
+        50,
+        18,
+        false,
+        java.util.List.of("source"));
   }
 
   private String profitResponseJson() {
@@ -154,6 +179,14 @@ class RestClientAnalysisLambdaClientTest {
             "fixedOverheadRate": 8,
             "staffCostPerPerson": 250
           },
+          "dynamicMetrics": {
+            "baseRevenue": 80,
+            "regionMultiplier": 1.3,
+            "storeMarketFactor": 1.18,
+            "avgSalesAmt": 3000,
+            "competitorCount": 18,
+            "competitorDensity": 0.45
+          },
           "result": {
             "monthlyRev": 3120,
             "staffCost": 750,
@@ -169,7 +202,10 @@ class RestClientAnalysisLambdaClientTest {
             "totalInvest": 7000.0,
             "paybackMonths": 14,
             "propertyScore": 81
-          }
+          },
+          "dataSources": ["source"],
+          "warnings": [],
+          "fallbackUsed": false
         }
         """;
   }
@@ -199,6 +235,17 @@ class RestClientAnalysisLambdaClientTest {
             "vitalityScore": 62,
             "stabilityIndex": 75
           },
+          "dynamicMetrics": {
+            "avgSalesAmt": 3000,
+            "avgSales": 3,
+            "salesGrowth": 4,
+            "density": 3,
+            "vacancy": 2,
+            "traffic": 4,
+            "churn": 1,
+            "closureRate": 8.0,
+            "newBusinessRate": 12.0
+          },
           "scoreBreakdown": {
             "s1_salesStability": 15,
             "s2_salesGrowth": 2,
@@ -215,7 +262,10 @@ class RestClientAnalysisLambdaClientTest {
             "grade": "caution",
             "survival1Year": "40 ~ 55%",
             "survival3Year": "20 ~ 35%"
-          }
+          },
+          "dataSources": ["source"],
+          "warnings": [],
+          "fallbackUsed": true
         }
         """;
   }

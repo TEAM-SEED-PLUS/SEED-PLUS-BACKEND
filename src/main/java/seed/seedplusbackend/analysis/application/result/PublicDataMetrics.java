@@ -1,17 +1,9 @@
-package seed.seedplusbackend.analysis.application.command;
+package seed.seedplusbackend.analysis.application.result;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-public record ProfitAnalysisLambdaCommand(
-    String storeName,
-    String industry,
-    String region,
-    BigDecimal area,
-    BigDecimal invest,
-    BigDecimal rent,
-    BigDecimal premium,
-    Integer staff,
+public record PublicDataMetrics(
     Long monthlySalesAmount,
     Integer storeCountInCommercialArea,
     BigDecimal districtAverageSalesAmount,
@@ -20,5 +12,13 @@ public record ProfitAnalysisLambdaCommand(
     Integer storeListInArea,
     Integer storeListInRadius,
     Integer competitorCount,
+    BigDecimal salesGrowthRate,
+    Integer storeDensity,
+    BigDecimal vacancyRate,
+    Integer trafficIndex,
+    BigDecimal survivalRate,
+    BigDecimal closedBusinesses,
+    BigDecimal activeBusinesses,
+    BigDecimal newBusinesses,
     boolean fallbackUsed,
     List<String> dataSources) {}

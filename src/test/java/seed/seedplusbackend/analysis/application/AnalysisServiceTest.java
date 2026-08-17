@@ -18,7 +18,9 @@ import seed.seedplusbackend.analysis.application.command.ProfitAnalysisLambdaCom
 import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisCommand;
 import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisLambdaCommand;
 import seed.seedplusbackend.analysis.application.port.AnalysisLambdaClient;
+import seed.seedplusbackend.analysis.application.port.PublicDataResolver;
 import seed.seedplusbackend.analysis.application.result.ProfitAnalysisResult;
+import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 import seed.seedplusbackend.analysis.application.result.SurvivalAnalysisResult;
 import seed.seedplusbackend.global.cache.CaffeineCacheStore;
 import seed.seedplusbackend.global.error.ApplicationException;
@@ -41,6 +43,7 @@ class AnalysisServiceTest {
   @Mock private AnalysisLambdaClient analysisLambdaClient;
   @Mock private RegionRepository regionRepository;
   @Mock private IndustryRepository industryRepository;
+  @Mock private PublicDataResolver publicDataResolver;
 
   @BeforeEach
   void setUp() {
@@ -49,7 +52,13 @@ class AnalysisServiceTest {
             analysisLambdaClient,
             new CaffeineCacheStore(),
             new RegionResolver(regionRepository),
-            industryRepository);
+            industryRepository,
+            publicDataResolver);
+    org.mockito.Mockito.lenient()
+        .when(
+            publicDataResolver.resolve(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
+        .thenReturn(metrics());
   }
 
   @Test
@@ -57,6 +66,7 @@ class AnalysisServiceTest {
   void calculateProfit_returnsCachedResult_whenSameInputRequestedAgain() {
     ProfitAnalysisCommand firstCommand =
         new ProfitAnalysisCommand(
+            "스타카페",
             " I561 ",
             "1168010100",
             new BigDecimal("30.0"),
@@ -66,6 +76,7 @@ class AnalysisServiceTest {
             3);
     ProfitAnalysisCommand secondCommand =
         new ProfitAnalysisCommand(
+            "스타카페",
             "I561",
             "1168010100",
             new BigDecimal("30"),
@@ -92,6 +103,37 @@ class AnalysisServiceTest {
                     command != null
                         && "Cafe".equals(command.industry())
                         && "Seoul Gangnam-gu Yeoksam-dong".equals(command.region())));
+  }
+
+  @Test
+  @DisplayName("MVP 지역과 업종은 기준 데이터가 없어도 임시 매핑으로 계산한다")
+  void calculateProfit_usesMvpMapping_whenReferenceDataIsMissing() {
+    ProfitAnalysisCommand command =
+        new ProfitAnalysisCommand(
+            "강남스타카페",
+            "I101",
+            "1168010100",
+            new BigDecimal("40"),
+            new BigDecimal("8000"),
+            new BigDecimal("250"),
+            new BigDecimal("2000"),
+            3);
+    ProfitAnalysisResult result = profitResult();
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.empty());
+    given(industryRepository.findByIndustryCodeAndStatus("I101", IndustryStatus.ACTIVE))
+        .willReturn(java.util.Optional.empty());
+    given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(result);
+
+    assertThat(analysisService.calculateProfit(1L, command)).isSameAs(result);
+    verify(publicDataResolver).resolve("서울특별시 강남구 역삼동", "카페");
+    verify(analysisLambdaClient)
+        .requestProfit(
+            org.mockito.ArgumentMatchers.argThat(
+                lambdaCommand ->
+                    lambdaCommand != null
+                        && "서울특별시 강남구 역삼동".equals(lambdaCommand.region())
+                        && "카페".equals(lambdaCommand.industry())));
   }
 
   @Test
@@ -124,6 +166,7 @@ class AnalysisServiceTest {
   void calculateProfit_doesNotCacheFailure() {
     ProfitAnalysisCommand command =
         new ProfitAnalysisCommand(
+            "스타카페",
             "I561",
             "1168010100",
             new BigDecimal("30"),
@@ -150,19 +193,36 @@ class AnalysisServiceTest {
 
   private SurvivalAnalysisCommand survivalCommand() {
     return new SurvivalAnalysisCommand(
-        "1168010100",
+        "강남스타카페",
         "I562",
+        "1168010100",
         new BigDecimal("40"),
+        new BigDecimal("8000"),
         new BigDecimal("250"),
         new BigDecimal("2000"),
-        new BigDecimal("4"),
-        new BigDecimal("3"),
-        new BigDecimal("4"),
-        new BigDecimal("2"),
-        new BigDecimal("4"),
-        new BigDecimal("2"),
-        "transfer",
-        new BigDecimal("4200"));
+        3);
+  }
+
+  private PublicDataMetrics metrics() {
+    return new PublicDataMetrics(
+        3120000000L,
+        104,
+        new BigDecimal("3500000"),
+        new BigDecimal("2900000"),
+        100,
+        300,
+        50,
+        18,
+        new BigDecimal("5.2"),
+        42,
+        new BigDecimal("8"),
+        14000,
+        new BigDecimal("68"),
+        new BigDecimal("120"),
+        new BigDecimal("1500"),
+        new BigDecimal("180"),
+        true,
+        java.util.List.of("서울시 상권분석"));
   }
 
   private ProfitAnalysisResult profitResult() {
