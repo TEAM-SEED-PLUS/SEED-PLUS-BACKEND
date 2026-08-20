@@ -78,6 +78,9 @@ dependencies {
     // Cache
     implementation 'com.github.ben-manes.caffeine:caffeine'
 
+    // Monitoring (Prometheus scrape endpoint)
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
     // Hibernate Spatial (PostGIS Geography/Geometry 매핑)
     implementation 'org.hibernate.orm:hibernate-spatial'
     implementation 'org.locationtech.jts:jts-core:1.19.0'
