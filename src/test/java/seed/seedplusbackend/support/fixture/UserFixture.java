@@ -20,6 +20,8 @@ public final class UserFixture {
   public static User generalActiveUser(String phoneNumber, LocalDate birthDate) {
     return User.builder()
         .phoneNumber(phoneNumber)
+        .loginId(defaultLoginId(phoneNumber))
+        .email(defaultEmail(phoneNumber))
         .birthDate(birthDate)
         .password("password!@#")
         .name("일반 사용자")
@@ -30,5 +32,13 @@ public final class UserFixture {
 
   private static String defaultPhoneNumber(String seed) {
     return "010" + "%08d".formatted(Math.floorMod(seed.hashCode(), 100_000_000));
+  }
+
+  private static String defaultLoginId(String seed) {
+    return "user" + Integer.toUnsignedString(seed.hashCode());
+  }
+
+  private static String defaultEmail(String seed) {
+    return defaultLoginId(seed) + "@example.com";
   }
 }
