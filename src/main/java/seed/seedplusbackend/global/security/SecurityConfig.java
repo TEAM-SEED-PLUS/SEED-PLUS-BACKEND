@@ -73,6 +73,7 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         "/actuator/health",
+                        "/actuator/prometheus",
                         "/api/v1/auth/csrf",
                         "/api/v1/auth/signup",
                         "/api/v1/auth/login",
