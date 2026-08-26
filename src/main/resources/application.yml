@@ -1,6 +1,15 @@
 server:
   port: ${SERVER_PORT:8080}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_EXPOSURE:health,prometheus}
+  metrics:
+    tags:
+      application: seed-plus-backend
+
 spring:
   servlet:
     multipart:
@@ -25,7 +34,7 @@ spring:
     open-in-view: false
 
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:false}
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
