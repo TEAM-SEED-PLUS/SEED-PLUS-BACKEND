@@ -27,7 +27,7 @@ import seed.seedplusbackend.support.RepositoryTest;
 @DisplayName("JdbcPublicDataResolver")
 class JdbcPublicDataResolverTest extends AbstractPostgresContainerTest {
 
-  private static final String REGION_CODE = "1168010100";
+  private static final String REGION_CODE = "9999999998";
   private static final String INDUSTRY_CODE = "Q12A01";
 
   @Autowired private JdbcTemplate jdbcTemplate;
