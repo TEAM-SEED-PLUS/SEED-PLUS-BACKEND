@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record SeoulCommercialEstimatedSalesApiResponse(
-    @JsonProperty("VwsmTrdarSelngQq") Body body) {
+    @JsonProperty("VwsmTrdarSelngQq") Body body, @JsonProperty("RESULT") Result result) {
 
   public record Body(
       @JsonProperty("list_total_count") Integer totalCount,

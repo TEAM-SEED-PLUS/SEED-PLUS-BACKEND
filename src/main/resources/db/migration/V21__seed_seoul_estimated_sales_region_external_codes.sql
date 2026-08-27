@@ -2361,4 +2361,3 @@ FROM source_data
 WHERE evidence_store_count > 0
 ON CONFLICT ON CONSTRAINT uq_region_external_code_mapping
 DO NOTHING;
-
