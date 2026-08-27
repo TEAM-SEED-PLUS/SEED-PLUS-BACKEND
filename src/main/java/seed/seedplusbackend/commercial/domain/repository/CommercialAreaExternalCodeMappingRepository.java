@@ -10,4 +10,7 @@ public interface CommercialAreaExternalCodeMappingRepository {
 
   List<CommercialAreaExternalCodeMapping> findAllByCommercialAreaIdAndSource(
       Long commercialAreaId, ExternalDataSource source);
+
+  List<CommercialAreaExternalCodeMapping> findAllByRegionIdAndSource(
+      Long regionId, ExternalDataSource source);
 }
