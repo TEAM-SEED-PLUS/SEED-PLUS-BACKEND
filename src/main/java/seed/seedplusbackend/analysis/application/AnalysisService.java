@@ -24,11 +24,6 @@ import seed.seedplusbackend.region.application.RegionResolver;
 @RequiredArgsConstructor
 public class AnalysisService {
 
-  private static final String MVP_REGION_CODE = "1168010100";
-  private static final String MVP_REGION_NAME = "서울특별시 강남구 역삼동";
-  private static final String MVP_INDUSTRY_CODE = "I101";
-  private static final String MVP_INDUSTRY_NAME = "카페";
-
   private final AnalysisLambdaClient analysisLambdaClient;
   private final RegionResolver regionResolver;
   private final IndustryRepository industryRepository;
@@ -84,7 +79,8 @@ public class AnalysisService {
   private ProfitAnalysisLambdaCommand toLambda(ProfitAnalysisCommand command) {
     String regionName = resolveRegionName(command.regionCode());
     String industryName = resolveIndustryName(command.industryCode());
-    PublicDataMetrics metrics = publicDataResolver.resolve(regionName, industryName);
+    PublicDataMetrics metrics =
+        publicDataResolver.resolve(command.regionCode(), command.industryCode());
     return new ProfitAnalysisLambdaCommand(
         command.storeName(),
         industryName,
@@ -109,7 +105,8 @@ public class AnalysisService {
   private SurvivalAnalysisLambdaCommand toLambda(SurvivalAnalysisCommand command) {
     String regionName = resolveRegionName(command.regionCode());
     String industryName = resolveIndustryName(command.industryCode());
-    PublicDataMetrics metrics = publicDataResolver.resolve(regionName, industryName);
+    PublicDataMetrics metrics =
+        publicDataResolver.resolve(command.regionCode(), command.industryCode());
     return new SurvivalAnalysisLambdaCommand(
         command.storeName(),
         industryName,
@@ -137,24 +134,10 @@ public class AnalysisService {
     return industryRepository
         .findByIndustryCodeAndStatus(industryCode, IndustryStatus.ACTIVE)
         .map(industry -> industry.getName())
-        .orElseGet(
-            () -> {
-              if (MVP_INDUSTRY_CODE.equals(industryCode)) {
-                return MVP_INDUSTRY_NAME;
-              }
-              throw new ApplicationException(ErrorCode.NOT_FOUND_INDUSTRY);
-            });
+        .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_INDUSTRY));
   }
 
   private String resolveRegionName(String regionCode) {
-    try {
-      return regionResolver.resolveLegalDongName(regionCode);
-    } catch (ApplicationException exception) {
-      if (exception.getErrorCode() == ErrorCode.NOT_FOUND_REGION
-          && MVP_REGION_CODE.equals(regionCode)) {
-        return MVP_REGION_NAME;
-      }
-      throw exception;
-    }
+    return regionResolver.resolveLegalDongName(regionCode);
   }
 }

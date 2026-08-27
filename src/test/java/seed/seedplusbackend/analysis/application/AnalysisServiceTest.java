@@ -122,8 +122,8 @@ class AnalysisServiceTest {
   }
 
   @Test
-  @DisplayName("MVP 지역과 업종은 기준 데이터가 없어도 임시 매핑으로 계산한다")
-  void calculateProfit_usesMvpMapping_whenReferenceDataIsMissing() {
+  @DisplayName("지역 기준 데이터가 없으면 계산하지 않는다")
+  void calculateProfit_rejectsMissingRegion() {
     ProfitAnalysisCommand command =
         new ProfitAnalysisCommand(
             "강남스타카페",
@@ -134,22 +134,41 @@ class AnalysisServiceTest {
             new BigDecimal("250"),
             new BigDecimal("2000"),
             3);
-    ProfitAnalysisResult result = profitResult();
     given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
         .willReturn(java.util.Optional.empty());
+
+    assertThatThrownBy(() -> analysisService.calculateProfit(1L, command))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.NOT_FOUND_REGION);
+    verify(publicDataResolver, never()).resolve(anyString(), anyString());
+    verify(analysisLambdaClient, never()).requestProfit(anyProfitLambdaCommand());
+  }
+
+  @Test
+  @DisplayName("활성 업종 기준 데이터가 없으면 계산하지 않는다")
+  void calculateProfit_rejectsMissingIndustry() {
+    ProfitAnalysisCommand command =
+        new ProfitAnalysisCommand(
+            "강남스타카페",
+            "I101",
+            "1168010100",
+            new BigDecimal("40"),
+            new BigDecimal("8000"),
+            new BigDecimal("250"),
+            new BigDecimal("2000"),
+            3);
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
     given(industryRepository.findByIndustryCodeAndStatus("I101", IndustryStatus.ACTIVE))
         .willReturn(java.util.Optional.empty());
-    given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(result);
 
-    assertThat(analysisService.calculateProfit(1L, command)).isSameAs(result);
-    verify(publicDataResolver).resolve("서울특별시 강남구 역삼동", "카페");
-    verify(analysisLambdaClient)
-        .requestProfit(
-            org.mockito.ArgumentMatchers.argThat(
-                lambdaCommand ->
-                    lambdaCommand != null
-                        && "서울특별시 강남구 역삼동".equals(lambdaCommand.region())
-                        && "카페".equals(lambdaCommand.industry())));
+    assertThatThrownBy(() -> analysisService.calculateProfit(1L, command))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.NOT_FOUND_INDUSTRY);
+    verify(publicDataResolver, never()).resolve(anyString(), anyString());
+    verify(analysisLambdaClient, never()).requestProfit(anyProfitLambdaCommand());
   }
 
   @Test
