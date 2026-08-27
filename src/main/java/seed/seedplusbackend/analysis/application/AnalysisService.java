@@ -38,21 +38,35 @@ public class AnalysisService {
   public ProfitAnalysisResult calculateProfit(Long userId, ProfitAnalysisCommand command) {
     validateAuthenticated(userId);
     collectPublicData(
-        userId, AnalysisCollectionType.PROFIT, command.regionCode(), command.industryCode());
+        userId,
+        AnalysisCollectionType.PROFIT,
+        command.regionCode(),
+        command.industryCode(),
+        command.collectionRunId());
     return analysisLambdaClient.requestProfit(toLambda(command));
   }
 
   public SurvivalAnalysisResult calculateSurvival(Long userId, SurvivalAnalysisCommand command) {
     validateAuthenticated(userId);
     collectPublicData(
-        userId, AnalysisCollectionType.SURVIVAL, command.regionCode(), command.industryCode());
+        userId,
+        AnalysisCollectionType.SURVIVAL,
+        command.regionCode(),
+        command.industryCode(),
+        command.collectionRunId());
     return analysisLambdaClient.requestSurvival(toLambda(command));
   }
 
   private void collectPublicData(
-      Long userId, AnalysisCollectionType type, String regionCode, String industryCode) {
+      Long userId,
+      AnalysisCollectionType type,
+      String regionCode,
+      String industryCode,
+      Long collectionRunId) {
     AnalysisDataCollectionResult result =
-        collectionCoordinator.collect(userId, type, regionCode, industryCode);
+        collectionRunId == null
+            ? collectionCoordinator.collect(userId, type, regionCode, industryCode)
+            : collectionCoordinator.retry(userId, collectionRunId, type, regionCode, industryCode);
     if (result.status() != AnalysisCollectionRunStatus.COMPLETED) {
       throw new ApplicationException(
           ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED,

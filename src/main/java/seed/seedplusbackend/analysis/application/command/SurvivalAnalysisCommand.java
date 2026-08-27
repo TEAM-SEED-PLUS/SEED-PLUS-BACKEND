@@ -10,7 +10,20 @@ public record SurvivalAnalysisCommand(
     BigDecimal invest,
     BigDecimal rent,
     BigDecimal premium,
-    Integer staff) {
+    Integer staff,
+    Long collectionRunId) {
+
+  public SurvivalAnalysisCommand(
+      String storeName,
+      String industryCode,
+      String regionCode,
+      BigDecimal area,
+      BigDecimal invest,
+      BigDecimal rent,
+      BigDecimal premium,
+      Integer staff) {
+    this(storeName, industryCode, regionCode, area, invest, rent, premium, staff, null);
+  }
 
   public SurvivalAnalysisCommand {
     storeName = normalize(storeName);

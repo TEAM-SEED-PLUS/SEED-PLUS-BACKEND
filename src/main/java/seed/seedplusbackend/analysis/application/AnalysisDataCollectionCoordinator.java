@@ -39,7 +39,12 @@ public class AnalysisDataCollectionCoordinator {
     return collectionService.collect(run.getId(), commands);
   }
 
-  public AnalysisDataCollectionResult retry(Long userId, Long runId) {
+  public AnalysisDataCollectionResult retry(
+      Long userId,
+      Long runId,
+      AnalysisCollectionType analysisType,
+      String regionCode,
+      String industryCode) {
     AnalysisCollectionRun run =
         runRepository
             .findByIdAndUserId(runId, userId)
@@ -48,10 +53,24 @@ public class AnalysisDataCollectionCoordinator {
                     new ApplicationException(
                         ErrorCode.RESOURCE_NOT_FOUND,
                         "analysisCollectionRunId=%s".formatted(runId)));
+    validateRetryCondition(run, analysisType, regionCode, industryCode);
     AnalysisCollectionTarget target =
         targetResolver.resolve(run.getRegionCode(), run.getIndustryCode());
     List<CommercialDataCollectCommand> commands = commandFactory.create(target);
 
     return collectionService.collect(runId, commands);
+  }
+
+  private void validateRetryCondition(
+      AnalysisCollectionRun run,
+      AnalysisCollectionType analysisType,
+      String regionCode,
+      String industryCode) {
+    if (run.getAnalysisType() != analysisType
+        || !run.getRegionCode().equals(regionCode)
+        || !run.getIndustryCode().equals(industryCode)) {
+      throw new ApplicationException(
+          ErrorCode.INVALID_REQUEST, "재시도 요청의 분석 유형, 지역 또는 업종이 기존 수집 실행과 일치하지 않습니다.");
+    }
   }
 }

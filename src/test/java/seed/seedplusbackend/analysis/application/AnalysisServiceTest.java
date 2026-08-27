@@ -239,6 +239,37 @@ class AnalysisServiceTest {
     verify(analysisLambdaClient, never()).requestProfit(anyProfitLambdaCommand());
   }
 
+  @Test
+  @DisplayName("수집 실행 ID가 있으면 실패 작업을 재시도한 뒤 수익률을 계산한다")
+  void calculateProfit_retriesCollectionRunBeforeAnalysis() {
+    ProfitAnalysisCommand command =
+        new ProfitAnalysisCommand(
+            "스타카페",
+            "I561",
+            "1168010100",
+            new BigDecimal("30"),
+            new BigDecimal("5000"),
+            new BigDecimal("300"),
+            new BigDecimal("2000"),
+            3,
+            7L);
+    ProfitAnalysisResult result = profitResult();
+    given(collectionCoordinator.retry(1L, 7L, AnalysisCollectionType.PROFIT, "1168010100", "I561"))
+        .willReturn(
+            new AnalysisDataCollectionResult(
+                7L, AnalysisCollectionRunStatus.COMPLETED, java.util.List.of()));
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
+    given(industryRepository.findByIndustryCodeAndStatus("I561", IndustryStatus.ACTIVE))
+        .willReturn(java.util.Optional.of(industry("I561", "Cafe")));
+    given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(result);
+
+    assertThat(analysisService.calculateProfit(1L, command)).isSameAs(result);
+    verify(collectionCoordinator, never())
+        .collect(1L, AnalysisCollectionType.PROFIT, "1168010100", "I561");
+    verify(analysisLambdaClient).requestProfit(anyProfitLambdaCommand());
+  }
+
   private SurvivalAnalysisCommand survivalCommand() {
     return new SurvivalAnalysisCommand(
         "강남스타카페",

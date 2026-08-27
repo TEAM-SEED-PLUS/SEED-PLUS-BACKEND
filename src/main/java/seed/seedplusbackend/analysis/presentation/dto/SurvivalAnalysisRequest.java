@@ -19,10 +19,12 @@ public record SurvivalAnalysisRequest(
     @Schema(example = "250") @NotNull @PositiveOrZero BigDecimal rent,
     @Schema(example = "8000") @NotNull @PositiveOrZero BigDecimal invest,
     @Schema(example = "2000") @NotNull @PositiveOrZero BigDecimal premium,
-    @Schema(example = "3") @NotNull @PositiveOrZero Integer staff) {
+    @Schema(example = "3") @NotNull @PositiveOrZero Integer staff,
+    @Schema(description = "수집 실패 후 재시도할 실행 ID. 최초 요청에서는 생략합니다.", example = "7") @Positive
+        Long collectionRunId) {
 
   public SurvivalAnalysisCommand toCommand() {
     return new SurvivalAnalysisCommand(
-        storeName, industryCode, regionCode, area, invest, rent, premium, staff);
+        storeName, industryCode, regionCode, area, invest, rent, premium, staff, collectionRunId);
   }
 }

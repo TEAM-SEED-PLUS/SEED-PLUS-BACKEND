@@ -10,7 +10,20 @@ public record ProfitAnalysisCommand(
     BigDecimal invest,
     BigDecimal rent,
     BigDecimal premium,
-    Integer staff) {
+    Integer staff,
+    Long collectionRunId) {
+
+  public ProfitAnalysisCommand(
+      String storeName,
+      String industryCode,
+      String regionCode,
+      BigDecimal area,
+      BigDecimal invest,
+      BigDecimal rent,
+      BigDecimal premium,
+      Integer staff) {
+    this(storeName, industryCode, regionCode, area, invest, rent, premium, staff, null);
+  }
 
   public ProfitAnalysisCommand {
     storeName = normalize(storeName);

@@ -120,7 +120,9 @@ class AnalysisDataCollectionCoordinatorTest {
     given(commandFactory.create(target)).willReturn(commands);
     given(collectionService.collect(RUN_ID, commands)).willReturn(expected);
 
-    AnalysisDataCollectionResult result = coordinator().retry(USER_ID, RUN_ID);
+    AnalysisDataCollectionResult result =
+        coordinator()
+            .retry(USER_ID, RUN_ID, AnalysisCollectionType.SURVIVAL, REGION_CODE, INDUSTRY_CODE);
 
     assertThat(result).isSameAs(expected);
     verify(collectionService).collect(RUN_ID, commands);
@@ -132,11 +134,44 @@ class AnalysisDataCollectionCoordinatorTest {
   void rejectsRetryForUnownedRun() {
     given(runRepository.findByIdAndUserId(RUN_ID, USER_ID)).willReturn(Optional.empty());
 
-    assertThatThrownBy(() -> coordinator().retry(USER_ID, RUN_ID))
+    assertThatThrownBy(
+            () ->
+                coordinator()
+                    .retry(
+                        USER_ID,
+                        RUN_ID,
+                        AnalysisCollectionType.SURVIVAL,
+                        REGION_CODE,
+                        INDUSTRY_CODE))
         .isInstanceOf(ApplicationException.class)
         .hasMessageContaining(String.valueOf(RUN_ID))
         .extracting("errorCode")
         .isEqualTo(ErrorCode.RESOURCE_NOT_FOUND);
+    verify(targetResolver, never()).resolve(any(), any());
+    verify(collectionService, never()).collect(any(), any());
+  }
+
+  @Test
+  @DisplayName("기존 실행과 분석 조건이 다른 재시도 요청은 거부한다")
+  void rejectsRetryWithDifferentCondition() {
+    User user = UserFixture.generalActiveUser("collection-condition@test.com");
+    AnalysisCollectionRun run =
+        AnalysisCollectionRun.create(
+            user, AnalysisCollectionType.PROFIT, REGION_CODE, INDUSTRY_CODE);
+    given(runRepository.findByIdAndUserId(RUN_ID, USER_ID)).willReturn(Optional.of(run));
+
+    assertThatThrownBy(
+            () ->
+                coordinator()
+                    .retry(
+                        USER_ID,
+                        RUN_ID,
+                        AnalysisCollectionType.SURVIVAL,
+                        REGION_CODE,
+                        INDUSTRY_CODE))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.INVALID_REQUEST);
     verify(targetResolver, never()).resolve(any(), any());
     verify(collectionService, never()).collect(any(), any());
   }

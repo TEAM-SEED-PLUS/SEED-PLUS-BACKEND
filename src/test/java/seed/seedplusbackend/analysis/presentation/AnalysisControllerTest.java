@@ -85,7 +85,8 @@ class AnalysisControllerTest {
                         && "I561".equals(command.industryCode())
                         && "1168010100".equals(command.regionCode())
                         && new BigDecimal("30").compareTo(command.area()) == 0
-                        && Integer.valueOf(3).equals(command.staff())));
+                        && Integer.valueOf(3).equals(command.staff())
+                        && Long.valueOf(7L).equals(command.collectionRunId())));
   }
 
   @Test
@@ -201,7 +202,8 @@ class AnalysisControllerTest {
           "invest": 5000,
           "rent": 300,
           "premium": 2000,
-          "staff": 3
+          "staff": 3,
+          "collectionRunId": 7
         }
         """;
   }

@@ -19,10 +19,12 @@ public record ProfitAnalysisRequest(
     @Schema(example = "5000") @NotNull @PositiveOrZero BigDecimal invest,
     @Schema(example = "300") @NotNull @PositiveOrZero BigDecimal rent,
     @Schema(example = "2000") @NotNull @PositiveOrZero BigDecimal premium,
-    @Schema(example = "3") @NotNull @PositiveOrZero Integer staff) {
+    @Schema(example = "3") @NotNull @PositiveOrZero Integer staff,
+    @Schema(description = "수집 실패 후 재시도할 실행 ID. 최초 요청에서는 생략합니다.", example = "7") @Positive
+        Long collectionRunId) {
 
   public ProfitAnalysisCommand toCommand() {
     return new ProfitAnalysisCommand(
-        storeName, industryCode, regionCode, area, invest, rent, premium, staff);
+        storeName, industryCode, regionCode, area, invest, rent, premium, staff, collectionRunId);
   }
 }
