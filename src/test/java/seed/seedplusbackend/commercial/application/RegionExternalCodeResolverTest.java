@@ -36,9 +36,8 @@ class RegionExternalCodeResolverTest {
     RegionExternalCodeMapping first = mapping("10118");
     RegionExternalCodeMapping second = mapping("10117");
     RegionExternalCodeMapping duplicated = mapping("10117");
-    given(region.getId()).willReturn(1L);
     given(regionResolver.resolveLegalDong(REGION_CODE)).willReturn(region);
-    given(externalCodeMappingRepository.findAllByRegionIdAndSource(1L, SOURCE))
+    given(externalCodeMappingRepository.findAllByRegionCodeAndSource(REGION_CODE, SOURCE))
         .willReturn(List.of(first, second, duplicated));
 
     assertThat(resolver().resolve(REGION_CODE, SOURCE)).containsExactly("10117", "10118");
@@ -48,9 +47,8 @@ class RegionExternalCodeResolverTest {
   @DisplayName("법정동에 연결된 외부 코드가 없으면 실패한다")
   void throwsWhenExternalCodeIsNotMapped() {
     Region region = mock(Region.class);
-    given(region.getId()).willReturn(1L);
     given(regionResolver.resolveLegalDong(REGION_CODE)).willReturn(region);
-    given(externalCodeMappingRepository.findAllByRegionIdAndSource(1L, SOURCE))
+    given(externalCodeMappingRepository.findAllByRegionCodeAndSource(REGION_CODE, SOURCE))
         .willReturn(List.of());
 
     assertThatThrownBy(() -> resolver().resolve(REGION_CODE, SOURCE))

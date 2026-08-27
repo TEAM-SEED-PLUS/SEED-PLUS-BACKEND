@@ -13,6 +13,6 @@ public interface RegionExternalCodeMappingJpaRepository
   <S extends RegionExternalCodeMapping> S save(S mapping);
 
   @Override
-  List<RegionExternalCodeMapping> findAllByRegionIdAndSource(
-      Long regionId, ExternalDataSource source);
+  List<RegionExternalCodeMapping> findAllByRegionCodeAndSource(
+      String regionCode, ExternalDataSource source);
 }

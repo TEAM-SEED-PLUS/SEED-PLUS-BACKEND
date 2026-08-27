@@ -8,6 +8,6 @@ public interface RegionExternalCodeMappingRepository {
 
   <S extends RegionExternalCodeMapping> S save(S mapping);
 
-  List<RegionExternalCodeMapping> findAllByRegionIdAndSource(
-      Long regionId, ExternalDataSource source);
+  List<RegionExternalCodeMapping> findAllByRegionCodeAndSource(
+      String regionCode, ExternalDataSource source);
 }

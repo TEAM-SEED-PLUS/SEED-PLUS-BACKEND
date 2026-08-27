@@ -10,7 +10,6 @@ import seed.seedplusbackend.commercial.domain.repository.RegionExternalCodeMappi
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.region.application.RegionResolver;
-import seed.seedplusbackend.region.domain.entity.Region;
 
 @Component
 @RequiredArgsConstructor
@@ -21,9 +20,9 @@ public class RegionExternalCodeResolver {
 
   @Transactional(readOnly = true)
   public List<String> resolve(String regionCode, ExternalDataSource source) {
-    Region region = regionResolver.resolveLegalDong(regionCode);
+    regionResolver.resolveLegalDong(regionCode);
     List<String> externalCodes =
-        externalCodeMappingRepository.findAllByRegionIdAndSource(region.getId(), source).stream()
+        externalCodeMappingRepository.findAllByRegionCodeAndSource(regionCode, source).stream()
             .map(RegionExternalCodeMapping::getExternalCode)
             .distinct()
             .sorted()
