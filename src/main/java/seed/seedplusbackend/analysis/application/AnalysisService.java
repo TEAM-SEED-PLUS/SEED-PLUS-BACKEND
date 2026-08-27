@@ -1,8 +1,5 @@
 package seed.seedplusbackend.analysis.application;
 
-import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import seed.seedplusbackend.analysis.application.command.ProfitAnalysisCommand;
@@ -11,11 +8,12 @@ import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisCommand
 import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisLambdaCommand;
 import seed.seedplusbackend.analysis.application.port.AnalysisLambdaClient;
 import seed.seedplusbackend.analysis.application.port.PublicDataResolver;
+import seed.seedplusbackend.analysis.application.result.AnalysisDataCollectionResult;
 import seed.seedplusbackend.analysis.application.result.ProfitAnalysisResult;
 import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 import seed.seedplusbackend.analysis.application.result.SurvivalAnalysisResult;
-import seed.seedplusbackend.global.cache.CacheSpec;
-import seed.seedplusbackend.global.cache.CacheStore;
+import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionRunStatus;
+import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionType;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.industry.domain.entity.IndustryStatus;
@@ -32,38 +30,35 @@ public class AnalysisService {
   private static final String MVP_INDUSTRY_NAME = "카페";
 
   private final AnalysisLambdaClient analysisLambdaClient;
-  private final CacheStore cacheStore;
   private final RegionResolver regionResolver;
   private final IndustryRepository industryRepository;
   private final PublicDataResolver publicDataResolver;
+  private final AnalysisDataCollectionCoordinator collectionCoordinator;
 
   public ProfitAnalysisResult calculateProfit(Long userId, ProfitAnalysisCommand command) {
     validateAuthenticated(userId);
-    String cacheKey = profitCacheKey(command);
-
-    return cacheStore
-        .get(CacheSpec.ANALYSIS_PROFIT_RESULT, cacheKey, ProfitAnalysisResult.class)
-        .orElseGet(
-            () -> {
-              ProfitAnalysisResult result = analysisLambdaClient.requestProfit(toLambda(command));
-              cacheStore.put(CacheSpec.ANALYSIS_PROFIT_RESULT, cacheKey, result);
-              return result;
-            });
+    collectPublicData(
+        userId, AnalysisCollectionType.PROFIT, command.regionCode(), command.industryCode());
+    return analysisLambdaClient.requestProfit(toLambda(command));
   }
 
   public SurvivalAnalysisResult calculateSurvival(Long userId, SurvivalAnalysisCommand command) {
     validateAuthenticated(userId);
-    String cacheKey = survivalCacheKey(command);
+    collectPublicData(
+        userId, AnalysisCollectionType.SURVIVAL, command.regionCode(), command.industryCode());
+    return analysisLambdaClient.requestSurvival(toLambda(command));
+  }
 
-    return cacheStore
-        .get(CacheSpec.ANALYSIS_SURVIVAL_RESULT, cacheKey, SurvivalAnalysisResult.class)
-        .orElseGet(
-            () -> {
-              SurvivalAnalysisResult result =
-                  analysisLambdaClient.requestSurvival(toLambda(command));
-              cacheStore.put(CacheSpec.ANALYSIS_SURVIVAL_RESULT, cacheKey, result);
-              return result;
-            });
+  private void collectPublicData(
+      Long userId, AnalysisCollectionType type, String regionCode, String industryCode) {
+    AnalysisDataCollectionResult result =
+        collectionCoordinator.collect(userId, type, regionCode, industryCode);
+    if (result.status() != AnalysisCollectionRunStatus.COMPLETED) {
+      throw new ApplicationException(
+          ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED,
+          "runId=%s, failedDataTypes=%s"
+              .formatted(result.runId(), String.join(",", result.failedDataTypes())));
+    }
   }
 
   private void validateAuthenticated(Long userId) {
@@ -147,39 +142,5 @@ public class AnalysisService {
       }
       throw exception;
     }
-  }
-
-  private String profitCacheKey(ProfitAnalysisCommand command) {
-    return String.join(
-        "|",
-        "storeName=" + encode(command.storeName()),
-        "industryCode=" + encode(command.industryCode()),
-        "regionCode=" + encode(command.regionCode()),
-        "area=" + number(command.area()),
-        "invest=" + number(command.invest()),
-        "rent=" + number(command.rent()),
-        "premium=" + number(command.premium()),
-        "staff=" + command.staff());
-  }
-
-  private String survivalCacheKey(SurvivalAnalysisCommand command) {
-    return String.join(
-        "|",
-        "storeName=" + encode(command.storeName()),
-        "regionCode=" + encode(command.regionCode()),
-        "industryCode=" + encode(command.industryCode()),
-        "area=" + number(command.area()),
-        "invest=" + number(command.invest()),
-        "rent=" + number(command.rent()),
-        "premium=" + number(command.premium()),
-        "staff=" + command.staff());
-  }
-
-  private String number(BigDecimal value) {
-    return value.stripTrailingZeros().toPlainString();
-  }
-
-  private String encode(String value) {
-    return URLEncoder.encode(value, StandardCharsets.UTF_8);
   }
 }

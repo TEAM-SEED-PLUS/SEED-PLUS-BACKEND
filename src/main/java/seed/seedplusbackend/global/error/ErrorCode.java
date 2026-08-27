@@ -82,6 +82,7 @@ public enum ErrorCode {
   // 9100: Analysis
   ANALYSIS_FUNCTION_CALL_FAILED(
       HttpStatus.BAD_GATEWAY, 9100, "External analysis function call failed."),
+  ANALYSIS_DATA_COLLECTION_FAILED(HttpStatus.BAD_GATEWAY, 9101, "분석에 필요한 공공데이터 수집에 실패했습니다."),
 
   // 9200: External Open API
   SEOUL_OPEN_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 9200, "서울시 OpenAPI 요청에 실패했습니다."),
