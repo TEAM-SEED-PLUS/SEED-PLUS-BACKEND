@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.analysis.application.command.AnalysisCollectionTarget;
 import seed.seedplusbackend.analysis.application.command.SmallBusinessCollectionTarget;
+import seed.seedplusbackend.commercial.application.LatestEstimatedSalesQuarterResolver;
 import seed.seedplusbackend.commercial.application.RegionExternalCodeResolver;
 import seed.seedplusbackend.commercial.domain.entity.ExternalDataSource;
 import seed.seedplusbackend.industry.application.IndustryHierarchyResolver;
@@ -22,6 +23,7 @@ class AnalysisCollectionTargetResolverTest {
 
   @Mock private RegionExternalCodeResolver regionExternalCodeResolver;
   @Mock private IndustryHierarchyResolver industryHierarchyResolver;
+  @Mock private LatestEstimatedSalesQuarterResolver latestEstimatedSalesQuarterResolver;
 
   @Test
   @DisplayName("지역의 모든 외부 상권에 동일한 업종 계층을 적용한다")
@@ -30,8 +32,9 @@ class AnalysisCollectionTargetResolverTest {
         .willReturn(List.of("10117", "10118"));
     given(industryHierarchyResolver.resolve("G22199"))
         .willReturn(new IndustryHierarchyResult("G2", "G221", "G22199"));
+    given(latestEstimatedSalesQuarterResolver.resolve()).willReturn("20262");
 
-    AnalysisCollectionTarget target = resolver().resolve("1168010100", "G22199", "20262");
+    AnalysisCollectionTarget target = resolver().resolve("1168010100", "G22199");
 
     assertThat(target.estimatedSalesQuarter()).isEqualTo("20262");
     assertThat(target.smallBusinessTargets())
@@ -42,6 +45,6 @@ class AnalysisCollectionTargetResolverTest {
 
   private AnalysisCollectionTargetResolver resolver() {
     return new AnalysisCollectionTargetResolver(
-        regionExternalCodeResolver, industryHierarchyResolver);
+        regionExternalCodeResolver, industryHierarchyResolver, latestEstimatedSalesQuarterResolver);
   }
 }
