@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import seed.seedplusbackend.analysis.application.command.AnalysisCollectionTarget;
 import seed.seedplusbackend.analysis.application.command.SmallBusinessCollectionTarget;
-import seed.seedplusbackend.commercial.application.CommercialAreaExternalCodeResolver;
+import seed.seedplusbackend.commercial.application.RegionExternalCodeResolver;
 import seed.seedplusbackend.commercial.domain.entity.ExternalDataSource;
 import seed.seedplusbackend.industry.application.IndustryHierarchyResolver;
 import seed.seedplusbackend.industry.application.result.IndustryHierarchyResult;
@@ -14,14 +14,13 @@ import seed.seedplusbackend.industry.application.result.IndustryHierarchyResult;
 @RequiredArgsConstructor
 public class AnalysisCollectionTargetResolver {
 
-  private final CommercialAreaExternalCodeResolver commercialAreaExternalCodeResolver;
+  private final RegionExternalCodeResolver regionExternalCodeResolver;
   private final IndustryHierarchyResolver industryHierarchyResolver;
 
   public AnalysisCollectionTarget resolve(
       String regionCode, String industryCode, String estimatedSalesQuarter) {
     List<String> commercialAreaCodes =
-        commercialAreaExternalCodeResolver.resolve(
-            regionCode, ExternalDataSource.SMALL_BUSINESS_STORE);
+        regionExternalCodeResolver.resolve(regionCode, ExternalDataSource.SMALL_BUSINESS_STORE);
     IndustryHierarchyResult industryHierarchy = industryHierarchyResolver.resolve(industryCode);
 
     List<SmallBusinessCollectionTarget> smallBusinessTargets =

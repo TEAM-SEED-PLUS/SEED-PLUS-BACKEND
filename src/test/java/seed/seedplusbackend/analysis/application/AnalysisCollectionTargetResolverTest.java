@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import seed.seedplusbackend.analysis.application.command.AnalysisCollectionTarget;
 import seed.seedplusbackend.analysis.application.command.SmallBusinessCollectionTarget;
-import seed.seedplusbackend.commercial.application.CommercialAreaExternalCodeResolver;
+import seed.seedplusbackend.commercial.application.RegionExternalCodeResolver;
 import seed.seedplusbackend.commercial.domain.entity.ExternalDataSource;
 import seed.seedplusbackend.industry.application.IndustryHierarchyResolver;
 import seed.seedplusbackend.industry.application.result.IndustryHierarchyResult;
@@ -20,15 +20,13 @@ import seed.seedplusbackend.industry.application.result.IndustryHierarchyResult;
 @DisplayName("분석 데이터 수집 대상 조회기")
 class AnalysisCollectionTargetResolverTest {
 
-  @Mock private CommercialAreaExternalCodeResolver commercialAreaExternalCodeResolver;
+  @Mock private RegionExternalCodeResolver regionExternalCodeResolver;
   @Mock private IndustryHierarchyResolver industryHierarchyResolver;
 
   @Test
   @DisplayName("지역의 모든 외부 상권에 동일한 업종 계층을 적용한다")
   void resolvesCollectionTargetsForAllCommercialAreas() {
-    given(
-            commercialAreaExternalCodeResolver.resolve(
-                "1168010100", ExternalDataSource.SMALL_BUSINESS_STORE))
+    given(regionExternalCodeResolver.resolve("1168010100", ExternalDataSource.SMALL_BUSINESS_STORE))
         .willReturn(List.of("10117", "10118"));
     given(industryHierarchyResolver.resolve("G22199"))
         .willReturn(new IndustryHierarchyResult("G2", "G221", "G22199"));
@@ -44,6 +42,6 @@ class AnalysisCollectionTargetResolverTest {
 
   private AnalysisCollectionTargetResolver resolver() {
     return new AnalysisCollectionTargetResolver(
-        commercialAreaExternalCodeResolver, industryHierarchyResolver);
+        regionExternalCodeResolver, industryHierarchyResolver);
   }
 }
