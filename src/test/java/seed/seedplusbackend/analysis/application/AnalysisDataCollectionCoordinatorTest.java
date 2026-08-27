@@ -101,6 +101,46 @@ class AnalysisDataCollectionCoordinatorTest {
     verify(runRepository, never()).save(any());
   }
 
+  @Test
+  @DisplayName("기존 실행을 재시도하면 같은 실행 ID로 수집 명령을 다시 전달한다")
+  void retriesExistingRun() {
+    User user = UserFixture.generalActiveUser("collection-retry@test.com");
+    AnalysisCollectionRun run =
+        AnalysisCollectionRun.create(
+            user, AnalysisCollectionType.SURVIVAL, REGION_CODE, INDUSTRY_CODE);
+    AnalysisCollectionTarget target =
+        new AnalysisCollectionTarget(
+            "20262", List.of(new SmallBusinessCollectionTarget("10117", "G2", "G221", "G22199")));
+    List<CommercialDataCollectCommand> commands =
+        List.of(new CommercialEstimatedSalesCollectCommand("20262", true));
+    AnalysisDataCollectionResult expected =
+        new AnalysisDataCollectionResult(RUN_ID, AnalysisCollectionRunStatus.COMPLETED, List.of());
+    given(runRepository.findByIdAndUserId(RUN_ID, USER_ID)).willReturn(Optional.of(run));
+    given(targetResolver.resolve(REGION_CODE, INDUSTRY_CODE)).willReturn(target);
+    given(commandFactory.create(target)).willReturn(commands);
+    given(collectionService.collect(RUN_ID, commands)).willReturn(expected);
+
+    AnalysisDataCollectionResult result = coordinator().retry(USER_ID, RUN_ID);
+
+    assertThat(result).isSameAs(expected);
+    verify(collectionService).collect(RUN_ID, commands);
+    verify(runRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("사용자에게 속하지 않은 수집 실행은 재시도하지 않는다")
+  void rejectsRetryForUnownedRun() {
+    given(runRepository.findByIdAndUserId(RUN_ID, USER_ID)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> coordinator().retry(USER_ID, RUN_ID))
+        .isInstanceOf(ApplicationException.class)
+        .hasMessageContaining(String.valueOf(RUN_ID))
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.RESOURCE_NOT_FOUND);
+    verify(targetResolver, never()).resolve(any(), any());
+    verify(collectionService, never()).collect(any(), any());
+  }
+
   private AnalysisDataCollectionCoordinator coordinator() {
     return new AnalysisDataCollectionCoordinator(
         userRepository, runRepository, targetResolver, commandFactory, collectionService);

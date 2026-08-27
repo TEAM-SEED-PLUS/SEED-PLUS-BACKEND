@@ -8,4 +8,6 @@ public interface AnalysisCollectionRunRepository {
   <S extends AnalysisCollectionRun> S save(S run);
 
   Optional<AnalysisCollectionRun> findById(Long id);
+
+  Optional<AnalysisCollectionRun> findByIdAndUserId(Long runId, Long userId);
 }

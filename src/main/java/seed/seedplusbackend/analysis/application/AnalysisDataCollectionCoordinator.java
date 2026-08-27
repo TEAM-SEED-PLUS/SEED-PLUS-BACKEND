@@ -38,4 +38,20 @@ public class AnalysisDataCollectionCoordinator {
 
     return collectionService.collect(run.getId(), commands);
   }
+
+  public AnalysisDataCollectionResult retry(Long userId, Long runId) {
+    AnalysisCollectionRun run =
+        runRepository
+            .findByIdAndUserId(runId, userId)
+            .orElseThrow(
+                () ->
+                    new ApplicationException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        "analysisCollectionRunId=%s".formatted(runId)));
+    AnalysisCollectionTarget target =
+        targetResolver.resolve(run.getRegionCode(), run.getIndustryCode());
+    List<CommercialDataCollectCommand> commands = commandFactory.create(target);
+
+    return collectionService.collect(runId, commands);
+  }
 }
