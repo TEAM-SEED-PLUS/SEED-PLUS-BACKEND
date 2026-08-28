@@ -199,6 +199,65 @@ class AnalysisServiceTest {
   }
 
   @Test
+  @DisplayName("수익률 공공데이터가 없으면 명세의 fallback 값을 전달한다")
+  void calculateProfit_appliesFallbackValues() {
+    ProfitAnalysisCommand command =
+        new ProfitAnalysisCommand(
+            "스타카페",
+            "I561",
+            "1168010100",
+            new BigDecimal("30"),
+            new BigDecimal("5000"),
+            new BigDecimal("300"),
+            new BigDecimal("2000"),
+            3);
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
+    given(industryRepository.findByIndustryCodeAndStatus("I561", IndustryStatus.ACTIVE))
+        .willReturn(java.util.Optional.of(industry("I561", "Cafe")));
+    given(publicDataResolver.resolve("1168010100", "I561"))
+        .willReturn(metricsWithoutFallbackTargets());
+    given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(profitResult());
+
+    analysisService.calculateProfit(1L, command);
+
+    verify(analysisLambdaClient)
+        .requestProfit(
+            org.mockito.ArgumentMatchers.argThat(
+                lambdaCommand ->
+                    lambdaCommand.storeZoneOne() == 100
+                        && lambdaCommand.storeListInArea() == 300
+                        && lambdaCommand.storeListInRadius() == 50
+                        && lambdaCommand.fallbackUsed()));
+  }
+
+  @Test
+  @DisplayName("생존률 공공데이터가 없으면 명세의 fallback 값을 전달한다")
+  void calculateSurvival_appliesFallbackValues() {
+    SurvivalAnalysisCommand command = survivalCommand();
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
+    given(industryRepository.findByIndustryCodeAndStatus("I562", IndustryStatus.ACTIVE))
+        .willReturn(java.util.Optional.of(industry("I562", "Restaurant")));
+    given(publicDataResolver.resolve("1168010100", "I562"))
+        .willReturn(metricsWithoutFallbackTargets());
+    given(analysisLambdaClient.requestSurvival(anySurvivalLambdaCommand()))
+        .willReturn(survivalResult());
+
+    analysisService.calculateSurvival(1L, command);
+
+    verify(analysisLambdaClient)
+        .requestSurvival(
+            org.mockito.ArgumentMatchers.argThat(
+                lambdaCommand ->
+                    BigDecimal.ZERO.compareTo(lambdaCommand.salesGrowthRate()) == 0
+                        && lambdaCommand.storeDensity() == 40
+                        && new BigDecimal("8.0").compareTo(lambdaCommand.vacancyRate()) == 0
+                        && lambdaCommand.trafficIndex() == 14000
+                        && lambdaCommand.fallbackUsed()));
+  }
+
+  @Test
   @DisplayName("Lambda 호출 실패 후 다음 요청에서 다시 분석한다")
   void calculateProfit_retriesAnalysisOnNextRequestAfterLambdaFailure() {
     ProfitAnalysisCommand command =
@@ -320,6 +379,28 @@ class AnalysisServiceTest {
         new BigDecimal("1500"),
         new BigDecimal("180"),
         true,
+        java.util.List.of("서울시 상권분석"));
+  }
+
+  private PublicDataMetrics metricsWithoutFallbackTargets() {
+    return new PublicDataMetrics(
+        3120000000L,
+        104,
+        new BigDecimal("3500000"),
+        new BigDecimal("2900000"),
+        null,
+        null,
+        null,
+        18,
+        null,
+        null,
+        null,
+        null,
+        new BigDecimal("68"),
+        new BigDecimal("120"),
+        new BigDecimal("1500"),
+        new BigDecimal("180"),
+        false,
         java.util.List.of("서울시 상권분석"));
   }
 

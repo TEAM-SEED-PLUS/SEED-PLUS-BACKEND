@@ -12,6 +12,8 @@ import seed.seedplusbackend.analysis.application.result.AnalysisDataCollectionRe
 import seed.seedplusbackend.analysis.application.result.ProfitAnalysisResult;
 import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 import seed.seedplusbackend.analysis.application.result.SurvivalAnalysisResult;
+import seed.seedplusbackend.analysis.application.support.ProfitCalculatorFallback;
+import seed.seedplusbackend.analysis.application.support.SurvivalCalculatorFallback;
 import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionRunStatus;
 import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionType;
 import seed.seedplusbackend.global.error.ApplicationException;
@@ -81,6 +83,11 @@ public class AnalysisService {
     String industryName = resolveIndustryName(command.industryCode());
     PublicDataMetrics metrics =
         publicDataResolver.resolve(command.regionCode(), command.industryCode());
+    boolean fallbackUsed =
+        metrics.fallbackUsed()
+            || metrics.storeZoneOne() == null
+            || metrics.storeListInArea() == null
+            || metrics.storeListInRadius() == null;
     return new ProfitAnalysisLambdaCommand(
         command.storeName(),
         industryName,
@@ -94,11 +101,11 @@ public class AnalysisService {
         metrics.storeCountInCommercialArea(),
         metrics.districtAverageSalesAmount(),
         metrics.cityAverageSalesAmount(),
-        metrics.storeZoneOne(),
-        metrics.storeListInArea(),
-        metrics.storeListInRadius(),
+        valueOrDefault(metrics.storeZoneOne(), ProfitCalculatorFallback.STORE_ZONE_ONE),
+        valueOrDefault(metrics.storeListInArea(), ProfitCalculatorFallback.STORE_LIST_IN_AREA),
+        valueOrDefault(metrics.storeListInRadius(), ProfitCalculatorFallback.STORE_LIST_IN_RADIUS),
         metrics.competitorCount(),
-        metrics.fallbackUsed(),
+        fallbackUsed,
         metrics.dataSources());
   }
 
@@ -107,6 +114,12 @@ public class AnalysisService {
     String industryName = resolveIndustryName(command.industryCode());
     PublicDataMetrics metrics =
         publicDataResolver.resolve(command.regionCode(), command.industryCode());
+    boolean fallbackUsed =
+        metrics.fallbackUsed()
+            || metrics.salesGrowthRate() == null
+            || metrics.storeDensity() == null
+            || metrics.vacancyRate() == null
+            || metrics.trafficIndex() == null;
     return new SurvivalAnalysisLambdaCommand(
         command.storeName(),
         industryName,
@@ -118,16 +131,20 @@ public class AnalysisService {
         command.staff(),
         metrics.monthlySalesAmount(),
         metrics.storeCountInCommercialArea(),
-        metrics.salesGrowthRate(),
-        metrics.storeDensity(),
-        metrics.vacancyRate(),
-        metrics.trafficIndex(),
+        valueOrDefault(metrics.salesGrowthRate(), SurvivalCalculatorFallback.SALES_GROWTH_RATE),
+        valueOrDefault(metrics.storeDensity(), SurvivalCalculatorFallback.STORE_DENSITY),
+        valueOrDefault(metrics.vacancyRate(), SurvivalCalculatorFallback.VACANCY_RATE),
+        valueOrDefault(metrics.trafficIndex(), SurvivalCalculatorFallback.TRAFFIC_INDEX),
         metrics.survivalRate(),
         metrics.closedBusinesses(),
         metrics.activeBusinesses(),
         metrics.newBusinesses(),
-        metrics.fallbackUsed(),
+        fallbackUsed,
         metrics.dataSources());
+  }
+
+  private <T> T valueOrDefault(T value, T fallback) {
+    return value == null ? fallback : value;
   }
 
   private String resolveIndustryName(String industryCode) {
