@@ -26,7 +26,8 @@ public interface BuilderStoreBookmarkJpaRepository
         "builderStore",
         "builderStore.region",
         "builderStore.commercialArea",
-        "builderStore.industry"
+        "builderStore.industry",
+        "builderStore.industry.parentIndustry"
       })
   Optional<BuilderStoreBookmark> findByIdAndUser_Id(Long id, Long userId);
 
@@ -36,7 +37,8 @@ public interface BuilderStoreBookmarkJpaRepository
         "builderStore",
         "builderStore.region",
         "builderStore.commercialArea",
-        "builderStore.industry"
+        "builderStore.industry",
+        "builderStore.industry.parentIndustry"
       })
   Page<BuilderStoreBookmark> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 

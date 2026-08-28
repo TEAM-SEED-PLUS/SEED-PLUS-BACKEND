@@ -56,4 +56,21 @@ class AnalysisCollectionCommandFactoryTest {
 
     assertThat(commands).filteredOn(SmallBusinessStoreCollectCommand.class::isInstance).hasSize(1);
   }
+
+  @Test
+  @DisplayName("실시간 데이터를 제외하면 S-DoT 수집 명령을 생성하지 않는다")
+  void excludesRealtimeCommand() {
+    SmallBusinessCollectionTarget target =
+        new SmallBusinessCollectionTarget("9151", "Q", "Q12", "Q12A01");
+
+    List<CommercialDataCollectCommand> commands =
+        factory.createWithoutRealtime(new AnalysisCollectionTarget("20262", List.of(target)));
+
+    assertThat(commands)
+        .noneMatch(SeoulSdotFootTrafficCollectCommand.class::isInstance)
+        .anyMatch(CommercialEstimatedSalesCollectCommand.class::isInstance)
+        .anyMatch(SmallBusinessStoreCollectCommand.class::isInstance)
+        .anyMatch(KosisBusinessSurvivalCollectCommand.class::isInstance)
+        .anyMatch(KosisBusinessCountCollectCommand.class::isInstance);
+  }
 }

@@ -31,7 +31,7 @@ public class JdbcBuilderStoreBookmarkSnapshotResolver
           WHERE industry.industry_code = ?
             AND mapping.source = 'SEOUL_ESTIMATED_SALES'
         ), latest_sales AS (
-          SELECT sales.stdr_yyqu_cd, SUM(sales.thsmon_selng_amt) AS sales_amount
+          SELECT sales.stdr_yyqu_cd, CAST(SUM(sales.thsmon_selng_amt) AS BIGINT) AS sales_amount
           FROM commercial_estimated_sales sales
           WHERE sales.trdar_cd IN (SELECT external_code FROM sales_area_codes)
             AND sales.svc_induty_cd IN (SELECT external_code FROM sales_industry_codes)

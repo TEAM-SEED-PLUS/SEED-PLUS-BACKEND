@@ -45,27 +45,22 @@ public class BuilderStoreBookmarkService {
 
     AnalysisDataCollectionResult collectionResult =
         collectionRunId == null
-            ? collectionCoordinator.collect(
+            ? collectionCoordinator.collectWithoutRealtime(
                 userId, AnalysisCollectionType.PROFIT, regionCode, industryCode)
-            : collectionCoordinator.retry(
-                userId,
-                collectionRunId,
-                AnalysisCollectionType.PROFIT,
-                regionCode,
-                industryCode);
+            : collectionCoordinator.retryWithoutRealtime(
+                userId, collectionRunId, AnalysisCollectionType.PROFIT, regionCode, industryCode);
     if (collectionResult.status() != AnalysisCollectionRunStatus.COMPLETED) {
       throw new ApplicationException(
           ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED,
           "runId=%s, failedDataTypes=%s"
               .formatted(
-                  collectionResult.runId(),
-                  String.join(",", collectionResult.failedDataTypes())));
+                  collectionResult.runId(), String.join(",", collectionResult.failedDataTypes())));
     }
 
     BuilderStoreBookmarkSnapshot latest = resolveCurrent(bookmark);
     bookmark.applySnapshot(latest);
-    BuilderStoreBookmark saved = bookmarkRepository.save(bookmark);
-    return BuilderStoreBookmarkResult.of(saved, latest, collectionResult.runId());
+    bookmarkRepository.save(bookmark);
+    return BuilderStoreBookmarkResult.of(bookmark, latest, collectionResult.runId());
   }
 
   private BuilderStoreBookmarkSnapshot resolveCurrent(BuilderStoreBookmark bookmark) {

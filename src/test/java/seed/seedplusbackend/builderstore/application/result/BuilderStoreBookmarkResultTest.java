@@ -44,9 +44,7 @@ class BuilderStoreBookmarkResultTest {
 
     BuilderStoreBookmarkResult result =
         BuilderStoreBookmarkResult.of(
-            bookmark,
-            snapshot("20262", 2024, 2024, savedStoreTime, 2026, 2),
-            null);
+            bookmark, snapshot("20262", 2024, 2024, savedStoreTime, 2026, 2), null);
 
     assertThat(result.estimatedSalesUpdateAvailable()).isFalse();
     assertThat(result.otherDataUpdateAvailable()).isTrue();

@@ -18,6 +18,15 @@ public class AnalysisCollectionCommandFactory {
   private static final int KOSIS_LATEST_YEAR_COUNT = 3;
 
   public List<CommercialDataCollectCommand> create(AnalysisCollectionTarget target) {
+    return create(target, true);
+  }
+
+  public List<CommercialDataCollectCommand> createWithoutRealtime(AnalysisCollectionTarget target) {
+    return create(target, false);
+  }
+
+  private List<CommercialDataCollectCommand> create(
+      AnalysisCollectionTarget target, boolean includeRealtime) {
     List<CommercialDataCollectCommand> commands = new ArrayList<>();
     commands.add(new CommercialEstimatedSalesCollectCommand(target.estimatedSalesQuarter(), true));
     target.smallBusinessTargets().stream()
@@ -27,7 +36,9 @@ public class AnalysisCollectionCommandFactory {
     commands.add(
         new KosisBusinessSurvivalCollectCommand(null, null, KOSIS_LATEST_YEAR_COUNT, true));
     commands.add(new KosisBusinessCountCollectCommand(null, null, KOSIS_LATEST_YEAR_COUNT, true));
-    commands.add(new SeoulSdotFootTrafficCollectCommand(true));
+    if (includeRealtime) {
+      commands.add(new SeoulSdotFootTrafficCollectCommand(true));
+    }
     return List.copyOf(commands);
   }
 
