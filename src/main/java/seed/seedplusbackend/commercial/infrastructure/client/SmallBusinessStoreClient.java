@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriBuilder;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreQueryType;
 import seed.seedplusbackend.commercial.application.exception.SmallBusinessStoreApiRequestException;
 import seed.seedplusbackend.commercial.application.port.SmallBusinessStoreClientPort;
 import seed.seedplusbackend.commercial.application.result.SmallBusinessStorePageResult;
@@ -26,6 +27,7 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
 
   private static final String SUCCESS_CODE = "00";
   private static final String NO_DATA_CODE = "03";
+  private static final String STORE_LIST_IN_DONG_ENDPOINT = "storeListInDong";
   private final RestClient restClient;
   private final SmallBusinessStoreOpenApiProperties properties;
 
@@ -77,16 +79,25 @@ public class SmallBusinessStoreClient implements SmallBusinessStoreClientPort {
       int pageNumber,
       int numberOfRows) {
     builder
-        .pathSegment(properties.endpoint())
+        .pathSegment(endpoint(command.queryType()))
         .queryParam("serviceKey", "{serviceKey}")
         .queryParam("key", command.commercialAreaCode())
         .queryParam("numOfRows", numberOfRows)
         .queryParam("pageNo", pageNumber)
         .queryParam("type", properties.type());
+    if (command.queryType() == SmallBusinessStoreQueryType.SIGUNGU) {
+      builder.queryParam("divId", "signguCd");
+    }
     addQueryParam(builder, "indsLclsCd", command.largeIndustryCode());
     addQueryParam(builder, "indsMclsCd", command.mediumIndustryCode());
     addQueryParam(builder, "indsSclsCd", command.smallIndustryCode());
     return builder.build(decodeServiceKey(properties.serviceKey()));
+  }
+
+  private String endpoint(SmallBusinessStoreQueryType queryType) {
+    return queryType == SmallBusinessStoreQueryType.SIGUNGU
+        ? STORE_LIST_IN_DONG_ENDPOINT
+        : properties.endpoint();
   }
 
   private void addQueryParam(UriBuilder builder, String name, String value) {

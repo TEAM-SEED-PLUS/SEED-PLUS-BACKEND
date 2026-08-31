@@ -62,6 +62,7 @@ public class AnalysisCollectionCommandFactory {
         target.largeIndustryCode(),
         target.mediumIndustryCode(),
         target.smallIndustryCode(),
-        true);
+        true,
+        target.queryType());
   }
 }
