@@ -61,7 +61,7 @@ class AnalysisDataCollectionCoordinatorTest {
         new AnalysisDataCollectionResult(RUN_ID, AnalysisCollectionRunStatus.COMPLETED, List.of());
     given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
     given(targetResolver.resolve(REGION_CODE, INDUSTRY_CODE)).willReturn(target);
-    given(commandFactory.create(target)).willReturn(commands);
+    given(commandFactory.create(AnalysisCollectionType.PROFIT, target)).willReturn(commands);
     given(runRepository.save(any(AnalysisCollectionRun.class)))
         .willAnswer(
             invocation -> {
@@ -117,7 +117,7 @@ class AnalysisDataCollectionCoordinatorTest {
         new AnalysisDataCollectionResult(RUN_ID, AnalysisCollectionRunStatus.COMPLETED, List.of());
     given(runRepository.findByIdAndUserId(RUN_ID, USER_ID)).willReturn(Optional.of(run));
     given(targetResolver.resolve(REGION_CODE, INDUSTRY_CODE)).willReturn(target);
-    given(commandFactory.create(target)).willReturn(commands);
+    given(commandFactory.create(AnalysisCollectionType.SURVIVAL, target)).willReturn(commands);
     given(collectionService.collect(RUN_ID, commands)).willReturn(expected);
 
     AnalysisDataCollectionResult result =

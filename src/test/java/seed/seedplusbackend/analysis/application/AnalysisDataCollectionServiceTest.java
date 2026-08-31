@@ -38,6 +38,7 @@ class AnalysisDataCollectionServiceTest {
   @Mock private AnalysisCollectionRunRepository runRepository;
   @Mock private AnalysisCollectionTaskRepository taskRepository;
   @Mock private CommercialDataCollectService commercialDataCollectService;
+  @Mock private CommercialDataCollectionWaiter commercialDataCollectionWaiter;
 
   private AnalysisDataCollectionService service;
   private AnalysisCollectionRun run;
@@ -47,7 +48,10 @@ class AnalysisDataCollectionServiceTest {
   void setUp() {
     service =
         new AnalysisDataCollectionService(
-            runRepository, taskRepository, commercialDataCollectService);
+            runRepository,
+            taskRepository,
+            commercialDataCollectService,
+            commercialDataCollectionWaiter);
     run =
         AnalysisCollectionRun.create(
             UserFixture.generalActiveUser("collection-service@test.com"),
@@ -113,6 +117,20 @@ class AnalysisDataCollectionServiceTest {
     assertThat(result.status()).isEqualTo(AnalysisCollectionRunStatus.COMPLETED);
   }
 
+  @Test
+  @DisplayName("동일한 수집이 진행 중이면 완료될 때까지 기다린다")
+  void waitsForRunningCollection() {
+    CommercialDataCollectCommand sales = new CommercialEstimatedSalesCollectCommand("20262", true);
+    given(commercialDataCollectService.collect(sales)).willReturn(running(sales));
+    given(commercialDataCollectionWaiter.awaitCompletion(sales)).willReturn(completed(sales));
+
+    AnalysisDataCollectionResult result = service.collect(RUN_ID, List.of(sales));
+
+    verify(commercialDataCollectionWaiter).awaitCompletion(sales);
+    assertThat(result.status()).isEqualTo(AnalysisCollectionRunStatus.COMPLETED);
+    assertThat(result.failedDataTypes()).isEmpty();
+  }
+
   private AnalysisCollectionTask task(CommercialDataCollectCommand command) {
     return AnalysisCollectionTask.create(run, command.dataType().historyKey(), command.targetKey());
   }
@@ -130,5 +148,16 @@ class AnalysisDataCollectionServiceTest {
         false,
         CommercialDataCollectStatus.COMPLETED,
         "완료");
+  }
+
+  private CommercialDataCollectResult running(CommercialDataCollectCommand command) {
+    return new CommercialDataCollectResult(
+        command.dataType().historyKey(),
+        command.targetKey(),
+        0,
+        0,
+        true,
+        CommercialDataCollectStatus.RUNNING,
+        "진행 중");
   }
 }

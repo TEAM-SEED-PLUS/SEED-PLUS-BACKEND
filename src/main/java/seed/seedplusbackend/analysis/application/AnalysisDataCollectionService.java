@@ -22,6 +22,7 @@ public class AnalysisDataCollectionService {
   private final AnalysisCollectionRunRepository runRepository;
   private final AnalysisCollectionTaskRepository taskRepository;
   private final CommercialDataCollectService commercialDataCollectService;
+  private final CommercialDataCollectionWaiter commercialDataCollectionWaiter;
 
   public AnalysisDataCollectionResult collect(
       Long runId, List<? extends CommercialDataCollectCommand> commands) {
@@ -73,6 +74,9 @@ public class AnalysisDataCollectionService {
     taskRepository.save(task);
     try {
       CommercialDataCollectResult result = commercialDataCollectService.collect(command);
+      if (result.status() == CommercialDataCollectStatus.RUNNING) {
+        result = commercialDataCollectionWaiter.awaitCompletion(command);
+      }
       if (result.status() == CommercialDataCollectStatus.COMPLETED) {
         task.complete();
       } else {
