@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreCollectCommand;
+import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreQueryType;
 
 @DisplayName("소상공인 상가정보 API 클라이언트")
 class SmallBusinessStoreClientTest {
@@ -74,6 +75,23 @@ class SmallBusinessStoreClientTest {
             100);
 
     assertThat(uri.getRawQuery()).contains("serviceKey=abc%2Bdef%2Fghi%3D%3D");
+  }
+
+  @Test
+  @DisplayName("시군구 수집은 행정구역 단위 조회 URI를 만든다")
+  void buildUri_usesSigunguQuery() {
+    SmallBusinessStoreClient client = client("test-key");
+
+    URI uri =
+        client.buildUri(
+            new DefaultUriBuilderFactory("https://example.com").builder(),
+            new SmallBusinessStoreCollectCommand(
+                "11200", null, null, null, false, SmallBusinessStoreQueryType.SIGUNGU),
+            1,
+            100);
+
+    assertThat(uri.getPath()).endsWith("/storeListInDong");
+    assertThat(uri.getQuery()).contains("divId=signguCd", "key=11200");
   }
 
   private SmallBusinessStoreClient client(String serviceKey) {
