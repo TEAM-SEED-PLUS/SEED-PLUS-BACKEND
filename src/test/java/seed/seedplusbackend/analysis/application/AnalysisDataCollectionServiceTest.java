@@ -57,7 +57,7 @@ class AnalysisDataCollectionServiceTest {
             UserFixture.generalActiveUser("collection-service@test.com"),
             seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionType.SURVIVAL,
             "1168010100",
-            "I101");
+            "I21201");
     tasks = new HashMap<>();
     given(runRepository.findById(RUN_ID)).willReturn(Optional.of(run));
     given(runRepository.save(run)).willReturn(run);

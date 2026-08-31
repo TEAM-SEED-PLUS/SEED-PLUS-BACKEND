@@ -127,7 +127,7 @@ class AnalysisServiceTest {
     ProfitAnalysisCommand command =
         new ProfitAnalysisCommand(
             "강남스타카페",
-            "I101",
+            "I21201",
             "1168010100",
             new BigDecimal("40"),
             new BigDecimal("8000"),
@@ -151,7 +151,7 @@ class AnalysisServiceTest {
     ProfitAnalysisCommand command =
         new ProfitAnalysisCommand(
             "강남스타카페",
-            "I101",
+            "I21201",
             "1168010100",
             new BigDecimal("40"),
             new BigDecimal("8000"),
@@ -160,7 +160,7 @@ class AnalysisServiceTest {
             3);
     given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
         .willReturn(java.util.Optional.of(region()));
-    given(industryRepository.findByIndustryCodeAndStatus("I101", IndustryStatus.ACTIVE))
+    given(industryRepository.findByIndustryCodeAndStatus("I21201", IndustryStatus.ACTIVE))
         .willReturn(java.util.Optional.empty());
 
     assertThatThrownBy(() -> analysisService.calculateProfit(1L, command))
