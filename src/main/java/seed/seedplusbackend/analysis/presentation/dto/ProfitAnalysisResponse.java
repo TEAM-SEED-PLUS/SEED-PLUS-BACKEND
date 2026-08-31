@@ -1,19 +1,31 @@
 package seed.seedplusbackend.analysis.presentation.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 import seed.seedplusbackend.analysis.application.result.ProfitAnalysisResult;
 
 public record ProfitAnalysisResponse(
-    ProfitInputResponse input, ProfitAssumptionsResponse assumptions, ProfitResultResponse result) {
+    ProfitInputResponse input,
+    ProfitAssumptionsResponse assumptions,
+    ProfitDynamicMetricsResponse dynamicMetrics,
+    ProfitResultResponse result,
+    List<String> dataSources,
+    List<String> warnings,
+    Boolean fallbackUsed) {
 
   public static ProfitAnalysisResponse from(ProfitAnalysisResult result) {
     return new ProfitAnalysisResponse(
         ProfitInputResponse.from(result.input()),
         ProfitAssumptionsResponse.from(result.assumptions()),
-        ProfitResultResponse.from(result.result()));
+        ProfitDynamicMetricsResponse.from(result.dynamicMetrics()),
+        ProfitResultResponse.from(result.result()),
+        result.dataSources(),
+        result.warnings(),
+        result.fallbackUsed());
   }
 
   public record ProfitInputResponse(
+      String storeName,
       String industry,
       String region,
       BigDecimal area,
@@ -24,6 +36,7 @@ public record ProfitAnalysisResponse(
 
     private static ProfitInputResponse from(ProfitAnalysisResult.ProfitInput input) {
       return new ProfitInputResponse(
+          input.storeName(),
           input.industry(),
           input.region(),
           input.area(),
@@ -31,6 +44,27 @@ public record ProfitAnalysisResponse(
           input.rent(),
           input.premium(),
           input.staff());
+    }
+  }
+
+  public record ProfitDynamicMetricsResponse(
+      BigDecimal baseRevenue,
+      BigDecimal regionMultiplier,
+      BigDecimal storeMarketFactor,
+      BigDecimal avgSalesAmt,
+      BigDecimal competitorCount,
+      BigDecimal competitorDensity) {
+
+    private static ProfitDynamicMetricsResponse from(
+        ProfitAnalysisResult.ProfitDynamicMetrics metrics) {
+      if (metrics == null) return null;
+      return new ProfitDynamicMetricsResponse(
+          metrics.baseRevenue(),
+          metrics.regionMultiplier(),
+          metrics.storeMarketFactor(),
+          metrics.avgSalesAmt(),
+          metrics.competitorCount(),
+          metrics.competitorDensity());
     }
   }
 

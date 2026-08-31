@@ -10,36 +10,21 @@ import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisCommand
 
 @Schema(description = "Survival analysis request")
 public record SurvivalAnalysisRequest(
+    @Schema(description = "상가명", example = "강남스타카페") @NotBlank String storeName,
     @Schema(description = "지역 코드. regions.code 값이며 행정구역 코드를 사용합니다.", example = "1168000000")
         @NotBlank
         String regionCode,
-    @Schema(description = "업종 코드", example = "I101") @NotBlank String industryCode,
+    @Schema(description = "업종 코드", example = "I21201") @NotBlank String industryCode,
     @Schema(example = "40") @NotNull @Positive BigDecimal area,
     @Schema(example = "250") @NotNull @PositiveOrZero BigDecimal rent,
-    @Schema(example = "2000") @NotNull @PositiveOrZero BigDecimal deposit,
-    @Schema(example = "4") @NotNull @PositiveOrZero BigDecimal avgSales,
-    @Schema(example = "3") @NotNull BigDecimal salesGrowth,
-    @Schema(example = "4") @NotNull @PositiveOrZero BigDecimal density,
-    @Schema(example = "2") @NotNull @PositiveOrZero BigDecimal vacancy,
-    @Schema(example = "4") @NotNull @PositiveOrZero BigDecimal traffic,
-    @Schema(example = "2") @NotNull @PositiveOrZero BigDecimal churn,
-    @Schema(example = "transfer") @NotBlank String startupType,
-    @Schema(example = "4200") @NotNull @PositiveOrZero BigDecimal avgSalesAmt) {
+    @Schema(example = "8000") @NotNull @PositiveOrZero BigDecimal invest,
+    @Schema(example = "2000") @NotNull @PositiveOrZero BigDecimal premium,
+    @Schema(example = "3") @NotNull @PositiveOrZero Integer staff,
+    @Schema(description = "수집 실패 후 재시도할 실행 ID. 최초 요청에서는 생략합니다.", example = "7") @Positive
+        Long collectionRunId) {
 
   public SurvivalAnalysisCommand toCommand() {
     return new SurvivalAnalysisCommand(
-        regionCode,
-        industryCode,
-        area,
-        rent,
-        deposit,
-        avgSales,
-        salesGrowth,
-        density,
-        vacancy,
-        traffic,
-        churn,
-        startupType,
-        avgSalesAmt);
+        storeName, industryCode, regionCode, area, invest, rent, premium, staff, collectionRunId);
   }
 }

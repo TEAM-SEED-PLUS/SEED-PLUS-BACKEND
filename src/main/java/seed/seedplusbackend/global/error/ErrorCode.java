@@ -32,7 +32,7 @@ public enum ErrorCode {
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2900, "서버 내부 오류가 발생했습니다."),
 
   // 3000: Auth
-  INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, 3000, "휴대폰 번호 또는 비밀번호가 올바르지 않습니다."),
+  INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, 3000, "로그인 ID 또는 비밀번호가 올바르지 않습니다."),
   EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, 3001, "토큰이 만료되었습니다."),
   INVALID_TOKEN(HttpStatus.UNAUTHORIZED, 3002, "유효하지 않은 토큰입니다."),
   EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, 3003, "리프레시 토큰이 만료되었습니다."),
@@ -42,6 +42,8 @@ public enum ErrorCode {
   DUPLICATE_EMAIL(HttpStatus.CONFLICT, 4001, "이미 사용 중인 이메일입니다."),
   INVALID_USER_STATUS(HttpStatus.BAD_REQUEST, 4002, "유효하지 않은 사용자 상태입니다."),
   DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, 4003, "이미 사용 중인 휴대폰 번호입니다."),
+  DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, 4004, "이미 사용 중인 로그인 ID입니다."),
+  PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, 4005, "새 비밀번호와 비밀번호 확인이 일치하지 않습니다."),
 
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),
@@ -82,6 +84,29 @@ public enum ErrorCode {
   // 9100: Analysis
   ANALYSIS_FUNCTION_CALL_FAILED(
       HttpStatus.BAD_GATEWAY, 9100, "External analysis function call failed."),
+  ANALYSIS_DATA_COLLECTION_FAILED(HttpStatus.BAD_GATEWAY, 9101, "분석에 필요한 공공데이터 수집에 실패했습니다."),
+
+  // 9200: External Open API
+  SEOUL_OPEN_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 9200, "서울시 OpenAPI 요청에 실패했습니다."),
+  SEOUL_OPEN_API_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, 9201, "서울시 OpenAPI 응답 형식이 올바르지 않습니다."),
+  SEOUL_ESTIMATED_SALES_QUARTER_NOT_FOUND(
+      HttpStatus.BAD_GATEWAY, 9202, "서울시 추정매출 데이터의 최신 기준 분기를 찾을 수 없습니다."),
+
+  // 9300: Small Business Store OpenAPI
+  SMALL_BUSINESS_STORE_API_REQUEST_FAILED(
+      HttpStatus.BAD_GATEWAY, 9300, "소상공인 상가정보 OpenAPI 요청에 실패했습니다."),
+  SMALL_BUSINESS_STORE_API_INVALID_RESPONSE(
+      HttpStatus.BAD_GATEWAY, 9301, "소상공인 상가정보 OpenAPI 응답 형식이 올바르지 않습니다."),
+  COMMERCIAL_DATA_PROVIDER_FAILED(
+      HttpStatus.INTERNAL_SERVER_ERROR, 9302, "공공데이터 Provider 실행에 실패했습니다."),
+
+  // 9400: REB Small Retail Rent File
+  REB_RENT_FILE_INVALID(HttpStatus.BAD_REQUEST, 9400, "한국부동산원 임대료 파일 형식이 올바르지 않습니다."),
+  REB_RENT_FILE_IMPORT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 9401, "한국부동산원 임대료 파일 적재에 실패했습니다."),
+
+  // 9500: KOSIS OpenAPI
+  KOSIS_OPEN_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 9500, "KOSIS OpenAPI 요청에 실패했습니다."),
+  KOSIS_OPEN_API_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, 9501, "KOSIS OpenAPI 응답 형식이 올바르지 않습니다."),
   ;
 
   private final HttpStatus httpStatus;

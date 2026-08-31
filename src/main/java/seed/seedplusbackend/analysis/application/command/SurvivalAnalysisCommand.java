@@ -3,24 +3,32 @@ package seed.seedplusbackend.analysis.application.command;
 import java.math.BigDecimal;
 
 public record SurvivalAnalysisCommand(
-    String regionCode,
+    String storeName,
     String industryCode,
+    String regionCode,
     BigDecimal area,
+    BigDecimal invest,
     BigDecimal rent,
-    BigDecimal deposit,
-    BigDecimal avgSales,
-    BigDecimal salesGrowth,
-    BigDecimal density,
-    BigDecimal vacancy,
-    BigDecimal traffic,
-    BigDecimal churn,
-    String startupType,
-    BigDecimal avgSalesAmt) {
+    BigDecimal premium,
+    Integer staff,
+    Long collectionRunId) {
+
+  public SurvivalAnalysisCommand(
+      String storeName,
+      String industryCode,
+      String regionCode,
+      BigDecimal area,
+      BigDecimal invest,
+      BigDecimal rent,
+      BigDecimal premium,
+      Integer staff) {
+    this(storeName, industryCode, regionCode, area, invest, rent, premium, staff, null);
+  }
 
   public SurvivalAnalysisCommand {
-    regionCode = normalize(regionCode);
+    storeName = normalize(storeName);
     industryCode = normalize(industryCode);
-    startupType = normalize(startupType);
+    regionCode = normalize(regionCode);
   }
 
   private static String normalize(String value) {

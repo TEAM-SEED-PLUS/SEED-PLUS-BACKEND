@@ -10,11 +10,17 @@ public interface UserRepository {
 
   Optional<User> findById(Long id);
 
-  Optional<User> findByPhoneNumber(String phoneNumber);
+  Optional<User> findByLoginId(String loginId);
+
+  Optional<User> findByEmail(String email);
 
   List<User> findAll();
 
   boolean existsById(Long id);
+
+  boolean existsByLoginId(String loginId);
+
+  boolean existsByEmail(String email);
 
   boolean existsByPhoneNumber(String phoneNumber);
 

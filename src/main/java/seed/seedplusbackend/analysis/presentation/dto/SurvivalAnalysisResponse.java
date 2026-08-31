@@ -1,20 +1,29 @@
 package seed.seedplusbackend.analysis.presentation.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 import seed.seedplusbackend.analysis.application.result.SurvivalAnalysisResult;
 
 public record SurvivalAnalysisResponse(
     SurvivalInputResponse input,
     SurvivalDerivedResponse derived,
+    SurvivalDynamicMetricsResponse dynamicMetrics,
     SurvivalScoreBreakdownResponse scoreBreakdown,
-    SurvivalResultResponse survival) {
+    SurvivalResultResponse survival,
+    List<String> dataSources,
+    List<String> warnings,
+    Boolean fallbackUsed) {
 
   public static SurvivalAnalysisResponse from(SurvivalAnalysisResult result) {
     return new SurvivalAnalysisResponse(
         SurvivalInputResponse.from(result.input()),
         SurvivalDerivedResponse.from(result.derived()),
+        SurvivalDynamicMetricsResponse.from(result.dynamicMetrics()),
         SurvivalScoreBreakdownResponse.from(result.scoreBreakdown()),
-        SurvivalResultResponse.from(result.survival()));
+        SurvivalResultResponse.from(result.survival()),
+        result.dataSources(),
+        result.warnings(),
+        result.fallbackUsed());
   }
 
   public record SurvivalInputResponse(
@@ -22,15 +31,11 @@ public record SurvivalAnalysisResponse(
       String industry,
       BigDecimal area,
       BigDecimal rent,
-      BigDecimal deposit,
-      BigDecimal avgSales,
-      BigDecimal salesGrowth,
-      BigDecimal density,
-      BigDecimal vacancy,
-      BigDecimal traffic,
-      BigDecimal churn,
+      BigDecimal invest,
+      BigDecimal premium,
+      Integer staff,
       String startupType,
-      BigDecimal avgSalesAmt) {
+      String storeName) {
 
     private static SurvivalInputResponse from(SurvivalAnalysisResult.SurvivalInput input) {
       return new SurvivalInputResponse(
@@ -38,15 +43,38 @@ public record SurvivalAnalysisResponse(
           input.industry(),
           input.area(),
           input.rent(),
-          input.deposit(),
-          input.avgSales(),
-          input.salesGrowth(),
-          input.density(),
-          input.vacancy(),
-          input.traffic(),
-          input.churn(),
+          input.invest(),
+          input.premium(),
+          input.staff(),
           input.startupType(),
-          input.avgSalesAmt());
+          input.storeName());
+    }
+  }
+
+  public record SurvivalDynamicMetricsResponse(
+      BigDecimal avgSalesAmt,
+      BigDecimal avgSales,
+      BigDecimal salesGrowth,
+      BigDecimal density,
+      BigDecimal vacancy,
+      BigDecimal traffic,
+      BigDecimal churn,
+      BigDecimal closureRate,
+      BigDecimal newBusinessRate) {
+
+    private static SurvivalDynamicMetricsResponse from(
+        SurvivalAnalysisResult.SurvivalDynamicMetrics metrics) {
+      if (metrics == null) return null;
+      return new SurvivalDynamicMetricsResponse(
+          metrics.avgSalesAmt(),
+          metrics.avgSales(),
+          metrics.salesGrowth(),
+          metrics.density(),
+          metrics.vacancy(),
+          metrics.traffic(),
+          metrics.churn(),
+          metrics.closureRate(),
+          metrics.newBusinessRate());
     }
   }
 

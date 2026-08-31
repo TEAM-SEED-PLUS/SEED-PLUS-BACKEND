@@ -72,9 +72,12 @@ public class SecurityConfig {
                         "/api/v1/commercial-areas/**")
                     .permitAll()
                     .requestMatchers(
+                        "/actuator/health",
+                        "/actuator/prometheus",
                         "/api/v1/auth/csrf",
                         "/api/v1/auth/signup",
                         "/api/v1/auth/login",
+                        "/api/v1/auth/password/reset",
                         "/api/v1/auth/reissue",
                         "/swagger-ui/**",
                         "/swagger-ui.html",

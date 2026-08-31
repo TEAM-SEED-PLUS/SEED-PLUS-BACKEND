@@ -3,9 +3,11 @@ package seed.seedplusbackend;
 import java.util.TimeZone;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing(dateTimeProviderRef = "auditingDateTimeProvider", modifyOnCreate = false)
+@ConfigurationPropertiesScan
 @SpringBootApplication
 public class SeedPlusBackendApplication {
 

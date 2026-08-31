@@ -25,6 +25,7 @@ import seed.seedplusbackend.builderstore.application.command.CreateBuilderStoreC
 import seed.seedplusbackend.builderstore.application.command.CreateBuilderStoreCommentCommand;
 import seed.seedplusbackend.builderstore.application.command.UpdateBuilderStoreCommand;
 import seed.seedplusbackend.builderstore.application.event.BuilderStoreCreatedEvent;
+import seed.seedplusbackend.builderstore.application.port.BuilderStoreBookmarkSnapshotResolver;
 import seed.seedplusbackend.builderstore.application.result.BuilderStoreDetailResult;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStore;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreComment;
@@ -62,6 +63,7 @@ class BuilderStoreCommandServiceTest {
   @Mock private BuilderStoreImageRepository builderStoreImageRepository;
   @Mock private BuilderStoreLikeRepository builderStoreLikeRepository;
   @Mock private BuilderStoreBookmarkRepository builderStoreBookmarkRepository;
+  @Mock private BuilderStoreBookmarkSnapshotResolver builderStoreBookmarkSnapshotResolver;
   @Mock private BuilderStoreCommentRepository builderStoreCommentRepository;
   @Mock private UserRepository userRepository;
   @Mock private RegionRepository regionRepository;

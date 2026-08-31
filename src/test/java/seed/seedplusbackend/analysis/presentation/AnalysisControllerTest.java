@@ -85,7 +85,8 @@ class AnalysisControllerTest {
                         && "I561".equals(command.industryCode())
                         && "1168010100".equals(command.regionCode())
                         && new BigDecimal("30").compareTo(command.area()) == 0
-                        && Integer.valueOf(3).equals(command.staff())));
+                        && Integer.valueOf(3).equals(command.staff())
+                        && Long.valueOf(7L).equals(command.collectionRunId())));
   }
 
   @Test
@@ -120,8 +121,8 @@ class AnalysisControllerTest {
                     command != null
                         && "I562".equals(command.industryCode())
                         && "1168010100".equals(command.regionCode())
-                        && "transfer".equals(command.startupType())
-                        && new BigDecimal("4200").compareTo(command.avgSalesAmt()) == 0));
+                        && "강남스타카페".equals(command.storeName())
+                        && new BigDecimal("8000").compareTo(command.invest()) == 0));
   }
 
   @Test
@@ -167,18 +168,13 @@ class AnalysisControllerTest {
                   .content(
                       """
                       {
+                        "storeName": "강남스타카페",
                         "regionCode": "1168010100",
                         "industryCode": "I562",
                         "rent": 250,
-                        "deposit": 2000,
-                        "avgSales": 4,
-                        "salesGrowth": 3,
-                        "density": 4,
-                        "vacancy": 2,
-                        "traffic": 4,
-                        "churn": 2,
-                        "startupType": "transfer",
-                        "avgSalesAmt": 4200
+                        "invest": 8000,
+                        "premium": 2000,
+                        "staff": 3
                       }
                       """))
           .andExpect(status().isBadRequest());
@@ -199,13 +195,15 @@ class AnalysisControllerTest {
   private String validProfitRequest() {
     return """
         {
+          "storeName": "스타카페",
           "industryCode": "I561",
           "regionCode": "1168010100",
           "area": 30,
           "invest": 5000,
           "rent": 300,
           "premium": 2000,
-          "staff": 3
+          "staff": 3,
+          "collectionRunId": 7
         }
         """;
   }
@@ -213,19 +211,14 @@ class AnalysisControllerTest {
   private String validSurvivalRequest() {
     return """
         {
+          "storeName": "강남스타카페",
           "regionCode": "1168010100",
           "industryCode": "I562",
           "area": 40,
+          "invest": 8000,
           "rent": 250,
-          "deposit": 2000,
-          "avgSales": 4,
-          "salesGrowth": 3,
-          "density": 4,
-          "vacancy": 2,
-          "traffic": 4,
-          "churn": 2,
-          "startupType": "transfer",
-          "avgSalesAmt": 4200
+          "premium": 2000,
+          "staff": 3
         }
         """;
   }

@@ -1,9 +1,12 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.11'
+    id 'org.springframework.boot' version '3.5.16'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.diffplug.spotless' version '8.4.0'
 }
+
+// Boot BOM이 42.7.12 이상을 관리시 제거
+ext['postgresql.version'] = '42.7.12'
 
 group = 'seed'
 version = '0.0.1-SNAPSHOT'
@@ -45,6 +48,7 @@ spotless {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
@@ -73,6 +77,9 @@ dependencies {
 
     // Cache
     implementation 'com.github.ben-manes.caffeine:caffeine'
+
+    // Monitoring (Prometheus scrape endpoint)
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     // Hibernate Spatial (PostGIS Geography/Geometry 매핑)
     implementation 'org.hibernate.orm:hibernate-spatial'

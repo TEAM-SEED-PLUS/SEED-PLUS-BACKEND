@@ -2,6 +2,7 @@ package seed.seedplusbackend.analysis.infrastructure;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -77,37 +78,76 @@ public class RestClientAnalysisLambdaClient implements AnalysisLambdaClient {
   }
 
   private URI profitUri(ProfitAnalysisLambdaCommand command) {
-    return UriComponentsBuilder.fromUriString(properties.profit().endpoint())
-        .queryParam("industry", command.industry())
-        .queryParam("region", command.region())
-        .queryParam("area", number(command.area()))
-        .queryParam("invest", number(command.invest()))
-        .queryParam("rent", number(command.rent()))
-        .queryParam("premium", number(command.premium()))
-        .queryParam("staff", command.staff())
-        .encode()
-        .build()
-        .toUri();
+    UriComponentsBuilder builder =
+        endpointBuilder(properties.profit().endpoint(), "profit")
+            .queryParam("storeName", command.storeName())
+            .queryParam("industry", command.industry())
+            .queryParam("region", command.region())
+            .queryParam("area", number(command.area()))
+            .queryParam("invest", number(command.invest()))
+            .queryParam("rent", number(command.rent()))
+            .queryParam("premium", number(command.premium()))
+            .queryParam("staff", command.staff());
+    add(builder, "THSMON_SELNG_AMT", command.monthlySalesAmount());
+    add(builder, "storeCountInTrdar", command.storeCountInCommercialArea());
+    add(builder, "guAvgSalesAmt", command.districtAverageSalesAmount());
+    add(builder, "cityAvgSalesAmt", command.cityAverageSalesAmount());
+    add(builder, "storeZoneOne", command.storeZoneOne());
+    add(builder, "storeListInArea", command.storeListInArea());
+    add(builder, "storeListInRadius", command.storeListInRadius());
+    add(builder, "competitorCount", command.competitorCount());
+    builder.queryParam("fallbackUsed", command.fallbackUsed());
+    addSources(builder, command.dataSources());
+    return builder.encode().build().toUri();
   }
 
   private URI survivalUri(SurvivalAnalysisLambdaCommand command) {
-    return UriComponentsBuilder.fromUriString(properties.survival().endpoint())
-        .queryParam("region", command.region())
-        .queryParam("industry", command.industry())
-        .queryParam("area", number(command.area()))
-        .queryParam("rent", number(command.rent()))
-        .queryParam("deposit", number(command.deposit()))
-        .queryParam("avgSales", number(command.avgSales()))
-        .queryParam("salesGrowth", number(command.salesGrowth()))
-        .queryParam("density", number(command.density()))
-        .queryParam("vacancy", number(command.vacancy()))
-        .queryParam("traffic", number(command.traffic()))
-        .queryParam("churn", number(command.churn()))
-        .queryParam("startupType", command.startupType())
-        .queryParam("avgSalesAmt", number(command.avgSalesAmt()))
-        .encode()
-        .build()
-        .toUri();
+    UriComponentsBuilder builder =
+        endpointBuilder(properties.survival().endpoint(), "survival")
+            .queryParam("storeName", command.storeName())
+            .queryParam("industry", command.industry())
+            .queryParam("region", command.region())
+            .queryParam("area", number(command.area()))
+            .queryParam("invest", number(command.invest()))
+            .queryParam("rent", number(command.rent()))
+            .queryParam("premium", number(command.premium()))
+            .queryParam("staff", command.staff())
+            .queryParam("startupType", "new");
+    add(builder, "THSMON_SELNG_AMT", command.monthlySalesAmount());
+    add(builder, "storeCountInTrdar", command.storeCountInCommercialArea());
+    add(builder, "salesGrowthRate", command.salesGrowthRate());
+    add(builder, "storeDensity", command.storeDensity());
+    add(builder, "vacancyRate", command.vacancyRate());
+    add(builder, "trafficIndex", command.trafficIndex());
+    add(builder, "survivalRate", command.survivalRate());
+    add(builder, "closedBusinesses", command.closedBusinesses());
+    add(builder, "activeBusinesses", command.activeBusinesses());
+    add(builder, "newBusinesses", command.newBusinesses());
+    builder.queryParam("fallbackUsed", command.fallbackUsed());
+    addSources(builder, command.dataSources());
+    return builder.encode().build().toUri();
+  }
+
+  private void add(UriComponentsBuilder builder, String name, Object value) {
+    if (value != null) builder.queryParam(name, value);
+  }
+
+  private UriComponentsBuilder endpointBuilder(String endpoint, String functionPath) {
+    String normalized =
+        endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
+    if (!normalized.endsWith("/" + functionPath)) {
+      normalized += "/" + functionPath;
+    }
+    return UriComponentsBuilder.fromUriString(normalized);
+  }
+
+  private void addSources(UriComponentsBuilder builder, List<String> sources) {
+    if (sources == null || sources.isEmpty()) return;
+    String json =
+        sources.stream()
+            .map(value -> "\"" + value.replace("\"", "\\\"") + "\"")
+            .collect(java.util.stream.Collectors.joining(",", "[", "]"));
+    builder.queryParam("dataSources", json);
   }
 
   private String number(BigDecimal value) {

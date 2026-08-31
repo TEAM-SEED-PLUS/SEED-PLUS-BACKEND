@@ -1,7 +1,21 @@
 server:
   port: ${SERVER_PORT:8080}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_EXPOSURE:health,prometheus}
+  metrics:
+    tags:
+      application: seed-plus-backend
+
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -20,7 +34,7 @@ spring:
     open-in-view: false
 
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:false}
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
@@ -69,3 +83,76 @@ logging:
     org.hibernate.SQL: ${LOG_LEVEL_SQL:WARN}
   pattern:
     level: "%5p [requestId:%X{requestId:-}]"
+
+seoul:
+  realtime-city:
+    open-api:
+      key: ${SEOUL_OPEN_API_KEY}
+      base-url: http://openapi.seoul.go.kr:8088
+      service-name: citydata_ppltn
+      type: xml
+      start-index: 1
+      end-index: 5
+      initial-backoff-millis: ${SEOUL_REALTIME_CITY_INITIAL_BACKOFF_MS:500}
+      min-jitter-millis: ${SEOUL_REALTIME_CITY_MIN_JITTER_MS:300}
+      max-jitter-millis: ${SEOUL_REALTIME_CITY_MAX_JITTER_MS:1200}
+      max-retry-count: ${SEOUL_REALTIME_CITY_MAX_RETRY_COUNT:3}
+  sdot:
+    open-api:
+      key: ${SEOUL_OPEN_API_KEY}
+      base-url: http://openapi.seoul.go.kr:8088
+      service-name: IotVdata018
+      type: json
+      page-size: 1000
+      min-jitter-millis: ${SEOUL_SDOT_MIN_JITTER_MS:300}
+      max-jitter-millis: ${SEOUL_SDOT_MAX_JITTER_MS:1200}
+      max-retry-count: ${SEOUL_SDOT_MAX_RETRY_COUNT:3}
+  commercial:
+    open-api:
+      key: ${SEOUL_OPEN_API_KEY}
+      base-url: http://openapi.seoul.go.kr:8088
+      service-name: VwsmTrdarSelngQq
+      type: json
+      page-size: 1000
+      min-jitter-millis: 300
+      max-jitter-millis: 1200
+      max-retry-count: 3
+
+small-business:
+  store:
+    open-api:
+      service-key: ${SMALL_BUSINESS_STORE_API_KEY}
+      base-url: https://apis.data.go.kr/B553077/api/open/sdsc2
+      endpoint: storeListInArea
+      type: json
+      page-size: 1000
+      initial-backoff-millis: ${SMALL_BUSINESS_STORE_INITIAL_BACKOFF_MS:500}
+      max-retry-count: ${SMALL_BUSINESS_STORE_MAX_RETRY_COUNT:3}
+
+kosis:
+  business-survival:
+    open-api:
+      key: ${KOSIS_API_KEY}
+      base-url: https://kosis.kr
+      endpoint: /openapi/Param/statisticsParameterData.do
+      organization-id: "101"
+      table-id: DT_2BD1003
+      connect-timeout-millis: ${KOSIS_CONNECT_TIMEOUT_MS:3000}
+      read-timeout-millis: ${KOSIS_READ_TIMEOUT_MS:30000}
+      initial-backoff-millis: ${KOSIS_INITIAL_BACKOFF_MS:500}
+      min-jitter-millis: ${KOSIS_MIN_JITTER_MS:300}
+      max-jitter-millis: ${KOSIS_MAX_JITTER_MS:1200}
+      max-retry-count: ${KOSIS_MAX_RETRY_COUNT:3}
+  business-count:
+    open-api:
+      key: ${KOSIS_API_KEY}
+      base-url: https://kosis.kr
+      endpoint: /openapi/Param/statisticsParameterData.do
+      organization-id: "101"
+      table-id: DT_1BD1001
+      connect-timeout-millis: ${KOSIS_CONNECT_TIMEOUT_MS:3000}
+      read-timeout-millis: ${KOSIS_READ_TIMEOUT_MS:30000}
+      initial-backoff-millis: ${KOSIS_INITIAL_BACKOFF_MS:500}
+      min-jitter-millis: ${KOSIS_MIN_JITTER_MS:300}
+      max-jitter-millis: ${KOSIS_MAX_JITTER_MS:1200}
+      max-retry-count: ${KOSIS_MAX_RETRY_COUNT:3}

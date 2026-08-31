@@ -17,6 +17,8 @@ public interface RefreshTokenRepository {
 
   int revokeByTokenHashIfNotRevoked(String tokenHash, OffsetDateTime revokedAt);
 
+  int revokeAllByUserIdIfNotRevoked(Long userId, OffsetDateTime revokedAt);
+
   List<RefreshToken> findAll();
 
   boolean existsById(Long id);

@@ -13,6 +13,27 @@ public class ExternalRestClientConfig {
   public RestClient.Builder externalRestClientBuilder(
       @Value("${external.rest-client.connect-timeout-millis:3000}") int connectTimeoutMillis,
       @Value("${external.rest-client.read-timeout-millis:5000}") int readTimeoutMillis) {
+    return restClientBuilder(connectTimeoutMillis, readTimeoutMillis);
+  }
+
+  @Bean
+  public RestClient.Builder kosisBusinessSurvivalRestClientBuilder(
+      @Value("${kosis.business-survival.open-api.connect-timeout-millis:3000}")
+          int connectTimeoutMillis,
+      @Value("${kosis.business-survival.open-api.read-timeout-millis:30000}")
+          int readTimeoutMillis) {
+    return restClientBuilder(connectTimeoutMillis, readTimeoutMillis);
+  }
+
+  @Bean
+  public RestClient.Builder kosisBusinessCountRestClientBuilder(
+      @Value("${kosis.business-count.open-api.connect-timeout-millis:3000}")
+          int connectTimeoutMillis,
+      @Value("${kosis.business-count.open-api.read-timeout-millis:30000}") int readTimeoutMillis) {
+    return restClientBuilder(connectTimeoutMillis, readTimeoutMillis);
+  }
+
+  private RestClient.Builder restClientBuilder(int connectTimeoutMillis, int readTimeoutMillis) {
     SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
     requestFactory.setConnectTimeout(connectTimeoutMillis);
     requestFactory.setReadTimeout(readTimeoutMillis);
