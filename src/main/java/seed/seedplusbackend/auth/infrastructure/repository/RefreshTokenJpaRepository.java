@@ -42,5 +42,17 @@ public interface RefreshTokenJpaRepository
       @Param("tokenHash") String tokenHash, @Param("revokedAt") OffsetDateTime revokedAt);
 
   @Override
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query(
+      """
+      update RefreshToken refreshToken
+      set refreshToken.revokedAt = :revokedAt
+      where refreshToken.user.id = :userId
+        and refreshToken.revokedAt is null
+      """)
+  int revokeAllByUserIdIfNotRevoked(
+      @Param("userId") Long userId, @Param("revokedAt") OffsetDateTime revokedAt);
+
+  @Override
   void deleteById(Long id);
 }

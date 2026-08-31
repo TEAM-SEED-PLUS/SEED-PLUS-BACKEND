@@ -21,6 +21,8 @@ import seed.seedplusbackend.global.common.BaseTimeEntity;
 @Table(
     name = "users",
     uniqueConstraints = {
+      @UniqueConstraint(name = "users_login_id_key", columnNames = "login_id"),
+      @UniqueConstraint(name = "users_email_key", columnNames = "email"),
       @UniqueConstraint(name = "users_phone_number_key", columnNames = "phone_number")
     })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -33,6 +35,12 @@ public class User extends BaseTimeEntity {
 
   @Column(name = "phone_number", nullable = false, length = 20)
   private String phoneNumber;
+
+  @Column(name = "login_id", nullable = false, length = 20)
+  private String loginId;
+
+  @Column(name = "email", nullable = false, length = 320)
+  private String email;
 
   @Column(name = "birth_date", nullable = false)
   private LocalDate birthDate;
@@ -54,12 +62,16 @@ public class User extends BaseTimeEntity {
   @Builder
   private User(
       String phoneNumber,
+      String loginId,
+      String email,
       LocalDate birthDate,
       String password,
       String name,
       UserRole role,
       UserStatus status) {
     this.phoneNumber = phoneNumber;
+    this.loginId = loginId;
+    this.email = email;
     this.birthDate = birthDate;
     this.password = password;
     this.name = name;
@@ -74,5 +86,9 @@ public class User extends BaseTimeEntity {
     if (password != null) {
       this.password = password;
     }
+  }
+
+  public void changePassword(String password) {
+    this.password = password;
   }
 }

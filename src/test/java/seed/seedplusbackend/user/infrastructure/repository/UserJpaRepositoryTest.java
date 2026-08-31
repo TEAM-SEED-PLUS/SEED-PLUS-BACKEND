@@ -47,11 +47,11 @@ class UserJpaRepositoryTest extends AbstractPostgresContainerTest {
   }
 
   @Test
-  @DisplayName("휴대폰 번호로 사용자를 조회하면 저장된 사용자가 반환된다")
-  void findByPhoneNumber_returnsSavedUser_whenExists() {
+  @DisplayName("로그인 ID로 사용자를 조회하면 저장된 사용자가 반환된다")
+  void findByLoginId_returnsSavedUser_whenExists() {
     User saved = userJpaRepository.save(UserFixture.generalActiveUser("01011112222"));
 
-    User found = userJpaRepository.findByPhoneNumber(saved.getPhoneNumber()).orElseThrow();
+    User found = userJpaRepository.findByLoginId(saved.getLoginId()).orElseThrow();
 
     assertThat(found.getId()).isEqualTo(saved.getId());
   }
@@ -68,16 +68,44 @@ class UserJpaRepositoryTest extends AbstractPostgresContainerTest {
   }
 
   @Test
+  @DisplayName("로그인 ID가 중복되면 저장 무결성 예외가 발생한다")
+  void save_throwsDataIntegrityViolation_whenLoginIdDuplicates() {
+    userJpaRepository.save(user("seedplus01", "first@example.com", "01011112222"));
+    entityManager.flush();
+
+    assertThatThrownBy(
+            () -> {
+              userJpaRepository.save(user("seedplus01", "second@example.com", "01011113333"));
+              entityManager.flush();
+            })
+        .isInstanceOf(DataIntegrityViolationException.class);
+  }
+
+  @Test
+  @DisplayName("이메일이 중복되면 저장 무결성 예외가 발생한다")
+  void save_throwsDataIntegrityViolation_whenEmailDuplicates() {
+    userJpaRepository.save(user("seedplus01", "duplicate@example.com", "01011112222"));
+    entityManager.flush();
+
+    assertThatThrownBy(
+            () -> {
+              userJpaRepository.save(user("seedplus02", "duplicate@example.com", "01011113333"));
+              entityManager.flush();
+            })
+        .isInstanceOf(DataIntegrityViolationException.class);
+  }
+
+  @Test
   @DisplayName("휴대폰 번호가 중복되면 저장 무결성 예외가 발생한다")
   void save_throwsDataIntegrityViolation_whenPhoneNumberDuplicates() {
     String duplicatedPhoneNumber = "01022223333";
-    userJpaRepository.save(UserFixture.generalActiveUser(duplicatedPhoneNumber));
+    userJpaRepository.save(user("seedplus01", "first@example.com", duplicatedPhoneNumber));
     entityManager.flush();
 
     assertThatThrownBy(
             () -> {
               userJpaRepository.save(
-                  UserFixture.generalActiveUser(duplicatedPhoneNumber, LocalDate.of(1991, 1, 1)));
+                  user("seedplus02", "second@example.com", duplicatedPhoneNumber));
               entityManager.flush();
             })
         .isInstanceOf(DataIntegrityViolationException.class);
@@ -111,6 +139,8 @@ class UserJpaRepositoryTest extends AbstractPostgresContainerTest {
         userJpaRepository.save(
             User.builder()
                 .phoneNumber("01099990000")
+                .loginId("deleted01")
+                .email("deleted@example.com")
                 .birthDate(LocalDate.of(1990, 1, 1))
                 .password("password")
                 .name("탈퇴 사용자")
@@ -121,5 +151,18 @@ class UserJpaRepositoryTest extends AbstractPostgresContainerTest {
     User found = userJpaRepository.findById(saved.getId()).orElseThrow();
 
     assertThat(found.getStatus()).isEqualTo(UserStatus.DELETED);
+  }
+
+  private User user(String loginId, String email, String phoneNumber) {
+    return User.builder()
+        .loginId(loginId)
+        .email(email)
+        .phoneNumber(phoneNumber)
+        .birthDate(LocalDate.of(1990, 1, 1))
+        .password("password")
+        .name("일반 사용자")
+        .role(UserRole.GENERAL)
+        .status(UserStatus.ACTIVE)
+        .build();
   }
 }
