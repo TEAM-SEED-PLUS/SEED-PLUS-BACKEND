@@ -12,6 +12,7 @@ import seed.seedplusbackend.builderstore.application.command.CreateBuilderStoreC
 import seed.seedplusbackend.builderstore.application.command.UpdateBuilderStoreCommand;
 import seed.seedplusbackend.builderstore.application.command.UpdateBuilderStoreCommentCommand;
 import seed.seedplusbackend.builderstore.application.event.BuilderStoreCreatedEvent;
+import seed.seedplusbackend.builderstore.application.port.BuilderStoreBookmarkSnapshotResolver;
 import seed.seedplusbackend.builderstore.application.result.BuilderStoreCommentResult;
 import seed.seedplusbackend.builderstore.application.result.BuilderStoreDetailResult;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStore;
@@ -53,6 +54,7 @@ public class BuilderStoreCommandService {
   private final BuilderStoreImageRepository builderStoreImageRepository;
   private final BuilderStoreLikeRepository builderStoreLikeRepository;
   private final BuilderStoreBookmarkRepository builderStoreBookmarkRepository;
+  private final BuilderStoreBookmarkSnapshotResolver builderStoreBookmarkSnapshotResolver;
   private final BuilderStoreCommentRepository builderStoreCommentRepository;
   private final UserRepository userRepository;
   private final RegionRepository regionRepository;
@@ -196,7 +198,16 @@ public class BuilderStoreCommandService {
     }
 
     builderStoreBookmarkRepository.save(
-        BuilderStoreBookmark.builder().builderStore(builderStore).user(user).build());
+        BuilderStoreBookmark.builder()
+            .builderStore(builderStore)
+            .user(user)
+            .snapshot(
+                builderStoreBookmarkSnapshotResolver.resolve(
+                    builderStore.getRegion().getCode(),
+                    builderStore.getIndustry().getIndustryCode(),
+                    builderStore.getRegion().getId(),
+                    builderStore.getCommercialArea().getId()))
+            .build());
   }
 
   @Transactional

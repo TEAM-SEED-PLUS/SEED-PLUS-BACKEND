@@ -11,9 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import seed.seedplusbackend.builderstore.presentation.dto.BuilderStoreBookmarkPageRequest;
+import seed.seedplusbackend.builderstore.presentation.dto.BuilderStoreBookmarkResponse;
 import seed.seedplusbackend.builderstore.presentation.dto.BuilderStoreDetailResponse;
 import seed.seedplusbackend.builderstore.presentation.dto.BuilderStorePageRequest;
 import seed.seedplusbackend.builderstore.presentation.dto.BuilderStoreSummaryResponse;
+import seed.seedplusbackend.builderstore.presentation.dto.RefreshBuilderStoreBookmarkRequest;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.response.PageResponse;
@@ -48,4 +53,29 @@ public interface MyBuilderStoreApi {
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
       @Parameter(description = "가상 점포 ID", example = "1") @PathVariable @Positive
           Long builderStoreId);
+
+  @Operation(
+      summary = "저장 가상 점포 카드 목록 조회",
+      operationId = "getMyBuilderStoreBookmarks",
+      security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiErrorCodeExamples({ErrorCode.UNAUTHORIZED, ErrorCode.NOT_FOUND_USER})
+  @GetMapping("/bookmarks")
+  ResponseEntity<ApiResponse<PageResponse<BuilderStoreBookmarkResponse>>> getBookmarks(
+      @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+      @Valid @ParameterObject BuilderStoreBookmarkPageRequest request);
+
+  @Operation(
+      summary = "저장 가상 점포 카드에 최신 데이터 반영",
+      operationId = "refreshMyBuilderStoreBookmark",
+      security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiErrorCodeExamples({
+    ErrorCode.UNAUTHORIZED,
+    ErrorCode.NOT_BOOKMARKED,
+    ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED
+  })
+  @PostMapping("/bookmarks/{bookmarkId}/refresh")
+  ResponseEntity<ApiResponse<BuilderStoreBookmarkResponse>> refreshBookmark(
+      @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+      @Parameter(description = "북마크 ID", example = "1") @PathVariable @Positive Long bookmarkId,
+      @Valid @RequestBody(required = false) RefreshBuilderStoreBookmarkRequest request);
 }

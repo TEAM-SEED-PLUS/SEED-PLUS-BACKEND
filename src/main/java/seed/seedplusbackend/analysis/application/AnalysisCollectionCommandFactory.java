@@ -20,19 +20,38 @@ public class AnalysisCollectionCommandFactory {
 
   public List<CommercialDataCollectCommand> create(
       AnalysisCollectionType analysisType, AnalysisCollectionTarget target) {
+    return create(analysisType, target, true);
+  }
+
+  public List<CommercialDataCollectCommand> createWithoutRealtime(
+      AnalysisCollectionType analysisType, AnalysisCollectionTarget target) {
+    return create(analysisType, target, false);
+  }
+
+  private List<CommercialDataCollectCommand> create(
+      AnalysisCollectionType analysisType,
+      AnalysisCollectionTarget target,
+      boolean includeRealtime) {
     List<CommercialDataCollectCommand> commands = new ArrayList<>();
     commands.add(new CommercialEstimatedSalesCollectCommand(target.estimatedSalesQuarter(), true));
+
     target.smallBusinessTargets().stream()
         .distinct()
         .map(this::smallBusinessCommand)
         .forEach(commands::add);
+
     if (analysisType == AnalysisCollectionType.PROFIT) {
       return List.copyOf(commands);
     }
+
     commands.add(
         new KosisBusinessSurvivalCollectCommand(null, null, KOSIS_LATEST_YEAR_COUNT, true));
     commands.add(new KosisBusinessCountCollectCommand(null, null, KOSIS_LATEST_YEAR_COUNT, true));
-    commands.add(new SeoulSdotFootTrafficCollectCommand(true));
+
+    if (includeRealtime) {
+      commands.add(new SeoulSdotFootTrafficCollectCommand(true));
+    }
+
     return List.copyOf(commands);
   }
 
