@@ -88,7 +88,9 @@ class AnalysisCollectionCommandFactoryTest {
         new SmallBusinessCollectionTarget("9151", "Q", "Q12", "Q12A01");
 
     List<CommercialDataCollectCommand> commands =
-        factory.createWithoutRealtime(new AnalysisCollectionTarget("20262", List.of(target)));
+        factory.createWithoutRealtime(
+            AnalysisCollectionType.SURVIVAL,
+            new AnalysisCollectionTarget("20262", List.of(target)));
 
     assertThat(commands)
         .noneMatch(SeoulSdotFootTrafficCollectCommand.class::isInstance)
