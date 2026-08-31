@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStore;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreBookmark;
+import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreVisibilityStatus;
 import seed.seedplusbackend.commercial.domain.entity.CommercialArea;
 import seed.seedplusbackend.commercial.infrastructure.repository.CommercialAreaJpaRepository;
 import seed.seedplusbackend.industry.domain.entity.Industry;
@@ -53,5 +56,62 @@ class BuilderStoreBookmarkJpaRepositoryTest extends AbstractPostgresContainerTes
 
     assertThat(saved.getId()).isNotNull();
     assertThat(builderStoreBookmarkJpaRepository.findById(saved.getId())).isPresent();
+  }
+
+  @Test
+  @DisplayName("북마크 목록과 단건 조회에서는 공개 가상 점포만 조회한다")
+  void findsOnlyPublicBuilderStoreBookmarks() {
+    User owner = userJpaRepository.save(UserFixture.generalActiveUser("visibility-owner@test.com"));
+    User bookmarker =
+        userJpaRepository.save(UserFixture.generalActiveUser("visibility-user@test.com"));
+    Region region = regionJpaRepository.save(RegionFixture.seoulGangnamYeoksamLegalDong());
+    CommercialArea area =
+        commercialAreaJpaRepository.save(CommercialAreaFixture.developedActive("공개상태상권"));
+    Industry industry =
+        industryJpaRepository.save(IndustryFixture.largeRoot("VISIBILITY-IND", "공개상태업종"));
+    BuilderStore publicStore =
+        saveStore(owner, region, area, industry, BuilderStoreVisibilityStatus.PUBLIC);
+    BuilderStore privateStore =
+        saveStore(owner, region, area, industry, BuilderStoreVisibilityStatus.PRIVATE);
+    BuilderStore deletedStore =
+        saveStore(owner, region, area, industry, BuilderStoreVisibilityStatus.DELETED);
+    BuilderStoreBookmark publicBookmark = saveBookmark(publicStore, bookmarker);
+    BuilderStoreBookmark privateBookmark = saveBookmark(privateStore, bookmarker);
+    BuilderStoreBookmark deletedBookmark = saveBookmark(deletedStore, bookmarker);
+
+    assertThat(
+            builderStoreBookmarkJpaRepository
+                .findByUser_IdAndBuilderStore_VisibilityStatusOrderByCreatedAtDesc(
+                    bookmarker.getId(), BuilderStoreVisibilityStatus.PUBLIC, PageRequest.of(0, 10))
+                .getContent())
+        .containsExactly(publicBookmark);
+    assertThat(
+            builderStoreBookmarkJpaRepository.findByIdAndUser_IdAndBuilderStore_VisibilityStatus(
+                publicBookmark.getId(), bookmarker.getId(), BuilderStoreVisibilityStatus.PUBLIC))
+        .isPresent();
+    assertThat(
+            builderStoreBookmarkJpaRepository.findByIdAndUser_IdAndBuilderStore_VisibilityStatus(
+                privateBookmark.getId(), bookmarker.getId(), BuilderStoreVisibilityStatus.PUBLIC))
+        .isEmpty();
+    assertThat(
+            builderStoreBookmarkJpaRepository.findByIdAndUser_IdAndBuilderStore_VisibilityStatus(
+                deletedBookmark.getId(), bookmarker.getId(), BuilderStoreVisibilityStatus.PUBLIC))
+        .isEmpty();
+  }
+
+  private BuilderStore saveStore(
+      User owner,
+      Region region,
+      CommercialArea area,
+      Industry industry,
+      BuilderStoreVisibilityStatus visibilityStatus) {
+    BuilderStore store = BuilderStoreFixture.publicBuilderStore(owner, region, area, industry);
+    ReflectionTestUtils.setField(store, "visibilityStatus", visibilityStatus);
+    return builderStoreJpaRepository.save(store);
+  }
+
+  private BuilderStoreBookmark saveBookmark(BuilderStore store, User user) {
+    return builderStoreBookmarkJpaRepository.save(
+        BuilderStoreBookmark.builder().builderStore(store).user(user).build());
   }
 }

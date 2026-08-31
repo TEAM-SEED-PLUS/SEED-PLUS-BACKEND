@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreBookmark;
+import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreVisibilityStatus;
 import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreBookmarkRepository;
 
 public interface BuilderStoreBookmarkJpaRepository
@@ -29,7 +30,8 @@ public interface BuilderStoreBookmarkJpaRepository
         "builderStore.industry",
         "builderStore.industry.parentIndustry"
       })
-  Optional<BuilderStoreBookmark> findByIdAndUser_Id(Long id, Long userId);
+  Optional<BuilderStoreBookmark> findByIdAndUser_IdAndBuilderStore_VisibilityStatus(
+      Long id, Long userId, BuilderStoreVisibilityStatus visibilityStatus);
 
   @Override
   @EntityGraph(
@@ -40,7 +42,8 @@ public interface BuilderStoreBookmarkJpaRepository
         "builderStore.industry",
         "builderStore.industry.parentIndustry"
       })
-  Page<BuilderStoreBookmark> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+  Page<BuilderStoreBookmark> findByUser_IdAndBuilderStore_VisibilityStatusOrderByCreatedAtDesc(
+      Long userId, BuilderStoreVisibilityStatus visibilityStatus, Pageable pageable);
 
   @Override
   boolean existsByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);

@@ -13,6 +13,7 @@ import seed.seedplusbackend.builderstore.application.result.BuilderStoreBookmark
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStore;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreBookmark;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreBookmarkSnapshot;
+import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreVisibilityStatus;
 import seed.seedplusbackend.builderstore.domain.repository.BuilderStoreBookmarkRepository;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
@@ -30,14 +31,16 @@ public class BuilderStoreBookmarkService {
   public Page<BuilderStoreBookmarkResult> getBookmarks(Long userId, int page, int size) {
     validateUser(userId);
     return bookmarkRepository
-        .findByUser_IdOrderByCreatedAtDesc(userId, PageRequest.of(page, size))
+        .findByUser_IdAndBuilderStore_VisibilityStatusOrderByCreatedAtDesc(
+            userId, BuilderStoreVisibilityStatus.PUBLIC, PageRequest.of(page, size))
         .map(bookmark -> BuilderStoreBookmarkResult.of(bookmark, resolveCurrent(bookmark), null));
   }
 
   public BuilderStoreBookmarkResult refresh(Long userId, Long bookmarkId, Long collectionRunId) {
     BuilderStoreBookmark bookmark =
         bookmarkRepository
-            .findByIdAndUser_Id(bookmarkId, userId)
+            .findByIdAndUser_IdAndBuilderStore_VisibilityStatus(
+                bookmarkId, userId, BuilderStoreVisibilityStatus.PUBLIC)
             .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_BOOKMARKED));
     BuilderStore builderStore = bookmark.getBuilderStore();
     String regionCode = builderStore.getRegion().getCode();

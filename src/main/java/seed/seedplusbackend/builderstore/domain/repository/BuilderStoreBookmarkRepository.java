@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreBookmark;
+import seed.seedplusbackend.builderstore.domain.entity.BuilderStoreVisibilityStatus;
 
 public interface BuilderStoreBookmarkRepository {
 
@@ -14,9 +15,11 @@ public interface BuilderStoreBookmarkRepository {
 
   Optional<BuilderStoreBookmark> findByBuilderStore_IdAndUser_Id(Long builderStoreId, Long userId);
 
-  Optional<BuilderStoreBookmark> findByIdAndUser_Id(Long id, Long userId);
+  Optional<BuilderStoreBookmark> findByIdAndUser_IdAndBuilderStore_VisibilityStatus(
+      Long id, Long userId, BuilderStoreVisibilityStatus visibilityStatus);
 
-  Page<BuilderStoreBookmark> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+  Page<BuilderStoreBookmark> findByUser_IdAndBuilderStore_VisibilityStatusOrderByCreatedAtDesc(
+      Long userId, BuilderStoreVisibilityStatus visibilityStatus, Pageable pageable);
 
   List<BuilderStoreBookmark> findAll();
 
