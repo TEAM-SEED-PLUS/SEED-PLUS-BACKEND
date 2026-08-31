@@ -18,38 +18,42 @@ public class AnalysisCollectionCommandFactory {
 
   private static final int KOSIS_LATEST_YEAR_COUNT = 3;
 
-  public List<CommercialDataCollectCommand> create(AnalysisCollectionType analysisType, AnalysisCollectionTarget target) {
-      return create(analysisType, target, true);
+  public List<CommercialDataCollectCommand> create(
+      AnalysisCollectionType analysisType, AnalysisCollectionTarget target) {
+    return create(analysisType, target, true);
   }
 
-  public List<CommercialDataCollectCommand> createWithoutRealtime(AnalysisCollectionType analysisType, AnalysisCollectionTarget target) {
-      return create(analysisType, target, false);
+  public List<CommercialDataCollectCommand> createWithoutRealtime(
+      AnalysisCollectionType analysisType, AnalysisCollectionTarget target) {
+    return create(analysisType, target, false);
   }
 
-  private List<CommercialDataCollectCommand> create(AnalysisCollectionType analysisType, AnalysisCollectionTarget target, boolean includeRealtime) {
-      List<CommercialDataCollectCommand> commands = new ArrayList<>();
-      commands.add(new CommercialEstimatedSalesCollectCommand(target.estimatedSalesQuarter(), true));
+  private List<CommercialDataCollectCommand> create(
+      AnalysisCollectionType analysisType,
+      AnalysisCollectionTarget target,
+      boolean includeRealtime) {
+    List<CommercialDataCollectCommand> commands = new ArrayList<>();
+    commands.add(new CommercialEstimatedSalesCollectCommand(target.estimatedSalesQuarter(), true));
 
-      target.smallBusinessTargets().stream()
-          .distinct()
-          .map(this::smallBusinessCommand)
-          .forEach(commands::add);
+    target.smallBusinessTargets().stream()
+        .distinct()
+        .map(this::smallBusinessCommand)
+        .forEach(commands::add);
 
-      if (analysisType == AnalysisCollectionType.PROFIT) {
-        return List.copyOf(commands);
-      }
+    if (analysisType == AnalysisCollectionType.PROFIT) {
+      return List.copyOf(commands);
+    }
 
-  commands.add(
-      new KosisBusinessSurvivalCollectCommand(null, null, KOSIS_LATEST_YEAR_COUNT, true));
-  commands.add(
-      new KosisBusinessCountCollectCommand(null, null, KOSIS_LATEST_YEAR_COUNT, true));
+    commands.add(
+        new KosisBusinessSurvivalCollectCommand(null, null, KOSIS_LATEST_YEAR_COUNT, true));
+    commands.add(new KosisBusinessCountCollectCommand(null, null, KOSIS_LATEST_YEAR_COUNT, true));
 
-  if (includeRealtime) {
-    commands.add(new SeoulSdotFootTrafficCollectCommand(true));
+    if (includeRealtime) {
+      commands.add(new SeoulSdotFootTrafficCollectCommand(true));
+    }
+
+    return List.copyOf(commands);
   }
-
-  return List.copyOf(commands);
-}
 
   private SmallBusinessStoreCollectCommand smallBusinessCommand(
       SmallBusinessCollectionTarget target) {
