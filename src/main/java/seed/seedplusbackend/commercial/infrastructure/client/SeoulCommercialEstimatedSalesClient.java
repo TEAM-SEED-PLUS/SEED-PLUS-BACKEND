@@ -83,7 +83,19 @@ public class SeoulCommercialEstimatedSalesClient
 
   private SeoulCommercialEstimatedSalesApiResponse.Body validateAndGetBody(
       SeoulCommercialEstimatedSalesApiResponse response) {
-    if (response == null || response.body() == null) {
+    if (response == null) {
+      throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_INVALID_RESPONSE);
+    }
+
+    if (response.body() == null) {
+      SeoulCommercialEstimatedSalesApiResponse.Result result = response.result();
+      if (result != null && NO_DATA_CODE.equals(result.code())) {
+        return new SeoulCommercialEstimatedSalesApiResponse.Body(
+            0, result, Collections.emptyList());
+      }
+      if (result != null) {
+        throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_REQUEST_FAILED);
+      }
       throw new ApplicationException(ErrorCode.SEOUL_OPEN_API_INVALID_RESPONSE);
     }
 

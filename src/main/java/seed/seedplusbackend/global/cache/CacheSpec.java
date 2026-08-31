@@ -7,9 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum CacheSpec {
-  ACCESS_TOKEN_BLACKLIST(Duration.ofDays(7), Long.MAX_VALUE),
-  ANALYSIS_PROFIT_RESULT(Duration.ofMinutes(30), 10_000),
-  ANALYSIS_SURVIVAL_RESULT(Duration.ofMinutes(30), 10_000);
+  ACCESS_TOKEN_BLACKLIST(Duration.ofDays(7), Long.MAX_VALUE);
 
   private final Duration expireAfterWrite;
   private final long maximumSize;

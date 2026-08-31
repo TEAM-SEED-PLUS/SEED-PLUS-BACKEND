@@ -2,7 +2,11 @@ package seed.seedplusbackend.analysis.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -19,10 +23,12 @@ import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisCommand
 import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisLambdaCommand;
 import seed.seedplusbackend.analysis.application.port.AnalysisLambdaClient;
 import seed.seedplusbackend.analysis.application.port.PublicDataResolver;
+import seed.seedplusbackend.analysis.application.result.AnalysisDataCollectionResult;
 import seed.seedplusbackend.analysis.application.result.ProfitAnalysisResult;
 import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 import seed.seedplusbackend.analysis.application.result.SurvivalAnalysisResult;
-import seed.seedplusbackend.global.cache.CaffeineCacheStore;
+import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionRunStatus;
+import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionType;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.industry.domain.entity.Industry;
@@ -44,16 +50,24 @@ class AnalysisServiceTest {
   @Mock private RegionRepository regionRepository;
   @Mock private IndustryRepository industryRepository;
   @Mock private PublicDataResolver publicDataResolver;
+  @Mock private AnalysisDataCollectionCoordinator collectionCoordinator;
 
   @BeforeEach
   void setUp() {
     analysisService =
         new AnalysisService(
             analysisLambdaClient,
-            new CaffeineCacheStore(),
             new RegionResolver(regionRepository),
             industryRepository,
-            publicDataResolver);
+            publicDataResolver,
+            collectionCoordinator);
+    org.mockito.Mockito.lenient()
+        .when(
+            collectionCoordinator.collect(
+                anyLong(), any(AnalysisCollectionType.class), anyString(), anyString()))
+        .thenReturn(
+            new AnalysisDataCollectionResult(
+                1L, AnalysisCollectionRunStatus.COMPLETED, java.util.List.of()));
     org.mockito.Mockito.lenient()
         .when(
             publicDataResolver.resolve(
@@ -62,8 +76,8 @@ class AnalysisServiceTest {
   }
 
   @Test
-  @DisplayName("Profit analysis caches successful lambda responses by normalized input")
-  void calculateProfit_returnsCachedResult_whenSameInputRequestedAgain() {
+  @DisplayName("Profit analysis recalculates after collecting the latest public data")
+  void calculateProfit_recalculatesAfterCollectingLatestData() {
     ProfitAnalysisCommand firstCommand =
         new ProfitAnalysisCommand(
             "스타카페",
@@ -96,7 +110,9 @@ class AnalysisServiceTest {
 
     assertThat(first).isSameAs(result);
     assertThat(second).isSameAs(result);
-    verify(analysisLambdaClient, times(1))
+    verify(collectionCoordinator).collect(1L, AnalysisCollectionType.PROFIT, "1168010100", "I561");
+    verify(collectionCoordinator).collect(2L, AnalysisCollectionType.PROFIT, "1168010100", "I561");
+    verify(analysisLambdaClient, times(2))
         .requestProfit(
             org.mockito.ArgumentMatchers.argThat(
                 command ->
@@ -106,39 +122,58 @@ class AnalysisServiceTest {
   }
 
   @Test
-  @DisplayName("MVP 지역과 업종은 기준 데이터가 없어도 임시 매핑으로 계산한다")
-  void calculateProfit_usesMvpMapping_whenReferenceDataIsMissing() {
+  @DisplayName("지역 기준 데이터가 없으면 계산하지 않는다")
+  void calculateProfit_rejectsMissingRegion() {
     ProfitAnalysisCommand command =
         new ProfitAnalysisCommand(
             "강남스타카페",
-            "I101",
+            "I21201",
             "1168010100",
             new BigDecimal("40"),
             new BigDecimal("8000"),
             new BigDecimal("250"),
             new BigDecimal("2000"),
             3);
-    ProfitAnalysisResult result = profitResult();
     given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
         .willReturn(java.util.Optional.empty());
-    given(industryRepository.findByIndustryCodeAndStatus("I101", IndustryStatus.ACTIVE))
-        .willReturn(java.util.Optional.empty());
-    given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(result);
 
-    assertThat(analysisService.calculateProfit(1L, command)).isSameAs(result);
-    verify(publicDataResolver).resolve("서울특별시 강남구 역삼동", "카페");
-    verify(analysisLambdaClient)
-        .requestProfit(
-            org.mockito.ArgumentMatchers.argThat(
-                lambdaCommand ->
-                    lambdaCommand != null
-                        && "서울특별시 강남구 역삼동".equals(lambdaCommand.region())
-                        && "카페".equals(lambdaCommand.industry())));
+    assertThatThrownBy(() -> analysisService.calculateProfit(1L, command))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.NOT_FOUND_REGION);
+    verify(publicDataResolver, never()).resolve(anyString(), anyString());
+    verify(analysisLambdaClient, never()).requestProfit(anyProfitLambdaCommand());
   }
 
   @Test
-  @DisplayName("Survival analysis caches successful lambda responses by normalized input")
-  void calculateSurvival_returnsCachedResult_whenSameInputRequestedAgain() {
+  @DisplayName("활성 업종 기준 데이터가 없으면 계산하지 않는다")
+  void calculateProfit_rejectsMissingIndustry() {
+    ProfitAnalysisCommand command =
+        new ProfitAnalysisCommand(
+            "강남스타카페",
+            "I21201",
+            "1168010100",
+            new BigDecimal("40"),
+            new BigDecimal("8000"),
+            new BigDecimal("250"),
+            new BigDecimal("2000"),
+            3);
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
+    given(industryRepository.findByIndustryCodeAndStatus("I21201", IndustryStatus.ACTIVE))
+        .willReturn(java.util.Optional.empty());
+
+    assertThatThrownBy(() -> analysisService.calculateProfit(1L, command))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.NOT_FOUND_INDUSTRY);
+    verify(publicDataResolver, never()).resolve(anyString(), anyString());
+    verify(analysisLambdaClient, never()).requestProfit(anyProfitLambdaCommand());
+  }
+
+  @Test
+  @DisplayName("Survival analysis recalculates after collecting the latest public data")
+  void calculateSurvival_recalculatesAfterCollectingLatestData() {
     SurvivalAnalysisCommand command = survivalCommand();
     SurvivalAnalysisResult result = survivalResult();
     given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
@@ -152,7 +187,9 @@ class AnalysisServiceTest {
 
     assertThat(first).isSameAs(result);
     assertThat(second).isSameAs(result);
-    verify(analysisLambdaClient, times(1))
+    verify(collectionCoordinator, times(2))
+        .collect(1L, AnalysisCollectionType.SURVIVAL, "1168010100", "I562");
+    verify(analysisLambdaClient, times(2))
         .requestSurvival(
             org.mockito.ArgumentMatchers.argThat(
                 lambdaCommand ->
@@ -162,8 +199,67 @@ class AnalysisServiceTest {
   }
 
   @Test
-  @DisplayName("Lambda failures are not cached")
-  void calculateProfit_doesNotCacheFailure() {
+  @DisplayName("수익률 공공데이터가 없으면 명세의 fallback 값을 전달한다")
+  void calculateProfit_appliesFallbackValues() {
+    ProfitAnalysisCommand command =
+        new ProfitAnalysisCommand(
+            "스타카페",
+            "I561",
+            "1168010100",
+            new BigDecimal("30"),
+            new BigDecimal("5000"),
+            new BigDecimal("300"),
+            new BigDecimal("2000"),
+            3);
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
+    given(industryRepository.findByIndustryCodeAndStatus("I561", IndustryStatus.ACTIVE))
+        .willReturn(java.util.Optional.of(industry("I561", "Cafe")));
+    given(publicDataResolver.resolve("1168010100", "I561"))
+        .willReturn(metricsWithoutFallbackTargets());
+    given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(profitResult());
+
+    analysisService.calculateProfit(1L, command);
+
+    verify(analysisLambdaClient)
+        .requestProfit(
+            org.mockito.ArgumentMatchers.argThat(
+                lambdaCommand ->
+                    lambdaCommand.storeZoneOne() == 100
+                        && lambdaCommand.storeListInArea() == 300
+                        && lambdaCommand.storeListInRadius() == 50
+                        && lambdaCommand.fallbackUsed()));
+  }
+
+  @Test
+  @DisplayName("생존률 공공데이터가 없으면 명세의 fallback 값을 전달한다")
+  void calculateSurvival_appliesFallbackValues() {
+    SurvivalAnalysisCommand command = survivalCommand();
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
+    given(industryRepository.findByIndustryCodeAndStatus("I562", IndustryStatus.ACTIVE))
+        .willReturn(java.util.Optional.of(industry("I562", "Restaurant")));
+    given(publicDataResolver.resolve("1168010100", "I562"))
+        .willReturn(metricsWithoutFallbackTargets());
+    given(analysisLambdaClient.requestSurvival(anySurvivalLambdaCommand()))
+        .willReturn(survivalResult());
+
+    analysisService.calculateSurvival(1L, command);
+
+    verify(analysisLambdaClient)
+        .requestSurvival(
+            org.mockito.ArgumentMatchers.argThat(
+                lambdaCommand ->
+                    BigDecimal.ZERO.compareTo(lambdaCommand.salesGrowthRate()) == 0
+                        && lambdaCommand.storeDensity() == 40
+                        && new BigDecimal("8.0").compareTo(lambdaCommand.vacancyRate()) == 0
+                        && lambdaCommand.trafficIndex() == 14000
+                        && lambdaCommand.fallbackUsed()));
+  }
+
+  @Test
+  @DisplayName("Lambda 호출 실패 후 다음 요청에서 다시 분석한다")
+  void calculateProfit_retriesAnalysisOnNextRequestAfterLambdaFailure() {
     ProfitAnalysisCommand command =
         new ProfitAnalysisCommand(
             "스타카페",
@@ -189,6 +285,67 @@ class AnalysisServiceTest {
 
     assertThat(recovered).isSameAs(result);
     verify(analysisLambdaClient, times(2)).requestProfit(anyProfitLambdaCommand());
+  }
+
+  @Test
+  @DisplayName("공공데이터 수집이 실패하면 분석 함수를 호출하지 않는다")
+  void calculateProfit_doesNotAnalyzeWhenCollectionFails() {
+    ProfitAnalysisCommand command =
+        new ProfitAnalysisCommand(
+            "스타카페",
+            "I561",
+            "1168010100",
+            new BigDecimal("30"),
+            new BigDecimal("5000"),
+            new BigDecimal("300"),
+            new BigDecimal("2000"),
+            3);
+    given(collectionCoordinator.collect(1L, AnalysisCollectionType.PROFIT, "1168010100", "I561"))
+        .willReturn(
+            new AnalysisDataCollectionResult(
+                7L,
+                AnalysisCollectionRunStatus.FAILED,
+                java.util.List.of("SEOUL_ESTIMATED_SALES")));
+
+    assertThatThrownBy(() -> analysisService.calculateProfit(1L, command))
+        .isInstanceOf(ApplicationException.class)
+        .hasMessageContaining("runId=7")
+        .hasMessageContaining("SEOUL_ESTIMATED_SALES")
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED);
+    verify(publicDataResolver, never()).resolve(anyString(), anyString());
+    verify(analysisLambdaClient, never()).requestProfit(anyProfitLambdaCommand());
+  }
+
+  @Test
+  @DisplayName("수집 실행 ID가 있으면 실패 작업을 재시도한 뒤 수익률을 계산한다")
+  void calculateProfit_retriesCollectionRunBeforeAnalysis() {
+    ProfitAnalysisCommand command =
+        new ProfitAnalysisCommand(
+            "스타카페",
+            "I561",
+            "1168010100",
+            new BigDecimal("30"),
+            new BigDecimal("5000"),
+            new BigDecimal("300"),
+            new BigDecimal("2000"),
+            3,
+            7L);
+    ProfitAnalysisResult result = profitResult();
+    given(collectionCoordinator.retry(1L, 7L, AnalysisCollectionType.PROFIT, "1168010100", "I561"))
+        .willReturn(
+            new AnalysisDataCollectionResult(
+                7L, AnalysisCollectionRunStatus.COMPLETED, java.util.List.of()));
+    given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
+        .willReturn(java.util.Optional.of(region()));
+    given(industryRepository.findByIndustryCodeAndStatus("I561", IndustryStatus.ACTIVE))
+        .willReturn(java.util.Optional.of(industry("I561", "Cafe")));
+    given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(result);
+
+    assertThat(analysisService.calculateProfit(1L, command)).isSameAs(result);
+    verify(collectionCoordinator, never())
+        .collect(1L, AnalysisCollectionType.PROFIT, "1168010100", "I561");
+    verify(analysisLambdaClient).requestProfit(anyProfitLambdaCommand());
   }
 
   private SurvivalAnalysisCommand survivalCommand() {
@@ -222,6 +379,28 @@ class AnalysisServiceTest {
         new BigDecimal("1500"),
         new BigDecimal("180"),
         true,
+        java.util.List.of("서울시 상권분석"));
+  }
+
+  private PublicDataMetrics metricsWithoutFallbackTargets() {
+    return new PublicDataMetrics(
+        3120000000L,
+        104,
+        new BigDecimal("3500000"),
+        new BigDecimal("2900000"),
+        null,
+        null,
+        null,
+        18,
+        null,
+        null,
+        null,
+        null,
+        new BigDecimal("68"),
+        new BigDecimal("120"),
+        new BigDecimal("1500"),
+        new BigDecimal("180"),
+        false,
         java.util.List.of("서울시 상권분석"));
   }
 

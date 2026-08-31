@@ -28,6 +28,7 @@ public interface AnalysisApi {
   @ApiErrorCodeExamples({
     ErrorCode.INVALID_PARAMETER,
     ErrorCode.UNAUTHORIZED,
+    ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED,
     ErrorCode.ANALYSIS_FUNCTION_CALL_FAILED
   })
   @PostMapping("/profit")
@@ -42,6 +43,7 @@ public interface AnalysisApi {
   @ApiErrorCodeExamples({
     ErrorCode.INVALID_PARAMETER,
     ErrorCode.UNAUTHORIZED,
+    ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED,
     ErrorCode.ANALYSIS_FUNCTION_CALL_FAILED
   })
   @PostMapping("/survival")

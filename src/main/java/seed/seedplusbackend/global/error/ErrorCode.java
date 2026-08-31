@@ -84,10 +84,13 @@ public enum ErrorCode {
   // 9100: Analysis
   ANALYSIS_FUNCTION_CALL_FAILED(
       HttpStatus.BAD_GATEWAY, 9100, "External analysis function call failed."),
+  ANALYSIS_DATA_COLLECTION_FAILED(HttpStatus.BAD_GATEWAY, 9101, "분석에 필요한 공공데이터 수집에 실패했습니다."),
 
   // 9200: External Open API
   SEOUL_OPEN_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 9200, "서울시 OpenAPI 요청에 실패했습니다."),
   SEOUL_OPEN_API_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, 9201, "서울시 OpenAPI 응답 형식이 올바르지 않습니다."),
+  SEOUL_ESTIMATED_SALES_QUARTER_NOT_FOUND(
+      HttpStatus.BAD_GATEWAY, 9202, "서울시 추정매출 데이터의 최신 기준 분기를 찾을 수 없습니다."),
 
   // 9300: Small Business Store OpenAPI
   SMALL_BUSINESS_STORE_API_REQUEST_FAILED(
