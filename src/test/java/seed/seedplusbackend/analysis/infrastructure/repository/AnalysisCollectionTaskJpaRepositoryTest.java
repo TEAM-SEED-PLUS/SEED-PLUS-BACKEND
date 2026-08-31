@@ -30,13 +30,13 @@ class AnalysisCollectionTaskJpaRepositoryTest extends AbstractPostgresContainerT
     AnalysisCollectionRun run =
         runRepository.save(
             AnalysisCollectionRun.create(
-                user, AnalysisCollectionType.SURVIVAL, "1168010100", "I101"));
+                user, AnalysisCollectionType.SURVIVAL, "1168010100", "I21201"));
     AnalysisCollectionTask completed =
-        AnalysisCollectionTask.create(run, "ESTIMATED_SALES", "20262:1001495:I101");
+        AnalysisCollectionTask.create(run, "ESTIMATED_SALES", "20262:1001495:I21201");
     completed.start();
     completed.complete();
     AnalysisCollectionTask failed =
-        AnalysisCollectionTask.create(run, "KOSIS_BUSINESS_SURVIVAL", "2025:I101");
+        AnalysisCollectionTask.create(run, "KOSIS_BUSINESS_SURVIVAL", "2025:I21201");
     failed.start();
     failed.fail("timeout");
     taskRepository.save(completed);

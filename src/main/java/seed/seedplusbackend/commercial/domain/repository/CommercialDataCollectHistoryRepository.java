@@ -14,5 +14,8 @@ public interface CommercialDataCollectHistoryRepository {
   Optional<CommercialDataCollectHistory> findByDataTypeAndTargetKeyAndStatus(
       String dataType, String targetKey, CommercialDataCollectStatus status);
 
+  Optional<CommercialDataCollectHistory> findTopByDataTypeAndTargetKeyOrderByStartedAtDesc(
+      String dataType, String targetKey);
+
   CommercialDataCollectHistory save(CommercialDataCollectHistory history);
 }

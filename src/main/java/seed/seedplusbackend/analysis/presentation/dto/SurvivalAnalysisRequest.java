@@ -14,7 +14,7 @@ public record SurvivalAnalysisRequest(
     @Schema(description = "지역 코드. regions.code 값이며 행정구역 코드를 사용합니다.", example = "1168000000")
         @NotBlank
         String regionCode,
-    @Schema(description = "업종 코드", example = "I101") @NotBlank String industryCode,
+    @Schema(description = "업종 코드", example = "I21201") @NotBlank String industryCode,
     @Schema(example = "40") @NotNull @Positive BigDecimal area,
     @Schema(example = "250") @NotNull @PositiveOrZero BigDecimal rent,
     @Schema(example = "8000") @NotNull @PositiveOrZero BigDecimal invest,

@@ -45,7 +45,7 @@ public class AnalysisDataCollectionCoordinator {
             .findById(userId)
             .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_USER));
     AnalysisCollectionTarget target = targetResolver.resolve(regionCode, industryCode);
-    List<CommercialDataCollectCommand> commands = createCommands(target, includeRealtime);
+    List<CommercialDataCollectCommand> commands = createCommands(analysisType, target, includeRealtime);
     AnalysisCollectionRun run =
         runRepository.save(
             AnalysisCollectionRun.create(user, analysisType, regionCode, industryCode));
@@ -89,16 +89,17 @@ public class AnalysisDataCollectionCoordinator {
     validateRetryCondition(run, analysisType, regionCode, industryCode);
     AnalysisCollectionTarget target =
         targetResolver.resolve(run.getRegionCode(), run.getIndustryCode());
-    List<CommercialDataCollectCommand> commands = createCommands(target, includeRealtime);
-
+    List<CommercialDataCollectCommand> commands = createCommands(analysisType, target, includeRealtime);
     return collectionService.collect(runId, commands);
   }
 
   private List<CommercialDataCollectCommand> createCommands(
-      AnalysisCollectionTarget target, boolean includeRealtime) {
+      AnalysisCollectionType analysisType,
+      AnalysisCollectionTarget target,
+      boolean includeRealtime) {
     return includeRealtime
-        ? commandFactory.create(target)
-        : commandFactory.createWithoutRealtime(target);
+        ? commandFactory.create(analysisType, target)
+        : commandFactory.createWithoutRealtime(analysisType, target);
   }
 
   private void validateRetryCondition(

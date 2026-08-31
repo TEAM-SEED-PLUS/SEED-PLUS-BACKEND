@@ -41,7 +41,7 @@ class AnalysisCollectionTaskTest {
             UserFixture.generalActiveUser("collection@test.com"),
             AnalysisCollectionType.PROFIT,
             "1168010100",
-            "I101");
-    return AnalysisCollectionTask.create(run, "ESTIMATED_SALES", "20262:1001495:I101");
+            "I21201");
+    return AnalysisCollectionTask.create(run, "ESTIMATED_SALES", "20262:1001495:I21201");
   }
 }
