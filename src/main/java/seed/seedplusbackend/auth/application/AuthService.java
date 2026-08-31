@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import seed.seedplusbackend.auth.application.command.LoginCommand;
+import seed.seedplusbackend.auth.application.command.PasswordResetCommand;
 import seed.seedplusbackend.auth.application.command.SignupCommand;
 import seed.seedplusbackend.auth.domain.entity.RefreshToken;
 import seed.seedplusbackend.auth.domain.repository.RefreshTokenRepository;
@@ -41,6 +42,8 @@ public class AuthService {
     User user =
         User.builder()
             .phoneNumber(command.getPhoneNumber())
+            .loginId(command.getLoginId())
+            .email(command.getEmail())
             .password(passwordEncoder.encode(command.getPassword()))
             .name(command.getName())
             .birthDate(command.getBirthDate())
@@ -56,7 +59,7 @@ public class AuthService {
   public AuthTokenResult login(LoginCommand command) {
     User user =
         userRepository
-            .findByPhoneNumber(command.getPhoneNumber())
+            .findByLoginId(command.getLoginId())
             .orElseThrow(
                 () -> {
                   log.warn("[AuthService] 로그인 실패, 사유=존재하지 않는 사용자 또는 비밀번호 불일치");
@@ -72,6 +75,32 @@ public class AuthService {
     AuthTokenResult result = issueAndSaveTokens(user);
     log.info("[AuthService] 로그인 완료 사용자ID={}", user.getId());
     return result;
+  }
+
+  @Transactional
+  public void resetPassword(PasswordResetCommand command) {
+    User user =
+        userRepository
+            .findByEmail(command.getEmail())
+            .orElseThrow(
+                () -> {
+                  log.warn("[AuthService] 비밀번호 재설정 실패, 사유=존재하지 않는 사용자 또는 비밀번호 불일치");
+                  return new ApplicationException(ErrorCode.INVALID_CREDENTIALS);
+                });
+
+    if (!passwordEncoder.matches(command.getCurrentPassword(), user.getPassword())) {
+      log.warn("[AuthService] 비밀번호 재설정 실패, 사유=존재하지 않는 사용자 또는 비밀번호 불일치 사용자ID={}", user.getId());
+      throw new ApplicationException(ErrorCode.INVALID_CREDENTIALS);
+    }
+    if (!command.getNewPassword().equals(command.getNewPasswordConfirmation())) {
+      throw new ApplicationException(ErrorCode.PASSWORD_CONFIRMATION_MISMATCH);
+    }
+
+    validateLoginAllowed(user);
+    user.changePassword(passwordEncoder.encode(command.getNewPassword()));
+    int revokedCount =
+        refreshTokenRepository.revokeAllByUserIdIfNotRevoked(user.getId(), OffsetDateTime.now());
+    log.info("[AuthService] 비밀번호 재설정 완료 사용자ID={} 폐기된리프레시토큰수={}", user.getId(), revokedCount);
   }
 
   @Transactional
@@ -128,6 +157,14 @@ public class AuthService {
   }
 
   private void validateSignup(SignupCommand command) {
+    if (userRepository.existsByLoginId(command.getLoginId())) {
+      log.warn("[AuthService] 회원가입 실패, 사유=중복된 로그인 ID");
+      throw new ApplicationException(ErrorCode.DUPLICATE_LOGIN_ID);
+    }
+    if (userRepository.existsByEmail(command.getEmail())) {
+      log.warn("[AuthService] 회원가입 실패, 사유=중복된 이메일");
+      throw new ApplicationException(ErrorCode.DUPLICATE_EMAIL);
+    }
     if (userRepository.existsByPhoneNumber(command.getPhoneNumber())) {
       log.warn("[AuthService] 회원가입 실패, 사유=중복된 전화번호");
       throw new ApplicationException(ErrorCode.DUPLICATE_PHONE_NUMBER);

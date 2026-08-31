@@ -7,6 +7,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LoginCommand {
 
-  private final String phoneNumber;
+  private final String loginId;
   private final String password;
 }
