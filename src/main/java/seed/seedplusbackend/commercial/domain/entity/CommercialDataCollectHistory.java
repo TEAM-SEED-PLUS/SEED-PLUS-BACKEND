@@ -27,7 +27,7 @@ public class CommercialDataCollectHistory {
   @Column(name = "data_type", nullable = false, length = 100)
   private String dataType;
 
-  @Column(name = "target_key", nullable = false, length = 50)
+  @Column(name = "target_key", nullable = false, length = 100)
   private String targetKey;
 
   @Enumerated(EnumType.STRING)

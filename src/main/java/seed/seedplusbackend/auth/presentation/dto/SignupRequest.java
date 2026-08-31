@@ -1,6 +1,7 @@
 package seed.seedplusbackend.auth.presentation.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
@@ -11,6 +12,12 @@ import seed.seedplusbackend.auth.application.command.SignupCommand;
 
 @Schema(description = "회원가입 요청")
 public record SignupRequest(
+    @NotBlank
+        @Pattern(regexp = "^[A-Za-z0-9]{4,20}$")
+        @Schema(description = "영문과 숫자로 구성된 로그인 ID", example = "seedplus01")
+        String loginId,
+    @NotBlank @Email @Size(max = 320) @Schema(description = "이메일", example = "seedplus@example.com")
+        String email,
     @NotBlank
         @Pattern(regexp = "^010\\d{8}$")
         @Schema(description = "하이픈 없는 휴대폰 번호", example = "01012345678")
@@ -26,6 +33,6 @@ public record SignupRequest(
         LocalDate birthDate) {
 
   public SignupCommand toCommand() {
-    return new SignupCommand(phoneNumber, password, name, birthDate);
+    return new SignupCommand(phoneNumber, loginId, email, password, name, birthDate);
   }
 }

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 public class SignupCommand {
 
   private final String phoneNumber;
+  private final String loginId;
+  private final String email;
   private final String password;
   private final String name;
   private final LocalDate birthDate;

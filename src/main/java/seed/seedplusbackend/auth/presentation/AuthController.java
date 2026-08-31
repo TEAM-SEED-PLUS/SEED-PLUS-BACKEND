@@ -26,6 +26,7 @@ import seed.seedplusbackend.auth.application.AuthService;
 import seed.seedplusbackend.auth.application.AuthTokenResult;
 import seed.seedplusbackend.auth.presentation.dto.CsrfTokenResponse;
 import seed.seedplusbackend.auth.presentation.dto.LoginRequest;
+import seed.seedplusbackend.auth.presentation.dto.PasswordResetRequest;
 import seed.seedplusbackend.auth.presentation.dto.SignupRequest;
 import seed.seedplusbackend.auth.presentation.dto.TokenResponse;
 import seed.seedplusbackend.global.error.ApplicationException;
@@ -58,13 +59,14 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success(CsrfTokenResponse.from(csrfToken)));
   }
 
-  @Operation(summary = "회원가입", description = "휴대폰 번호 기반 사용자를 생성한다.")
+  @Operation(summary = "회원가입", description = "로그인 ID 기반 사용자를 생성한다.")
   @io.swagger.v3.oas.annotations.responses.ApiResponse(
       responseCode = "201",
       description = "회원가입 성공",
       content = @Content)
   @ApiErrorCodeExamples({
     ErrorCode.INVALID_PARAMETER,
+    ErrorCode.DUPLICATE_LOGIN_ID,
     ErrorCode.DUPLICATE_PHONE_NUMBER,
     ErrorCode.DUPLICATE_EMAIL
   })
@@ -94,6 +96,22 @@ public class AuthController {
                 .createCookie(result.getRefreshToken(), result.getRefreshTokenExpiresIn())
                 .toString())
         .body(ApiResponse.success(TokenResponse.from(result)));
+  }
+
+  @Operation(summary = "비밀번호 재설정", description = "이메일과 기존 비밀번호를 검증한 뒤 새 비밀번호로 변경한다.")
+  @ApiErrorCodeExamples({
+    ErrorCode.INVALID_PARAMETER,
+    ErrorCode.INVALID_CREDENTIALS,
+    ErrorCode.INVALID_USER_STATUS,
+    ErrorCode.PASSWORD_CONFIRMATION_MISMATCH
+  })
+  @PostMapping("/password/reset")
+  public ResponseEntity<ApiResponse<Void>> resetPassword(
+      @Valid @RequestBody PasswordResetRequest request) {
+    authService.resetPassword(request.toCommand());
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, refreshTokenCookieManager.deleteCookie().toString())
+        .body(ApiResponse.success(HttpStatus.OK));
   }
 
   @Operation(

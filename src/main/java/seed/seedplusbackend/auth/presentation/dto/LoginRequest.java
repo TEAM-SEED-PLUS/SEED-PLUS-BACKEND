@@ -9,13 +9,13 @@ import seed.seedplusbackend.auth.application.command.LoginCommand;
 @Schema(description = "로그인 요청")
 public record LoginRequest(
     @NotBlank
-        @Pattern(regexp = "^010\\d{8}$")
-        @Schema(description = "하이픈 없는 휴대폰 번호", example = "01012345678")
-        String phoneNumber,
+        @Pattern(regexp = "^[A-Za-z0-9]{4,20}$")
+        @Schema(description = "영문과 숫자로 구성된 로그인 ID", example = "seedplus01")
+        String loginId,
     @NotBlank @Size(min = 8, max = 72) @Schema(description = "비밀번호", example = "password123")
         String password) {
 
   public LoginCommand toCommand() {
-    return new LoginCommand(phoneNumber, password);
+    return new LoginCommand(loginId, password);
   }
 }
