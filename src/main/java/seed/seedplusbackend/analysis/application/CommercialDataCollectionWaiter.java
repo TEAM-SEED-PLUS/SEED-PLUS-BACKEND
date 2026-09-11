@@ -1,6 +1,7 @@
 package seed.seedplusbackend.analysis.application;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import seed.seedplusbackend.commercial.application.command.CommercialDataCollectCommand;
@@ -11,6 +12,8 @@ import seed.seedplusbackend.commercial.domain.repository.CommercialDataCollectHi
 
 @Component
 public class CommercialDataCollectionWaiter {
+
+  private static final String TIMEOUT_ERROR_MESSAGE = "동일한 공공데이터 수집이 제한 시간 내에 완료되지 않아 중단 처리되었습니다.";
 
   private final CommercialDataCollectHistoryRepository historyRepository;
   private final Duration timeout;
@@ -32,9 +35,34 @@ public class CommercialDataCollectionWaiter {
       if (history.getStatus() != CommercialDataCollectStatus.RUNNING) {
         return toResult(history);
       }
+      if (isStale(history)) {
+        failStaleHistory(history);
+      }
       sleep();
     }
-    throw new IllegalStateException("동일한 공공데이터 수집이 제한 시간 내에 완료되지 않았습니다.");
+
+    CommercialDataCollectHistory history = findLatest(command);
+    if (history.getStatus() != CommercialDataCollectStatus.RUNNING) {
+      return toResult(history);
+    }
+    failStaleHistory(history);
+    throw new IllegalStateException(TIMEOUT_ERROR_MESSAGE);
+  }
+
+  private boolean isStale(CommercialDataCollectHistory history) {
+    OffsetDateTime lastActivityAt =
+        history.getUpdatedAt() == null ? history.getStartedAt() : history.getUpdatedAt();
+    return !lastActivityAt.plus(timeout).isAfter(OffsetDateTime.now());
+  }
+
+  private void failStaleHistory(CommercialDataCollectHistory history) {
+    history.fail(
+        history.getTotalCount(),
+        history.getFetchedCount(),
+        history.getLastStartIndex(),
+        TIMEOUT_ERROR_MESSAGE);
+    historyRepository.save(history);
+    throw new IllegalStateException(TIMEOUT_ERROR_MESSAGE);
   }
 
   private CommercialDataCollectHistory findLatest(CommercialDataCollectCommand command) {

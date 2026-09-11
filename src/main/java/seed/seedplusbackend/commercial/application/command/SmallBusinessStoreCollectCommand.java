@@ -7,8 +7,30 @@ public record SmallBusinessStoreCollectCommand(
     String largeIndustryCode,
     String mediumIndustryCode,
     String smallIndustryCode,
-    boolean force)
+    boolean force,
+    SmallBusinessStoreQueryType queryType)
     implements CommercialDataCollectCommand {
+
+  public SmallBusinessStoreCollectCommand(
+      String commercialAreaCode,
+      String largeIndustryCode,
+      String mediumIndustryCode,
+      String smallIndustryCode,
+      boolean force) {
+    this(
+        commercialAreaCode,
+        largeIndustryCode,
+        mediumIndustryCode,
+        smallIndustryCode,
+        force,
+        SmallBusinessStoreQueryType.COMMERCIAL_AREA);
+  }
+
+  public SmallBusinessStoreCollectCommand {
+    if (queryType == null) {
+      throw new IllegalArgumentException("소상공인 점포 조회 유형은 필수입니다.");
+    }
+  }
 
   @Override
   public CommercialDataType dataType() {
@@ -19,6 +41,7 @@ public record SmallBusinessStoreCollectCommand(
     return String.join(
         ":",
         commercialAreaCode,
+        queryType.name(),
         valueOrAll(largeIndustryCode),
         valueOrAll(mediumIndustryCode),
         valueOrAll(smallIndustryCode));

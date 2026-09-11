@@ -6,31 +6,30 @@ import org.springframework.stereotype.Component;
 import seed.seedplusbackend.analysis.application.command.AnalysisCollectionTarget;
 import seed.seedplusbackend.analysis.application.command.SmallBusinessCollectionTarget;
 import seed.seedplusbackend.commercial.application.LatestEstimatedSalesQuarterResolver;
-import seed.seedplusbackend.commercial.application.RegionExternalCodeResolver;
-import seed.seedplusbackend.commercial.domain.entity.ExternalDataSource;
+import seed.seedplusbackend.commercial.application.command.SmallBusinessStoreQueryType;
 import seed.seedplusbackend.industry.application.IndustryHierarchyResolver;
 import seed.seedplusbackend.industry.application.result.IndustryHierarchyResult;
+import seed.seedplusbackend.region.application.RegionResolver;
 
 @Component
 @RequiredArgsConstructor
 public class AnalysisCollectionTargetResolver {
 
-  private final RegionExternalCodeResolver regionExternalCodeResolver;
+  private static final int SIGUNGU_CODE_LENGTH = 5;
+
+  private final RegionResolver regionResolver;
   private final IndustryHierarchyResolver industryHierarchyResolver;
   private final LatestEstimatedSalesQuarterResolver latestEstimatedSalesQuarterResolver;
 
   public AnalysisCollectionTarget resolve(String regionCode, String industryCode) {
-    List<String> commercialAreaCodes =
-        regionExternalCodeResolver.resolve(regionCode, ExternalDataSource.SMALL_BUSINESS_STORE);
+    regionResolver.resolveLegalDong(regionCode);
     IndustryHierarchyResult industryHierarchy = industryHierarchyResolver.resolve(industryCode);
     String estimatedSalesQuarter = latestEstimatedSalesQuarterResolver.resolve();
 
-    List<SmallBusinessCollectionTarget> smallBusinessTargets =
-        commercialAreaCodes.stream()
-            .map(code -> toSmallBusinessTarget(code, industryHierarchy))
-            .toList();
+    SmallBusinessCollectionTarget smallBusinessTarget =
+        toSmallBusinessTarget(regionCode.substring(0, SIGUNGU_CODE_LENGTH), industryHierarchy);
 
-    return new AnalysisCollectionTarget(estimatedSalesQuarter, smallBusinessTargets);
+    return new AnalysisCollectionTarget(estimatedSalesQuarter, List.of(smallBusinessTarget));
   }
 
   private SmallBusinessCollectionTarget toSmallBusinessTarget(
@@ -39,6 +38,7 @@ public class AnalysisCollectionTargetResolver {
         commercialAreaCode,
         industryHierarchy.largeIndustryCode(),
         industryHierarchy.mediumIndustryCode(),
-        industryHierarchy.smallIndustryCode());
+        industryHierarchy.smallIndustryCode(),
+        SmallBusinessStoreQueryType.SIGUNGU);
   }
 }
