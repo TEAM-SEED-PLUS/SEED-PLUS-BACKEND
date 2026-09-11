@@ -11,6 +11,11 @@ management:
       application: seed-plus-backend
 
 spring:
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
   servlet:
     multipart:
       max-file-size: 10MB
@@ -117,6 +122,22 @@ seoul:
       min-jitter-millis: 300
       max-jitter-millis: 1200
       max-retry-count: 3
+
+# 원천 공표 주기와 수집 확인 주기는 다르다. 실제 스케줄러 연결 전 정책 초안.
+# 임대료 CSV는 수동 적재를 유지한다. Spring Batch 작업을 부팅 시 자동 실행하지 않는다.
+public-data:
+  collection:
+    zone: Asia/Seoul
+    crons:
+      SEOUL_SDOT_FOOT_TRAFFIC: "${COLLECT_SDOT_CRON:0 0 * * * *}"
+      SEOUL_REALTIME_CITY_POPULATION: "${COLLECT_CITY_POPULATION_CRON:0 10 * * * *}"
+      SEOUL_ESTIMATED_SALES: "${COLLECT_SALES_CRON:0 0 3 * * *}"
+      SMALL_BUSINESS_STORE: "${COLLECT_STORES_CRON:0 0 4 * * SUN}"
+      KOSIS_BUSINESS_COUNT: "${COLLECT_KOSIS_COUNT_CRON:0 0 5 * * MON}"
+      KOSIS_BUSINESS_SURVIVAL_RATE: "${COLLECT_KOSIS_SURVIVAL_CRON:0 30 5 * * MON}"
+    # 명시된 서비스 대상만 수집하며 빈 목록이면 대상 미설정으로 처리한다.
+    store-sigungu-codes: ${COLLECT_STORE_SIGUNGU_CODES:}
+    city-areas: ${COLLECT_CITY_AREAS:}
 
 small-business:
   store:
