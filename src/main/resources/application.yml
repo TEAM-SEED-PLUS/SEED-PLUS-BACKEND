@@ -126,6 +126,9 @@ seoul:
 # 원천 공표 주기와 수집 확인 주기는 다르다. 실제 스케줄러 연결 전 정책 초안.
 # 임대료 CSV는 수동 적재를 유지한다. Spring Batch 작업을 부팅 시 자동 실행하지 않는다.
 public-data:
+  batch:
+    # V28/V29 적용 및 개발 검증 후 활성화한다. Cron 자동 실행은 아직 연결하지 않는다.
+    enabled: ${PUBLIC_DATA_BATCH_ENABLED:false}
   collection:
     zone: Asia/Seoul
     crons:
