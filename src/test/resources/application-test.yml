@@ -1,4 +1,10 @@
 spring:
+  mail:
+    host: localhost
+    port: 3025
+    username: test@example.com
+    password: test-password
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -17,6 +23,11 @@ spring:
 
 app:
   base-url: http://localhost:8080
+
+auth:
+  temporary-password:
+    mail:
+      from-address: test@example.com
 
 external:
   rest-client:

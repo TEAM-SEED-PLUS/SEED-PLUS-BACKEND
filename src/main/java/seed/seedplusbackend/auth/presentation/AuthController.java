@@ -28,6 +28,7 @@ import seed.seedplusbackend.auth.presentation.dto.CsrfTokenResponse;
 import seed.seedplusbackend.auth.presentation.dto.LoginRequest;
 import seed.seedplusbackend.auth.presentation.dto.PasswordResetRequest;
 import seed.seedplusbackend.auth.presentation.dto.SignupRequest;
+import seed.seedplusbackend.auth.presentation.dto.TemporaryPasswordRequest;
 import seed.seedplusbackend.auth.presentation.dto.TokenResponse;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
@@ -112,6 +113,21 @@ public class AuthController {
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, refreshTokenCookieManager.deleteCookie().toString())
         .body(ApiResponse.success(HttpStatus.OK));
+  }
+
+  @Operation(
+      summary = "임시 비밀번호 발급",
+      description = "가입 이메일로 임시 비밀번호를 발송한다. 가입 여부와 무관하게 항상 200을 반환한다.")
+  @io.swagger.v3.oas.annotations.responses.ApiResponse(
+      responseCode = "200",
+      description = "임시 비밀번호 발급 요청 접수",
+      content = @Content)
+  @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.MAIL_SEND_FAILED})
+  @PostMapping("/password/temporary")
+  public ResponseEntity<ApiResponse<Void>> issueTemporaryPassword(
+      @Valid @RequestBody TemporaryPasswordRequest request) {
+    authService.issueTemporaryPassword(request.toCommand());
+    return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK));
   }
 
   @Operation(

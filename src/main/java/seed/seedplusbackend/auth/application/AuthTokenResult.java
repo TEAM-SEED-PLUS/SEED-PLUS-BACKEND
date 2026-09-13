@@ -11,4 +11,5 @@ public class AuthTokenResult {
   private final long accessTokenExpiresIn;
   private final String refreshToken;
   private final long refreshTokenExpiresIn;
+  private final boolean passwordChangeRequired;
 }
