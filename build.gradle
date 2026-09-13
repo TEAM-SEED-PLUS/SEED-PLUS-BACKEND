@@ -8,6 +8,10 @@ plugins {
 // Boot BOM이 42.7.12 이상을 관리시 제거
 ext['postgresql.version'] = '42.7.12'
 
+// CVE-2026-65182, CVE-2026-65905, CVE-2026-68525 대응 (권고 fixed 10.1.58은 Central 미배포)
+// Boot BOM이 10.1.59 이상을 관리시 제거
+ext['tomcat.version'] = '10.1.59'
+
 group = 'seed'
 version = '0.0.1-SNAPSHOT'
 description = 'SEED-PLUS-BACKEND'
