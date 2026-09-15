@@ -1,5 +1,6 @@
 package seed.seedplusbackend.commercial.infrastructure.batch;
 
+import java.time.Clock;
 import java.util.UUID;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.SyncTaskExecutor;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.interceptor.DefaultTransactionAttribute;
@@ -21,6 +23,7 @@ import seed.seedplusbackend.commercial.application.provider.CommercialDataProvid
 import seed.seedplusbackend.commercial.application.provider.CommercialDataType;
 
 @Configuration(proxyBeanMethods = false)
+@EnableScheduling
 @ConditionalOnProperty(name = "public-data.batch.enabled", havingValue = "true")
 @Import({
   PublicDataBatchLease.class,
@@ -31,6 +34,17 @@ import seed.seedplusbackend.commercial.application.provider.CommercialDataType;
 public class PublicDataBatchConfiguration {
 
   public static final String JOB_NAME = "publicDataCollection";
+
+  @Bean
+  Clock publicDataBatchClock() {
+    return Clock.systemUTC();
+  }
+
+  @Bean
+  PublicDataBatchScheduler publicDataBatchScheduler(
+      PublicDataCollectionProperties properties, PublicDataBatchLauncher launcher, Clock clock) {
+    return new PublicDataBatchScheduler(properties, launcher, clock);
+  }
 
   @Bean
   Job publicDataCollectionJob(

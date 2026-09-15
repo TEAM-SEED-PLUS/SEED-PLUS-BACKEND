@@ -6,7 +6,9 @@ import static org.mockito.Mockito.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -268,6 +270,13 @@ class PublicDataBatchIntegrationTest extends AbstractPostgresContainerTest {
     SeoulRealtimeCityPopulationJdbcRepository.class
   })
   static class Config {
+    @Bean
+    PublicDataCollectionProperties collectionProperties() {
+      // 통합 테스트는 직접 배치를 실행한다. 백그라운드 수집은 등록하지 않는다.
+      return new PublicDataCollectionProperties(
+          ZoneId.of("Asia/Seoul"), Map.of(), List.of(), List.of());
+    }
+
     @Bean
     DataSource dataSource() {
       return new DriverManagerDataSource(
