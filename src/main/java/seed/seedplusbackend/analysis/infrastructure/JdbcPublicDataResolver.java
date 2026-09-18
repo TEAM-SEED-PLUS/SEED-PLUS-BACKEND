@@ -6,6 +6,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import seed.seedplusbackend.analysis.application.port.PublicDataResolver;
 import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 
@@ -16,6 +18,7 @@ public class JdbcPublicDataResolver implements PublicDataResolver {
   private final JdbcTemplate jdbcTemplate;
 
   @Override
+  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
   public PublicDataMetrics resolve(String regionCode, String industryCode) {
     List<String> sources = new ArrayList<>();
     SalesMetrics sales = sales(regionCode, industryCode);

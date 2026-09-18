@@ -20,7 +20,8 @@ public record ProfitAnalysisRequest(
     @Schema(example = "300") @NotNull @PositiveOrZero BigDecimal rent,
     @Schema(example = "2000") @NotNull @PositiveOrZero BigDecimal premium,
     @Schema(example = "3") @NotNull @PositiveOrZero Integer staff,
-    @Schema(description = "수집 실패 후 재시도할 실행 ID. 최초 요청에서는 생략합니다.", example = "7") @Positive
+    @Schema(description = "이전 요청과의 호환용 필드입니다. 계산 시 사용하지 않으며 재수집하지 않습니다.", deprecated = true)
+        @Positive
         Long collectionRunId) {
 
   public ProfitAnalysisCommand toCommand() {
