@@ -143,11 +143,11 @@ seoul:
       max-jitter-millis: 1200
       max-retry-count: 3
 
-# 원천 공표 주기와 수집 확인 주기는 다르다. 실제 스케줄러 연결 전 정책 초안.
+# 원천 공표 주기와 수집 확인 주기는 다르다.
 # 임대료 CSV는 수동 적재를 유지한다. Spring Batch 작업을 부팅 시 자동 실행하지 않는다.
 public-data:
   batch:
-    # V28/V29 적용 및 개발 검증 후 활성화한다. Cron 자동 실행은 아직 연결하지 않는다.
+    # 배치 및 수집 대상 기준정보 마이그레이션 적용 후 Cron 정기 수집을 활성화한다.
     enabled: ${PUBLIC_DATA_BATCH_ENABLED:false}
   collection:
     zone: Asia/Seoul
@@ -158,7 +158,8 @@ public-data:
       SMALL_BUSINESS_STORE: "${COLLECT_STORES_CRON:0 0 4 * * SUN}"
       KOSIS_BUSINESS_COUNT: "${COLLECT_KOSIS_COUNT_CRON:0 0 5 * * MON}"
       KOSIS_BUSINESS_SURVIVAL_RATE: "${COLLECT_KOSIS_SURVIVAL_CRON:0 30 5 * * MON}"
-    # 명시된 서비스 대상만 수집하며 빈 목록이면 대상 미설정으로 처리한다.
+    # 미설정/빈 값이면 DB의 서울 SIGUNGU 및 활성 도시데이터 장소 기준정보를 조회한다.
+    # 값 지정은 로컬 검증 등에서 수집 범위를 제한할 때만 사용한다. 비활성화는 Cron '-'로 설정한다.
     store-sigungu-codes: ${COLLECT_STORE_SIGUNGU_CODES:}
     city-areas: ${COLLECT_CITY_AREAS:}
 

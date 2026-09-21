@@ -21,6 +21,7 @@ import seed.seedplusbackend.commercial.application.provider.CommercialDataType;
 
 @DisplayName("공공데이터 배치 수집 명령 생성")
 class PublicDataBatchCommandFactoryTest {
+  private final SeoulCollectionTargets targets = mock(SeoulCollectionTargets.class);
 
   private final LatestEstimatedSalesQuarterResolver quarterResolver =
       mock(LatestEstimatedSalesQuarterResolver.class);
@@ -65,13 +66,18 @@ class PublicDataBatchCommandFactoryTest {
   }
 
   @Test
-  @DisplayName("수집 대상 미설정과 임대료 CSV 자동 수집 명령 생성을 거부한다")
+  @DisplayName("수집 대상 미설정이면 서울 전체를 수집하며 임대료는 수동 적재를 유지한다")
   void missingTargetsAndManualCsvCannotBecomeSuccessfulEmptyJobs() {
+    when(targets.districts()).thenReturn(List.of("11680", "11740"));
+    when(targets.cityAreas()).thenReturn(List.of("홍제폭포"));
     var factory = factory(List.of(), List.of());
-    assertThatThrownBy(() -> factory.create(CommercialDataType.SMALL_BUSINESS_STORE))
-        .isInstanceOf(IllegalStateException.class);
-    assertThatThrownBy(() -> factory.create(CommercialDataType.SEOUL_REALTIME_CITY_POPULATION))
-        .isInstanceOf(IllegalStateException.class);
+    assertThat(factory.create(CommercialDataType.SMALL_BUSINESS_STORE))
+        .hasSize(2)
+        .doesNotHaveDuplicates();
+    assertThat(factory.create(CommercialDataType.SEOUL_REALTIME_CITY_POPULATION))
+        .hasSize(1)
+        .doesNotHaveDuplicates()
+        .contains(new SeoulRealtimeCityPopulationCollectCommand("홍제폭포", true));
     assertThatThrownBy(() -> factory.create(CommercialDataType.REB_SMALL_RETAIL_RENT))
         .isInstanceOf(IllegalArgumentException.class);
   }
@@ -86,6 +92,7 @@ class PublicDataBatchCommandFactoryTest {
   private PublicDataBatchCommandFactory factory(List<String> districts, List<String> areas) {
     return new PublicDataBatchCommandFactory(
         new PublicDataCollectionProperties(ZoneId.of("Asia/Seoul"), Map.of(), districts, areas),
-        quarterResolver);
+        quarterResolver,
+        targets);
   }
 }
