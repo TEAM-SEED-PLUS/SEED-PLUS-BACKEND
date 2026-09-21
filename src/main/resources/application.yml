@@ -193,7 +193,7 @@ kosis:
       base-url: https://kosis.kr
       endpoint: /openapi/Param/statisticsParameterData.do
       organization-id: "101"
-      table-id: DT_1BD1001
+      table-id: DT_1BD1101
       connect-timeout-millis: ${KOSIS_CONNECT_TIMEOUT_MS:3000}
       read-timeout-millis: ${KOSIS_READ_TIMEOUT_MS:30000}
       initial-backoff-millis: ${KOSIS_INITIAL_BACKOFF_MS:500}

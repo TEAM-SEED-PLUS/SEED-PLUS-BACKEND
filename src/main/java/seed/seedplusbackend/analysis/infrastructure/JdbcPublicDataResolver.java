@@ -151,8 +151,10 @@ public class JdbcPublicDataResolver implements PublicDataResolver {
                 SELECT MAX(reference_year)
                 FROM kosis_business_rates
                 WHERE industry_code IN (SELECT external_code FROM count_codes)
+                  AND organization_id = '101' AND table_id = 'DT_1BD1101'
               )
                 AND industry_code IN (SELECT external_code FROM count_codes)
+                AND organization_id = '101' AND table_id = 'DT_1BD1101'
             ), latest_survival AS (
               SELECT AVG(survival_rate) AS survival_rate
               FROM kosis_business_survival_rates

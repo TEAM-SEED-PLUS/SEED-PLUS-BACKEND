@@ -12,6 +12,7 @@ import seed.seedplusbackend.analysis.application.result.ProfitAnalysisResult;
 import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 import seed.seedplusbackend.analysis.application.result.SurvivalAnalysisResult;
 import seed.seedplusbackend.analysis.application.support.ProfitCalculatorFallback;
+import seed.seedplusbackend.analysis.application.support.SurvivalBusinessRates;
 import seed.seedplusbackend.analysis.application.support.SurvivalCalculatorFallback;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
@@ -35,7 +36,9 @@ public class AnalysisService {
 
   public SurvivalAnalysisResult calculateSurvival(Long userId, SurvivalAnalysisCommand command) {
     validateAuthenticated(userId);
-    return analysisLambdaClient.requestSurvival(toLambda(command));
+    var lambdaCommand = toLambda(command);
+    return SurvivalBusinessRates.normalize(
+        analysisLambdaClient.requestSurvival(lambdaCommand), lambdaCommand);
   }
 
   private void validateAuthenticated(Long userId) {
