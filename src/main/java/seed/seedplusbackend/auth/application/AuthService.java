@@ -1,6 +1,8 @@
 package seed.seedplusbackend.auth.application;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,6 +12,9 @@ import org.springframework.util.StringUtils;
 import seed.seedplusbackend.auth.application.command.LoginCommand;
 import seed.seedplusbackend.auth.application.command.PasswordResetCommand;
 import seed.seedplusbackend.auth.application.command.SignupCommand;
+import seed.seedplusbackend.auth.application.command.TemporaryPasswordIssueCommand;
+import seed.seedplusbackend.auth.application.port.TemporaryPasswordMailSender;
+import seed.seedplusbackend.auth.domain.TemporaryPasswordGenerator;
 import seed.seedplusbackend.auth.domain.entity.RefreshToken;
 import seed.seedplusbackend.auth.domain.repository.RefreshTokenRepository;
 import seed.seedplusbackend.global.error.ApplicationException;
@@ -29,11 +34,14 @@ import seed.seedplusbackend.user.domain.repository.UserRepository;
 @RequiredArgsConstructor
 public class AuthService {
 
+  private static final Duration TEMPORARY_PASSWORD_RESEND_COOLDOWN = Duration.ofMinutes(1);
+
   private final UserRepository userRepository;
   private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
   private final AccessTokenBlacklist accessTokenBlacklist;
+  private final TemporaryPasswordMailSender temporaryPasswordMailSender;
 
   @Transactional
   public void signup(SignupCommand command) {
@@ -101,6 +109,33 @@ public class AuthService {
     int revokedCount =
         refreshTokenRepository.revokeAllByUserIdIfNotRevoked(user.getId(), OffsetDateTime.now());
     log.info("[AuthService] 비밀번호 재설정 완료 사용자ID={} 폐기된리프레시토큰수={}", user.getId(), revokedCount);
+  }
+
+  @Transactional
+  public void issueTemporaryPassword(TemporaryPasswordIssueCommand command) {
+    Optional<User> found = userRepository.findByEmail(command.getEmail());
+    if (found.isEmpty()) {
+      log.info("[AuthService] 임시 비밀번호 발급 생략, 사유=존재하지 않는 사용자");
+      return;
+    }
+
+    User user = found.get();
+    OffsetDateTime now = OffsetDateTime.now();
+    if (user.getStatus() != UserStatus.ACTIVE) {
+      log.info("[AuthService] 임시 비밀번호 발급 생략, 사유=활성 상태가 아닌 사용자 사용자ID={}", user.getId());
+      return;
+    }
+    if (!user.isTemporaryPasswordReissuable(now, TEMPORARY_PASSWORD_RESEND_COOLDOWN)) {
+      log.info("[AuthService] 임시 비밀번호 발급 생략, 사유=재요청 쿨다운 이내 사용자ID={}", user.getId());
+      return;
+    }
+
+    String temporaryPassword = TemporaryPasswordGenerator.generate();
+    user.issueTemporaryPassword(passwordEncoder.encode(temporaryPassword), now);
+    int revokedCount = refreshTokenRepository.revokeAllByUserIdIfNotRevoked(user.getId(), now);
+
+    temporaryPasswordMailSender.send(user.getEmail(), temporaryPassword);
+    log.info("[AuthService] 임시 비밀번호 발급 완료 사용자ID={} 폐기된리프레시토큰수={}", user.getId(), revokedCount);
   }
 
   @Transactional
@@ -198,6 +233,7 @@ public class AuthService {
         .accessTokenExpiresIn(accessToken.getExpiresInMillis())
         .refreshToken(refreshToken.getValue())
         .refreshTokenExpiresIn(refreshToken.getExpiresInMillis())
+        .passwordChangeRequired(user.isTemporaryPassword())
         .build();
   }
 

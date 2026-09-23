@@ -2,8 +2,6 @@ package seed.seedplusbackend.analysis.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -23,12 +21,9 @@ import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisCommand
 import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisLambdaCommand;
 import seed.seedplusbackend.analysis.application.port.AnalysisLambdaClient;
 import seed.seedplusbackend.analysis.application.port.PublicDataResolver;
-import seed.seedplusbackend.analysis.application.result.AnalysisDataCollectionResult;
 import seed.seedplusbackend.analysis.application.result.ProfitAnalysisResult;
 import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 import seed.seedplusbackend.analysis.application.result.SurvivalAnalysisResult;
-import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionRunStatus;
-import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionType;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.industry.domain.entity.Industry;
@@ -50,7 +45,6 @@ class AnalysisServiceTest {
   @Mock private RegionRepository regionRepository;
   @Mock private IndustryRepository industryRepository;
   @Mock private PublicDataResolver publicDataResolver;
-  @Mock private AnalysisDataCollectionCoordinator collectionCoordinator;
 
   @BeforeEach
   void setUp() {
@@ -59,15 +53,7 @@ class AnalysisServiceTest {
             analysisLambdaClient,
             new RegionResolver(regionRepository),
             industryRepository,
-            publicDataResolver,
-            collectionCoordinator);
-    org.mockito.Mockito.lenient()
-        .when(
-            collectionCoordinator.collect(
-                anyLong(), any(AnalysisCollectionType.class), anyString(), anyString()))
-        .thenReturn(
-            new AnalysisDataCollectionResult(
-                1L, AnalysisCollectionRunStatus.COMPLETED, java.util.List.of()));
+            publicDataResolver);
     org.mockito.Mockito.lenient()
         .when(
             publicDataResolver.resolve(
@@ -76,8 +62,8 @@ class AnalysisServiceTest {
   }
 
   @Test
-  @DisplayName("Profit analysis recalculates after collecting the latest public data")
-  void calculateProfit_recalculatesAfterCollectingLatestData() {
+  @DisplayName("수익률 요청은 재수집 없이 저장된 데이터로 매번 계산한다")
+  void calculateProfit_usesStoredData() {
     ProfitAnalysisCommand firstCommand =
         new ProfitAnalysisCommand(
             "스타카페",
@@ -110,14 +96,14 @@ class AnalysisServiceTest {
 
     assertThat(first).isSameAs(result);
     assertThat(second).isSameAs(result);
-    verify(collectionCoordinator).collect(1L, AnalysisCollectionType.PROFIT, "1168010100", "I561");
-    verify(collectionCoordinator).collect(2L, AnalysisCollectionType.PROFIT, "1168010100", "I561");
+    verify(publicDataResolver, times(2)).resolve("1168010100", "I561");
     verify(analysisLambdaClient, times(2))
         .requestProfit(
             org.mockito.ArgumentMatchers.argThat(
                 command ->
                     command != null
                         && "Cafe".equals(command.industry())
+                        && command.monthlySalesAmount().equals(3120000000L)
                         && "Seoul Gangnam-gu Yeoksam-dong".equals(command.region())));
   }
 
@@ -172,8 +158,8 @@ class AnalysisServiceTest {
   }
 
   @Test
-  @DisplayName("Survival analysis recalculates after collecting the latest public data")
-  void calculateSurvival_recalculatesAfterCollectingLatestData() {
+  @DisplayName("생존률 요청은 재수집 없이 저장된 데이터로 매번 계산한다")
+  void calculateSurvival_usesStoredData() {
     SurvivalAnalysisCommand command = survivalCommand();
     SurvivalAnalysisResult result = survivalResult();
     given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
@@ -187,14 +173,14 @@ class AnalysisServiceTest {
 
     assertThat(first).isSameAs(result);
     assertThat(second).isSameAs(result);
-    verify(collectionCoordinator, times(2))
-        .collect(1L, AnalysisCollectionType.SURVIVAL, "1168010100", "I562");
+    verify(publicDataResolver, times(2)).resolve("1168010100", "I562");
     verify(analysisLambdaClient, times(2))
         .requestSurvival(
             org.mockito.ArgumentMatchers.argThat(
                 lambdaCommand ->
                     lambdaCommand != null
                         && "Restaurant".equals(lambdaCommand.industry())
+                        && lambdaCommand.survivalRate().compareTo(new BigDecimal("68")) == 0
                         && "Seoul Gangnam-gu Yeoksam-dong".equals(lambdaCommand.region())));
   }
 
@@ -288,38 +274,8 @@ class AnalysisServiceTest {
   }
 
   @Test
-  @DisplayName("공공데이터 수집이 실패하면 분석 함수를 호출하지 않는다")
-  void calculateProfit_doesNotAnalyzeWhenCollectionFails() {
-    ProfitAnalysisCommand command =
-        new ProfitAnalysisCommand(
-            "스타카페",
-            "I561",
-            "1168010100",
-            new BigDecimal("30"),
-            new BigDecimal("5000"),
-            new BigDecimal("300"),
-            new BigDecimal("2000"),
-            3);
-    given(collectionCoordinator.collect(1L, AnalysisCollectionType.PROFIT, "1168010100", "I561"))
-        .willReturn(
-            new AnalysisDataCollectionResult(
-                7L,
-                AnalysisCollectionRunStatus.FAILED,
-                java.util.List.of("SEOUL_ESTIMATED_SALES")));
-
-    assertThatThrownBy(() -> analysisService.calculateProfit(1L, command))
-        .isInstanceOf(ApplicationException.class)
-        .hasMessageContaining("runId=7")
-        .hasMessageContaining("SEOUL_ESTIMATED_SALES")
-        .extracting("errorCode")
-        .isEqualTo(ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED);
-    verify(publicDataResolver, never()).resolve(anyString(), anyString());
-    verify(analysisLambdaClient, never()).requestProfit(anyProfitLambdaCommand());
-  }
-
-  @Test
-  @DisplayName("수집 실행 ID가 있으면 실패 작업을 재시도한 뒤 수익률을 계산한다")
-  void calculateProfit_retriesCollectionRunBeforeAnalysis() {
+  @DisplayName("기존 수집 실행 ID가 전달돼도 재수집 없이 저장 데이터로 계산한다")
+  void calculateProfit_ignoresLegacyCollectionRunId() {
     ProfitAnalysisCommand command =
         new ProfitAnalysisCommand(
             "스타카페",
@@ -332,10 +288,6 @@ class AnalysisServiceTest {
             3,
             7L);
     ProfitAnalysisResult result = profitResult();
-    given(collectionCoordinator.retry(1L, 7L, AnalysisCollectionType.PROFIT, "1168010100", "I561"))
-        .willReturn(
-            new AnalysisDataCollectionResult(
-                7L, AnalysisCollectionRunStatus.COMPLETED, java.util.List.of()));
     given(regionRepository.findByCodeAndCodeType("1168010100", RegionCodeType.LEGAL_DONG))
         .willReturn(java.util.Optional.of(region()));
     given(industryRepository.findByIndustryCodeAndStatus("I561", IndustryStatus.ACTIVE))
@@ -343,9 +295,31 @@ class AnalysisServiceTest {
     given(analysisLambdaClient.requestProfit(anyProfitLambdaCommand())).willReturn(result);
 
     assertThat(analysisService.calculateProfit(1L, command)).isSameAs(result);
-    verify(collectionCoordinator, never())
-        .collect(1L, AnalysisCollectionType.PROFIT, "1168010100", "I561");
     verify(analysisLambdaClient).requestProfit(anyProfitLambdaCommand());
+  }
+
+  @Test
+  @DisplayName("인증되지 않은 요청은 DB 조회와 Lambda 호출을 하지 않는다")
+  void rejectsUnauthenticatedRequests() {
+    var command =
+        new ProfitAnalysisCommand(
+            "상가",
+            "I561",
+            "1168010100",
+            BigDecimal.TEN,
+            BigDecimal.TEN,
+            BigDecimal.ONE,
+            BigDecimal.ZERO,
+            1);
+    assertThatThrownBy(() -> analysisService.calculateProfit(null, command))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.UNAUTHORIZED);
+    assertThatThrownBy(() -> analysisService.calculateSurvival(null, survivalCommand()))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.UNAUTHORIZED);
+    org.mockito.Mockito.verifyNoInteractions(publicDataResolver, analysisLambdaClient);
   }
 
   private SurvivalAnalysisCommand survivalCommand() {

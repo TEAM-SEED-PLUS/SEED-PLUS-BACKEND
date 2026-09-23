@@ -15,7 +15,7 @@ public class SeoulRealtimeCityPopulationJdbcRepository
 
   private static final String UPSERT_SQL =
       """
-      INSERT INTO seoul_realtime_city_populations (
+      INSERT INTO seoul_realtime_city_populations AS current_data (
         area_code, area_name, congestion_level, congestion_message,
         population_min, population_max, estimated_population,
         male_population_rate, female_population_rate,
@@ -50,6 +50,25 @@ public class SeoulRealtimeCityPopulationJdbcRepository
         replacement_used = EXCLUDED.replacement_used,
         collected_at = now(),
         updated_at = now()
+        WHERE current_data.area_name IS DISTINCT FROM EXCLUDED.area_name
+           OR current_data.congestion_level IS DISTINCT FROM EXCLUDED.congestion_level
+           OR current_data.congestion_message IS DISTINCT FROM EXCLUDED.congestion_message
+           OR current_data.population_min IS DISTINCT FROM EXCLUDED.population_min
+           OR current_data.population_max IS DISTINCT FROM EXCLUDED.population_max
+           OR current_data.estimated_population IS DISTINCT FROM EXCLUDED.estimated_population
+           OR current_data.male_population_rate IS DISTINCT FROM EXCLUDED.male_population_rate
+           OR current_data.female_population_rate IS DISTINCT FROM EXCLUDED.female_population_rate
+           OR current_data.population_rate_0 IS DISTINCT FROM EXCLUDED.population_rate_0
+           OR current_data.population_rate_10 IS DISTINCT FROM EXCLUDED.population_rate_10
+           OR current_data.population_rate_20 IS DISTINCT FROM EXCLUDED.population_rate_20
+           OR current_data.population_rate_30 IS DISTINCT FROM EXCLUDED.population_rate_30
+           OR current_data.population_rate_40 IS DISTINCT FROM EXCLUDED.population_rate_40
+           OR current_data.population_rate_50 IS DISTINCT FROM EXCLUDED.population_rate_50
+           OR current_data.population_rate_60 IS DISTINCT FROM EXCLUDED.population_rate_60
+           OR current_data.population_rate_70 IS DISTINCT FROM EXCLUDED.population_rate_70
+           OR current_data.resident_population_rate IS DISTINCT FROM EXCLUDED.resident_population_rate
+           OR current_data.non_resident_population_rate IS DISTINCT FROM EXCLUDED.non_resident_population_rate
+           OR current_data.replacement_used IS DISTINCT FROM EXCLUDED.replacement_used
       """;
 
   private final JdbcTemplate jdbcTemplate;

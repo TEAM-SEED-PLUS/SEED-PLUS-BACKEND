@@ -51,7 +51,7 @@ class KosisBusinessCountClientTest {
                 [
                   {
                     "ORG_ID": "101",
-                    "TBL_ID": "DT_1BD1001",
+                    "TBL_ID": "DT_1BD1101",
                     "TBL_NM": "산업별 기업수",
                     "C1": "A",
                     "C1_NM": "전체 산업",
@@ -66,7 +66,7 @@ class KosisBusinessCountClientTest {
                   },
                   {
                     "ORG_ID": "101",
-                    "TBL_ID": "DT_1BD1001",
+                    "TBL_ID": "DT_1BD1101",
                     "TBL_NM": "산업별 기업수",
                     "C1": "A",
                     "C1_NM": "전체 산업",
@@ -129,7 +129,7 @@ class KosisBusinessCountClientTest {
             "https://kosis.kr",
             "/openapi/Param/statisticsParameterData.do",
             "101",
-            "DT_1BD1001",
+            "DT_1BD1101",
             0,
             0,
             0,
