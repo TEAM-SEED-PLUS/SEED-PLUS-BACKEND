@@ -15,7 +15,7 @@ public class SeoulSdotFootTrafficJdbcRepository implements SeoulSdotFootTrafficS
 
   private static final String UPSERT_SQL =
       """
-      INSERT INTO seoul_sdot_foot_traffic (
+      INSERT INTO seoul_sdot_foot_traffic AS current_data (
         model_name, serial_number, sensing_time, region_type,
         autonomous_district, administrative_district, visitor_count,
         registered_at, collected_at, created_at, updated_at
@@ -30,6 +30,12 @@ public class SeoulSdotFootTrafficJdbcRepository implements SeoulSdotFootTrafficS
         registered_at = EXCLUDED.registered_at,
         collected_at = now(),
         updated_at = now()
+        WHERE current_data.model_name IS DISTINCT FROM EXCLUDED.model_name
+           OR current_data.region_type IS DISTINCT FROM EXCLUDED.region_type
+           OR current_data.autonomous_district IS DISTINCT FROM EXCLUDED.autonomous_district
+           OR current_data.administrative_district IS DISTINCT FROM EXCLUDED.administrative_district
+           OR current_data.visitor_count IS DISTINCT FROM EXCLUDED.visitor_count
+           OR current_data.registered_at IS DISTINCT FROM EXCLUDED.registered_at
       """;
 
   private final JdbcTemplate jdbcTemplate;

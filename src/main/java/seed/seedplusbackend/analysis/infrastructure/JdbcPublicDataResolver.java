@@ -6,6 +6,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import seed.seedplusbackend.analysis.application.port.PublicDataResolver;
 import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 
@@ -16,6 +18,7 @@ public class JdbcPublicDataResolver implements PublicDataResolver {
   private final JdbcTemplate jdbcTemplate;
 
   @Override
+  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
   public PublicDataMetrics resolve(String regionCode, String industryCode) {
     List<String> sources = new ArrayList<>();
     SalesMetrics sales = sales(regionCode, industryCode);
@@ -148,8 +151,10 @@ public class JdbcPublicDataResolver implements PublicDataResolver {
                 SELECT MAX(reference_year)
                 FROM kosis_business_rates
                 WHERE industry_code IN (SELECT external_code FROM count_codes)
+                  AND organization_id = '101' AND table_id = 'DT_1BD1101'
               )
                 AND industry_code IN (SELECT external_code FROM count_codes)
+                AND organization_id = '101' AND table_id = 'DT_1BD1101'
             ), latest_survival AS (
               SELECT AVG(survival_rate) AS survival_rate
               FROM kosis_business_survival_rates

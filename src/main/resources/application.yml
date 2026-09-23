@@ -11,6 +11,11 @@ management:
       application: seed-plus-backend
 
 spring:
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
   servlet:
     multipart:
       max-file-size: 10MB
@@ -138,6 +143,26 @@ seoul:
       max-jitter-millis: 1200
       max-retry-count: 3
 
+# 원천 공표 주기와 수집 확인 주기는 다르다.
+# 임대료 CSV는 수동 적재를 유지한다. Spring Batch 작업을 부팅 시 자동 실행하지 않는다.
+public-data:
+  batch:
+    # 배치 및 수집 대상 기준정보 마이그레이션 적용 후 Cron 정기 수집을 활성화한다.
+    enabled: ${PUBLIC_DATA_BATCH_ENABLED:false}
+  collection:
+    zone: Asia/Seoul
+    crons:
+      SEOUL_SDOT_FOOT_TRAFFIC: "${COLLECT_SDOT_CRON:0 0 * * * *}"
+      SEOUL_REALTIME_CITY_POPULATION: "${COLLECT_CITY_POPULATION_CRON:0 10 * * * *}"
+      SEOUL_ESTIMATED_SALES: "${COLLECT_SALES_CRON:0 0 3 * * *}"
+      SMALL_BUSINESS_STORE: "${COLLECT_STORES_CRON:0 0 4 * * SUN}"
+      KOSIS_BUSINESS_COUNT: "${COLLECT_KOSIS_COUNT_CRON:0 0 5 * * MON}"
+      KOSIS_BUSINESS_SURVIVAL_RATE: "${COLLECT_KOSIS_SURVIVAL_CRON:0 30 5 * * MON}"
+    # 미설정/빈 값이면 DB의 서울 SIGUNGU 및 활성 도시데이터 장소 기준정보를 조회한다.
+    # 값 지정은 로컬 검증 등에서 수집 범위를 제한할 때만 사용한다. 비활성화는 Cron '-'로 설정한다.
+    store-sigungu-codes: ${COLLECT_STORE_SIGUNGU_CODES:}
+    city-areas: ${COLLECT_CITY_AREAS:}
+
 small-business:
   store:
     open-api:
@@ -169,7 +194,7 @@ kosis:
       base-url: https://kosis.kr
       endpoint: /openapi/Param/statisticsParameterData.do
       organization-id: "101"
-      table-id: DT_1BD1001
+      table-id: DT_1BD1101
       connect-timeout-millis: ${KOSIS_CONNECT_TIMEOUT_MS:3000}
       read-timeout-millis: ${KOSIS_READ_TIMEOUT_MS:30000}
       initial-backoff-millis: ${KOSIS_INITIAL_BACKOFF_MS:500}

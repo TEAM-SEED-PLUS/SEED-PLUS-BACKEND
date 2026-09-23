@@ -22,7 +22,7 @@ public class CommercialEstimatedSalesJdbcRepository implements CommercialEstimat
 
     String sql =
         """
-            INSERT INTO commercial_estimated_sales (
+            INSERT INTO commercial_estimated_sales AS current_data (
               stdr_yyqu_cd,
               trdar_se_cd,
               trdar_se_cd_nm,
@@ -150,6 +150,58 @@ public class CommercialEstimatedSalesJdbcRepository implements CommercialEstimat
               agrde_60_above_selng_co = EXCLUDED.agrde_60_above_selng_co,
               collected_at = now(),
               updated_at = now()
+              WHERE current_data.trdar_se_cd IS DISTINCT FROM EXCLUDED.trdar_se_cd
+                 OR current_data.trdar_se_cd_nm IS DISTINCT FROM EXCLUDED.trdar_se_cd_nm
+                 OR current_data.trdar_cd_nm IS DISTINCT FROM EXCLUDED.trdar_cd_nm
+                 OR current_data.svc_induty_cd_nm IS DISTINCT FROM EXCLUDED.svc_induty_cd_nm
+                 OR current_data.thsmon_selng_amt IS DISTINCT FROM EXCLUDED.thsmon_selng_amt
+                 OR current_data.thsmon_selng_co IS DISTINCT FROM EXCLUDED.thsmon_selng_co
+                 OR current_data.mdwk_selng_amt IS DISTINCT FROM EXCLUDED.mdwk_selng_amt
+                 OR current_data.wkend_selng_amt IS DISTINCT FROM EXCLUDED.wkend_selng_amt
+                 OR current_data.mon_selng_amt IS DISTINCT FROM EXCLUDED.mon_selng_amt
+                 OR current_data.tues_selng_amt IS DISTINCT FROM EXCLUDED.tues_selng_amt
+                 OR current_data.wed_selng_amt IS DISTINCT FROM EXCLUDED.wed_selng_amt
+                 OR current_data.thur_selng_amt IS DISTINCT FROM EXCLUDED.thur_selng_amt
+                 OR current_data.fri_selng_amt IS DISTINCT FROM EXCLUDED.fri_selng_amt
+                 OR current_data.sat_selng_amt IS DISTINCT FROM EXCLUDED.sat_selng_amt
+                 OR current_data.sun_selng_amt IS DISTINCT FROM EXCLUDED.sun_selng_amt
+                 OR current_data.tmzon_00_06_selng_amt IS DISTINCT FROM EXCLUDED.tmzon_00_06_selng_amt
+                 OR current_data.tmzon_06_11_selng_amt IS DISTINCT FROM EXCLUDED.tmzon_06_11_selng_amt
+                 OR current_data.tmzon_11_14_selng_amt IS DISTINCT FROM EXCLUDED.tmzon_11_14_selng_amt
+                 OR current_data.tmzon_14_17_selng_amt IS DISTINCT FROM EXCLUDED.tmzon_14_17_selng_amt
+                 OR current_data.tmzon_17_21_selng_amt IS DISTINCT FROM EXCLUDED.tmzon_17_21_selng_amt
+                 OR current_data.tmzon_21_24_selng_amt IS DISTINCT FROM EXCLUDED.tmzon_21_24_selng_amt
+                 OR current_data.ml_selng_amt IS DISTINCT FROM EXCLUDED.ml_selng_amt
+                 OR current_data.fml_selng_amt IS DISTINCT FROM EXCLUDED.fml_selng_amt
+                 OR current_data.agrde_10_selng_amt IS DISTINCT FROM EXCLUDED.agrde_10_selng_amt
+                 OR current_data.agrde_20_selng_amt IS DISTINCT FROM EXCLUDED.agrde_20_selng_amt
+                 OR current_data.agrde_30_selng_amt IS DISTINCT FROM EXCLUDED.agrde_30_selng_amt
+                 OR current_data.agrde_40_selng_amt IS DISTINCT FROM EXCLUDED.agrde_40_selng_amt
+                 OR current_data.agrde_50_selng_amt IS DISTINCT FROM EXCLUDED.agrde_50_selng_amt
+                 OR current_data.agrde_60_above_selng_amt IS DISTINCT FROM EXCLUDED.agrde_60_above_selng_amt
+                 OR current_data.mdwk_selng_co IS DISTINCT FROM EXCLUDED.mdwk_selng_co
+                 OR current_data.wkend_selng_co IS DISTINCT FROM EXCLUDED.wkend_selng_co
+                 OR current_data.mon_selng_co IS DISTINCT FROM EXCLUDED.mon_selng_co
+                 OR current_data.tues_selng_co IS DISTINCT FROM EXCLUDED.tues_selng_co
+                 OR current_data.wed_selng_co IS DISTINCT FROM EXCLUDED.wed_selng_co
+                 OR current_data.thur_selng_co IS DISTINCT FROM EXCLUDED.thur_selng_co
+                 OR current_data.fri_selng_co IS DISTINCT FROM EXCLUDED.fri_selng_co
+                 OR current_data.sat_selng_co IS DISTINCT FROM EXCLUDED.sat_selng_co
+                 OR current_data.sun_selng_co IS DISTINCT FROM EXCLUDED.sun_selng_co
+                 OR current_data.tmzon_00_06_selng_co IS DISTINCT FROM EXCLUDED.tmzon_00_06_selng_co
+                 OR current_data.tmzon_06_11_selng_co IS DISTINCT FROM EXCLUDED.tmzon_06_11_selng_co
+                 OR current_data.tmzon_11_14_selng_co IS DISTINCT FROM EXCLUDED.tmzon_11_14_selng_co
+                 OR current_data.tmzon_14_17_selng_co IS DISTINCT FROM EXCLUDED.tmzon_14_17_selng_co
+                 OR current_data.tmzon_17_21_selng_co IS DISTINCT FROM EXCLUDED.tmzon_17_21_selng_co
+                 OR current_data.tmzon_21_24_selng_co IS DISTINCT FROM EXCLUDED.tmzon_21_24_selng_co
+                 OR current_data.ml_selng_co IS DISTINCT FROM EXCLUDED.ml_selng_co
+                 OR current_data.fml_selng_co IS DISTINCT FROM EXCLUDED.fml_selng_co
+                 OR current_data.agrde_10_selng_co IS DISTINCT FROM EXCLUDED.agrde_10_selng_co
+                 OR current_data.agrde_20_selng_co IS DISTINCT FROM EXCLUDED.agrde_20_selng_co
+                 OR current_data.agrde_30_selng_co IS DISTINCT FROM EXCLUDED.agrde_30_selng_co
+                 OR current_data.agrde_40_selng_co IS DISTINCT FROM EXCLUDED.agrde_40_selng_co
+                 OR current_data.agrde_50_selng_co IS DISTINCT FROM EXCLUDED.agrde_50_selng_co
+                 OR current_data.agrde_60_above_selng_co IS DISTINCT FROM EXCLUDED.agrde_60_above_selng_co
             """;
 
     jdbcTemplate.batchUpdate(
