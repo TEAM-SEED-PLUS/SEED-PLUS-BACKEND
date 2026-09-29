@@ -27,7 +27,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final String BEARER_PREFIX = "Bearer ";
   private static final Set<String> PUBLIC_AUTH_PATHS =
       Set.of(
-          "/api/v1/auth/csrf", "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/reissue");
+          "/api/v1/auth/csrf",
+          "/api/v1/auth/signup",
+          "/api/v1/auth/login",
+          "/api/v1/auth/reissue",
+          "/api/v1/auth/password/temporary");
 
   private final JwtTokenProvider jwtTokenProvider;
   private final AccessTokenBlacklist accessTokenBlacklist;

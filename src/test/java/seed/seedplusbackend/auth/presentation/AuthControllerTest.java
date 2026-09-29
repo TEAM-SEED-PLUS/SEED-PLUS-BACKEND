@@ -19,8 +19,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import seed.seedplusbackend.auth.application.AuthService;
+import seed.seedplusbackend.auth.application.AuthTokenResult;
+import seed.seedplusbackend.auth.application.command.LoginCommand;
 import seed.seedplusbackend.auth.application.command.PasswordResetCommand;
 import seed.seedplusbackend.auth.application.command.SignupCommand;
+import seed.seedplusbackend.auth.application.command.TemporaryPasswordIssueCommand;
 import seed.seedplusbackend.global.error.GlobalExceptionHandler;
 
 @ExtendWith(MockitoExtension.class)
@@ -115,5 +118,77 @@ class AuthControllerTest {
         .andExpect(jsonPath("$.status").value(200));
 
     verify(authService).resetPassword(any(PasswordResetCommand.class));
+  }
+
+  @Test
+  @DisplayName("가입 이메일로 임시 비밀번호 발급을 요청하면 200 OK와 성공 응답을 반환한다")
+  void issueTemporaryPassword_returnsOk_whenRequestValid() throws Exception {
+    String request =
+        """
+        {
+          "email": "seedplus@example.com"
+        }
+        """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/password/temporary")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(200))
+        .andExpect(jsonPath("$.code").value(2000))
+        .andExpect(jsonPath("$.message").value("요청 성공"))
+        .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(authService).issueTemporaryPassword(any(TemporaryPasswordIssueCommand.class));
+  }
+
+  @Test
+  @DisplayName("임시 비밀번호 발급 요청의 이메일 형식이 올바르지 않으면 400 Bad Request를 반환한다")
+  void issueTemporaryPassword_returnsBadRequest_whenEmailInvalid() throws Exception {
+    String request =
+        """
+        {
+          "email": "not-an-email"
+        }
+        """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/password/temporary")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("임시 비밀번호 상태로 로그인하면 응답에 비밀번호 변경 필요 여부가 포함된다")
+  void login_returnsPasswordChangeRequired_whenPasswordIsTemporary() throws Exception {
+    String request =
+        """
+        {
+          "loginId": "seedplus01",
+          "password": "temporary123"
+        }
+        """;
+    given(authService.login(any(LoginCommand.class)))
+        .willReturn(
+            AuthTokenResult.builder()
+                .accessToken("access-token")
+                .accessTokenExpiresIn(86_400_000)
+                .refreshToken("refresh-token")
+                .refreshTokenExpiresIn(259_200_000)
+                .passwordChangeRequired(true)
+                .build());
+    given(refreshTokenCookieManager.createCookie("refresh-token", 259_200_000))
+        .willReturn(ResponseCookie.from("refreshToken", "refresh-token").build());
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(request))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+        .andExpect(jsonPath("$.data.passwordChangeRequired").value(true));
   }
 }

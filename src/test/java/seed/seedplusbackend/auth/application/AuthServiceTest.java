@@ -3,7 +3,10 @@ package seed.seedplusbackend.auth.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -22,6 +25,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import seed.seedplusbackend.auth.application.command.LoginCommand;
 import seed.seedplusbackend.auth.application.command.PasswordResetCommand;
 import seed.seedplusbackend.auth.application.command.SignupCommand;
+import seed.seedplusbackend.auth.application.command.TemporaryPasswordIssueCommand;
+import seed.seedplusbackend.auth.application.port.TemporaryPasswordMailSender;
 import seed.seedplusbackend.auth.domain.entity.RefreshToken;
 import seed.seedplusbackend.auth.domain.repository.RefreshTokenRepository;
 import seed.seedplusbackend.global.error.ApplicationException;
@@ -45,6 +50,7 @@ class AuthServiceTest {
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private JwtTokenProvider jwtTokenProvider;
   @Mock private AccessTokenBlacklist accessTokenBlacklist;
+  @Mock private TemporaryPasswordMailSender temporaryPasswordMailSender;
   @InjectMocks private AuthService authService;
 
   @Test
@@ -204,6 +210,96 @@ class AuthServiceTest {
 
     verify(passwordEncoder, never()).encode(command.getNewPassword());
     verify(refreshTokenRepository, never()).revokeAllByUserIdIfNotRevoked(any(), any());
+  }
+
+  @Test
+  @DisplayName("임시 비밀번호로 로그인하면 비밀번호 변경이 필요하다고 응답한다")
+  void login_returnsPasswordChangeRequired_whenPasswordIsTemporary() {
+    User user = activeUser();
+    user.issueTemporaryPassword("encoded-temporary-password", OffsetDateTime.now());
+    given(userRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
+    given(passwordEncoder.matches("temporary123", user.getPassword())).willReturn(true);
+    given(jwtTokenProvider.generateAccessToken(user)).willReturn(jwtToken("access-token"));
+    given(jwtTokenProvider.generateRefreshToken(user)).willReturn(jwtToken("refresh-token"));
+
+    AuthTokenResult result = authService.login(new LoginCommand(user.getLoginId(), "temporary123"));
+
+    assertThat(result.isPasswordChangeRequired()).isTrue();
+  }
+
+  @Test
+  @DisplayName("가입된 이메일이면 임시 비밀번호를 저장하고 메일로 발송한다")
+  void issueTemporaryPassword_savesEncodedPasswordAndSendsMail() {
+    User user = activeUser();
+    given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
+    given(passwordEncoder.encode(anyString())).willReturn("encoded-temporary-password");
+    given(refreshTokenRepository.revokeAllByUserIdIfNotRevoked(any(), any())).willReturn(2);
+    ArgumentCaptor<String> temporaryPasswordCaptor = ArgumentCaptor.forClass(String.class);
+
+    authService.issueTemporaryPassword(new TemporaryPasswordIssueCommand(user.getEmail()));
+
+    assertThat(user.getPassword()).isEqualTo("encoded-temporary-password");
+    assertThat(user.isTemporaryPassword()).isTrue();
+    verify(refreshTokenRepository).revokeAllByUserIdIfNotRevoked(any(), any());
+    verify(temporaryPasswordMailSender)
+        .send(eq(user.getEmail()), temporaryPasswordCaptor.capture());
+    assertThat(temporaryPasswordCaptor.getValue()).hasSize(12);
+  }
+
+  @Test
+  @DisplayName("가입되지 않은 이메일이면 예외 없이 메일을 발송하지 않는다")
+  void issueTemporaryPassword_doesNotSendMail_whenEmailIsNotRegistered() {
+    given(userRepository.findByEmail("unknown@example.com")).willReturn(Optional.empty());
+
+    authService.issueTemporaryPassword(new TemporaryPasswordIssueCommand("unknown@example.com"));
+
+    verify(temporaryPasswordMailSender, never()).send(any(), any());
+    verify(refreshTokenRepository, never()).revokeAllByUserIdIfNotRevoked(any(), any());
+  }
+
+  @Test
+  @DisplayName("ACTIVE가 아닌 사용자에게는 임시 비밀번호를 발급하지 않는다")
+  void issueTemporaryPassword_doesNotSendMail_whenUserStatusIsNotActive() {
+    User user = user(UserStatus.INACTIVE);
+    given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
+
+    authService.issueTemporaryPassword(new TemporaryPasswordIssueCommand(user.getEmail()));
+
+    assertThat(user.isTemporaryPassword()).isFalse();
+    verify(temporaryPasswordMailSender, never()).send(any(), any());
+  }
+
+  @Test
+  @DisplayName("재요청 쿨다운 이내에 다시 요청하면 임시 비밀번호를 새로 발급하지 않는다")
+  void issueTemporaryPassword_doesNotSendMail_whenWithinResendCooldown() {
+    User user = activeUser();
+    user.issueTemporaryPassword("encoded-temporary-password", OffsetDateTime.now());
+    given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
+
+    authService.issueTemporaryPassword(new TemporaryPasswordIssueCommand(user.getEmail()));
+
+    assertThat(user.getPassword()).isEqualTo("encoded-temporary-password");
+    verify(passwordEncoder, never()).encode(anyString());
+    verify(temporaryPasswordMailSender, never()).send(any(), any());
+  }
+
+  @Test
+  @DisplayName("메일 발송에 실패하면 예외가 전파되어 임시 비밀번호 저장이 롤백된다")
+  void issueTemporaryPassword_throwsException_whenMailSendFails() {
+    User user = activeUser();
+    given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
+    given(passwordEncoder.encode(anyString())).willReturn("encoded-temporary-password");
+    willThrow(new ApplicationException(ErrorCode.MAIL_SEND_FAILED))
+        .given(temporaryPasswordMailSender)
+        .send(any(), any());
+
+    assertThatThrownBy(
+            () ->
+                authService.issueTemporaryPassword(
+                    new TemporaryPasswordIssueCommand(user.getEmail())))
+        .isInstanceOf(ApplicationException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.MAIL_SEND_FAILED);
   }
 
   @Test

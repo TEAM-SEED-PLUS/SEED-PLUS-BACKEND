@@ -70,6 +70,7 @@ public class JdbcBuilderStoreBookmarkSnapshotResolver
                  SUM(closed_business_count) AS closed_business_count
           FROM kosis_business_rates
           WHERE industry_code IN (SELECT external_code FROM count_codes)
+            AND organization_id = '101' AND table_id = 'DT_1BD1101'
           GROUP BY reference_year
           ORDER BY reference_year DESC
           LIMIT 1

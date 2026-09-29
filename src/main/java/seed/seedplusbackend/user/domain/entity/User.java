@@ -9,7 +9,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -59,6 +61,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "status", nullable = false, length = 20)
   private UserStatus status;
 
+  @Column(name = "temporary_password_issued_at")
+  private OffsetDateTime temporaryPasswordIssuedAt;
+
   @Builder
   private User(
       String phoneNumber,
@@ -84,11 +89,26 @@ public class User extends BaseTimeEntity {
       this.name = name;
     }
     if (password != null) {
-      this.password = password;
+      changePassword(password);
     }
   }
 
   public void changePassword(String password) {
     this.password = password;
+    this.temporaryPasswordIssuedAt = null;
+  }
+
+  public void issueTemporaryPassword(String encodedPassword, OffsetDateTime issuedAt) {
+    this.password = encodedPassword;
+    this.temporaryPasswordIssuedAt = issuedAt;
+  }
+
+  public boolean isTemporaryPassword() {
+    return temporaryPasswordIssuedAt != null;
+  }
+
+  public boolean isTemporaryPasswordReissuable(OffsetDateTime now, Duration cooldown) {
+    return temporaryPasswordIssuedAt == null
+        || !now.isBefore(temporaryPasswordIssuedAt.plus(cooldown));
   }
 }

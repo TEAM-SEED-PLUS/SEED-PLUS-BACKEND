@@ -99,8 +99,7 @@ DB 스키마는 Flyway로 관리합니다.
 
 ```text
 src/main/resources/db/migration
-├── V1__init_seed_core_schema.sql
-└── V2__add_phone_number_to_users.sql
+└── V1__init_schema_and_reference_data.sql   # PostGIS 확장 + 전체 스키마 + 기준 데이터(지역·업종·상권·외부 코드 매핑)
 ```
 
 ## 배포

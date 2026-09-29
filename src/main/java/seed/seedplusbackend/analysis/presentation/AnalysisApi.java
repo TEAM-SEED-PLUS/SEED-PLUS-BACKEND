@@ -23,12 +23,12 @@ public interface AnalysisApi {
 
   @Operation(
       summary = "수익률 분석",
+      description = "DB에 저장된 최신 공공데이터로 계산합니다. 요청 시 공공 API를 재수집하지 않습니다.",
       operationId = "calculateProfitAnalysis",
       security = @SecurityRequirement(name = "bearerAuth"))
   @ApiErrorCodeExamples({
     ErrorCode.INVALID_PARAMETER,
     ErrorCode.UNAUTHORIZED,
-    ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED,
     ErrorCode.ANALYSIS_FUNCTION_CALL_FAILED
   })
   @PostMapping("/profit")
@@ -38,12 +38,12 @@ public interface AnalysisApi {
 
   @Operation(
       summary = "생존률 분석",
+      description = "DB에 저장된 최신 공공데이터로 계산합니다. 요청 시 공공 API를 재수집하지 않습니다.",
       operationId = "calculateSurvivalAnalysis",
       security = @SecurityRequirement(name = "bearerAuth"))
   @ApiErrorCodeExamples({
     ErrorCode.INVALID_PARAMETER,
     ErrorCode.UNAUTHORIZED,
-    ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED,
     ErrorCode.ANALYSIS_FUNCTION_CALL_FAILED
   })
   @PostMapping("/survival")

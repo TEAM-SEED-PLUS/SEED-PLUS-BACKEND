@@ -75,6 +75,33 @@ class JdbcPublicDataResolverTest extends AbstractPostgresContainerTest {
     assertThat(metrics.dataSources()).containsExactly("소상공인시장진흥공단 상가정보");
   }
 
+  @Test
+  @DisplayName("구표의 동일 연도와 더 최신 연도가 있어도 신표만 조회한다")
+  void excludesOldTableAndPreservesMissingLatestCount() {
+    Industry industry = saveReferenceData();
+    saveMappings(industry);
+    insertPublicData();
+    jdbcTemplate.update(
+        """
+        INSERT INTO kosis_business_counts
+        (organization_id, table_id, industry_code, industry_name, item_id, item_name,
+         unit_name, period_type, reference_year, business_count)
+        SELECT organization_id, 'DT_1BD1001', industry_code, industry_name, item_id, item_name,
+               unit_name, period_type, y, 999999
+        FROM kosis_business_counts CROSS JOIN (VALUES (2025), (2026)) years(y)
+        WHERE table_id = 'DT_1BD1101' AND industry_code = 'K1'
+        """);
+    jdbcTemplate.update(
+        """
+        DELETE FROM kosis_business_counts
+        WHERE table_id = 'DT_1BD1101' AND industry_code = 'K1' AND item_id = 'T03'
+        """);
+    var metrics = resolver().resolve(REGION_CODE, INDUSTRY_CODE);
+    assertThat(metrics.activeBusinesses()).isEqualByComparingTo("100");
+    assertThat(metrics.newBusinesses()).isEqualByComparingTo("10");
+    assertThat(metrics.closedBusinesses()).isNull();
+  }
+
   private Industry saveReferenceData() {
     saveRegion();
     return industryRepository.save(
@@ -175,7 +202,7 @@ class JdbcPublicDataResolverTest extends AbstractPostgresContainerTest {
         INSERT INTO kosis_business_counts (
           organization_id, table_id, industry_code, industry_name,
           item_id, item_name, unit_name, period_type, reference_year, business_count
-        ) VALUES ('101', 'COUNT', 'K1', '테스트 업종', ?, ?, '개', 'Y', 2025, ?)
+        ) VALUES ('101', 'DT_1BD1101', 'K1', '테스트 업종', ?, ?, '개', 'Y', 2025, ?)
         """,
         itemId,
         itemName,

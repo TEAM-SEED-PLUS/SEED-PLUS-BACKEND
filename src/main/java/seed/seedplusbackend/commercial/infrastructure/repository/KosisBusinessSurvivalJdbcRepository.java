@@ -14,7 +14,7 @@ public class KosisBusinessSurvivalJdbcRepository implements KosisBusinessSurviva
 
   private static final String UPSERT_SQL =
       """
-      INSERT INTO kosis_business_survival_rates (
+      INSERT INTO kosis_business_survival_rates AS current_data (
         organization_id, table_id, table_name,
         industry_code, industry_name, classification_name,
         item_id, item_name, unit_name, period_type,
@@ -34,6 +34,15 @@ public class KosisBusinessSurvivalJdbcRepository implements KosisBusinessSurviva
         source_updated_at = EXCLUDED.source_updated_at,
         collected_at = now(),
         updated_at = now()
+        WHERE current_data.organization_id IS DISTINCT FROM EXCLUDED.organization_id
+           OR current_data.table_name IS DISTINCT FROM EXCLUDED.table_name
+           OR current_data.industry_name IS DISTINCT FROM EXCLUDED.industry_name
+           OR current_data.classification_name IS DISTINCT FROM EXCLUDED.classification_name
+           OR current_data.item_name IS DISTINCT FROM EXCLUDED.item_name
+           OR current_data.unit_name IS DISTINCT FROM EXCLUDED.unit_name
+           OR current_data.period_type IS DISTINCT FROM EXCLUDED.period_type
+           OR current_data.survival_rate IS DISTINCT FROM EXCLUDED.survival_rate
+           OR current_data.source_updated_at IS DISTINCT FROM EXCLUDED.source_updated_at
       """;
 
   private final JdbcTemplate jdbcTemplate;

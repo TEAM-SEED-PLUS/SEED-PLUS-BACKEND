@@ -69,6 +69,7 @@ Access Token과 Refresh Token은 `tokenType` claim으로 구분한다.
 - `/api/v1/auth/signup`
 - `/api/v1/auth/login`
 - `/api/v1/auth/reissue`
+- `/api/v1/auth/password/temporary`
 
 ### 작성 원칙
 
@@ -108,6 +109,7 @@ Access Token과 Refresh Token은 `tokenType` claim으로 구분한다.
 - `/api/v1/auth/signup`
 - `/api/v1/auth/login`
 - `/api/v1/auth/reissue`
+- `/api/v1/auth/password/temporary`
 - `/swagger-ui/**`
 - `/swagger-ui.html`
 - `/v3/api-docs/**`

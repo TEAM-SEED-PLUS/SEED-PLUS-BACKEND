@@ -8,14 +8,12 @@ import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisCommand
 import seed.seedplusbackend.analysis.application.command.SurvivalAnalysisLambdaCommand;
 import seed.seedplusbackend.analysis.application.port.AnalysisLambdaClient;
 import seed.seedplusbackend.analysis.application.port.PublicDataResolver;
-import seed.seedplusbackend.analysis.application.result.AnalysisDataCollectionResult;
 import seed.seedplusbackend.analysis.application.result.ProfitAnalysisResult;
 import seed.seedplusbackend.analysis.application.result.PublicDataMetrics;
 import seed.seedplusbackend.analysis.application.result.SurvivalAnalysisResult;
 import seed.seedplusbackend.analysis.application.support.ProfitCalculatorFallback;
+import seed.seedplusbackend.analysis.application.support.SurvivalBusinessRates;
 import seed.seedplusbackend.analysis.application.support.SurvivalCalculatorFallback;
-import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionRunStatus;
-import seed.seedplusbackend.analysis.domain.entity.AnalysisCollectionType;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.industry.domain.entity.IndustryStatus;
@@ -30,46 +28,17 @@ public class AnalysisService {
   private final RegionResolver regionResolver;
   private final IndustryRepository industryRepository;
   private final PublicDataResolver publicDataResolver;
-  private final AnalysisDataCollectionCoordinator collectionCoordinator;
 
   public ProfitAnalysisResult calculateProfit(Long userId, ProfitAnalysisCommand command) {
     validateAuthenticated(userId);
-    collectPublicData(
-        userId,
-        AnalysisCollectionType.PROFIT,
-        command.regionCode(),
-        command.industryCode(),
-        command.collectionRunId());
     return analysisLambdaClient.requestProfit(toLambda(command));
   }
 
   public SurvivalAnalysisResult calculateSurvival(Long userId, SurvivalAnalysisCommand command) {
     validateAuthenticated(userId);
-    collectPublicData(
-        userId,
-        AnalysisCollectionType.SURVIVAL,
-        command.regionCode(),
-        command.industryCode(),
-        command.collectionRunId());
-    return analysisLambdaClient.requestSurvival(toLambda(command));
-  }
-
-  private void collectPublicData(
-      Long userId,
-      AnalysisCollectionType type,
-      String regionCode,
-      String industryCode,
-      Long collectionRunId) {
-    AnalysisDataCollectionResult result =
-        collectionRunId == null
-            ? collectionCoordinator.collect(userId, type, regionCode, industryCode)
-            : collectionCoordinator.retry(userId, collectionRunId, type, regionCode, industryCode);
-    if (result.status() != AnalysisCollectionRunStatus.COMPLETED) {
-      throw new ApplicationException(
-          ErrorCode.ANALYSIS_DATA_COLLECTION_FAILED,
-          "runId=%s, failedDataTypes=%s"
-              .formatted(result.runId(), String.join(",", result.failedDataTypes())));
-    }
+    var lambdaCommand = toLambda(command);
+    return SurvivalBusinessRates.normalize(
+        analysisLambdaClient.requestSurvival(lambdaCommand), lambdaCommand);
   }
 
   private void validateAuthenticated(Long userId) {

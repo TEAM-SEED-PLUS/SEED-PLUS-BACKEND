@@ -22,7 +22,7 @@ public class SmallBusinessStoreJdbcRepository implements SmallBusinessStoreStore
 
     String sql =
         """
-        INSERT INTO small_business_stores (
+        INSERT INTO small_business_stores AS current_data (
           store_id, commercial_area_code, store_name, branch_name,
           large_industry_code, large_industry_name,
           medium_industry_code, medium_industry_name,
@@ -68,6 +68,33 @@ public class SmallBusinessStoreJdbcRepository implements SmallBusinessStoreStore
           latitude = EXCLUDED.latitude,
           collected_at = now(),
           updated_at = now()
+          WHERE current_data.commercial_area_code IS DISTINCT FROM EXCLUDED.commercial_area_code
+             OR current_data.store_name IS DISTINCT FROM EXCLUDED.store_name
+             OR current_data.branch_name IS DISTINCT FROM EXCLUDED.branch_name
+             OR current_data.large_industry_code IS DISTINCT FROM EXCLUDED.large_industry_code
+             OR current_data.large_industry_name IS DISTINCT FROM EXCLUDED.large_industry_name
+             OR current_data.medium_industry_code IS DISTINCT FROM EXCLUDED.medium_industry_code
+             OR current_data.medium_industry_name IS DISTINCT FROM EXCLUDED.medium_industry_name
+             OR current_data.small_industry_code IS DISTINCT FROM EXCLUDED.small_industry_code
+             OR current_data.small_industry_name IS DISTINCT FROM EXCLUDED.small_industry_name
+             OR current_data.standard_industry_code IS DISTINCT FROM EXCLUDED.standard_industry_code
+             OR current_data.standard_industry_name IS DISTINCT FROM EXCLUDED.standard_industry_name
+             OR current_data.sido_code IS DISTINCT FROM EXCLUDED.sido_code
+             OR current_data.sido_name IS DISTINCT FROM EXCLUDED.sido_name
+             OR current_data.sigungu_code IS DISTINCT FROM EXCLUDED.sigungu_code
+             OR current_data.sigungu_name IS DISTINCT FROM EXCLUDED.sigungu_name
+             OR current_data.administrative_dong_code IS DISTINCT FROM EXCLUDED.administrative_dong_code
+             OR current_data.administrative_dong_name IS DISTINCT FROM EXCLUDED.administrative_dong_name
+             OR current_data.legal_dong_code IS DISTINCT FROM EXCLUDED.legal_dong_code
+             OR current_data.legal_dong_name IS DISTINCT FROM EXCLUDED.legal_dong_name
+             OR current_data.lot_number_address IS DISTINCT FROM EXCLUDED.lot_number_address
+             OR current_data.road_name_address IS DISTINCT FROM EXCLUDED.road_name_address
+             OR current_data.building_management_number IS DISTINCT FROM EXCLUDED.building_management_number
+             OR current_data.building_name IS DISTINCT FROM EXCLUDED.building_name
+             OR current_data.floor_number IS DISTINCT FROM EXCLUDED.floor_number
+             OR current_data.room_number IS DISTINCT FROM EXCLUDED.room_number
+             OR current_data.longitude IS DISTINCT FROM EXCLUDED.longitude
+             OR current_data.latitude IS DISTINCT FROM EXCLUDED.latitude
         """;
 
     jdbcTemplate.batchUpdate(

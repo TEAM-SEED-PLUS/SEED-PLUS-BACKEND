@@ -36,6 +36,7 @@ public enum ErrorCode {
   EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, 3001, "토큰이 만료되었습니다."),
   INVALID_TOKEN(HttpStatus.UNAUTHORIZED, 3002, "유효하지 않은 토큰입니다."),
   EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, 3003, "리프레시 토큰이 만료되었습니다."),
+  MAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 3004, "메일 발송에 실패했습니다."),
 
   // 4000: User
   NOT_FOUND_USER(HttpStatus.NOT_FOUND, 4000, "사용자를 찾을 수 없습니다."),

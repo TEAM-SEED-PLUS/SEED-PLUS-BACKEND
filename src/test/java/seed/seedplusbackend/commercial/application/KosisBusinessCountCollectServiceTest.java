@@ -49,7 +49,7 @@ class KosisBusinessCountCollectServiceTest {
   void setUp() {
     KosisBusinessCountOpenApiProperties properties =
         new KosisBusinessCountOpenApiProperties(
-            "key", "https://kosis.kr", "/openapi", "101", "DT_1BD1001", 0, 0, 0, 2);
+            "key", "https://kosis.kr", "/openapi", "101", "DT_1BD1101", 0, 0, 0, 2);
     KosisBusinessCountProvider provider =
         new KosisBusinessCountProvider(
             clientPort, storePort, properties, new ExternalApiRetryExecutor());
@@ -135,7 +135,7 @@ class KosisBusinessCountCollectServiceTest {
   private KosisBusinessCountRowResult row() {
     return new KosisBusinessCountRowResult(
         "101",
-        "DT_1BD1001",
+        "DT_1BD1101",
         "산업별 기업수",
         "A",
         "전체 산업",
