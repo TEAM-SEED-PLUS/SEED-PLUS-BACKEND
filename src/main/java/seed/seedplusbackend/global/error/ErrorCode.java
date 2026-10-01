@@ -108,6 +108,9 @@ public enum ErrorCode {
   // 9500: KOSIS OpenAPI
   KOSIS_OPEN_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 9500, "KOSIS OpenAPI 요청에 실패했습니다."),
   KOSIS_OPEN_API_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, 9501, "KOSIS OpenAPI 응답 형식이 올바르지 않습니다."),
+
+  // 9600: Weather Feed FastAPI
+  WEATHER_FEED_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 9600, "상권 날씨 API 요청에 실패했습니다."),
   ;
 
   private final HttpStatus httpStatus;
