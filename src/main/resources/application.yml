@@ -74,6 +74,10 @@ external:
     connect-timeout-millis: ${EXTERNAL_REST_CLIENT_CONNECT_TIMEOUT_MS:3000}
     read-timeout-millis: ${EXTERNAL_REST_CLIENT_READ_TIMEOUT_MS:5000}
 
+weather-feed:
+  fast-api:
+    base-url: ${WEATHER_FEED_FAST_API_BASE_URL:http://127.0.0.1:8000}
+
 analysis:
   lambda:
     profit:
