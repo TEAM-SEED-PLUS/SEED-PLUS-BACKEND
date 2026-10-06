@@ -1,0 +1,4 @@
+# CVE-2026-47884 requires Spring MVC XsltView-based view rendering.
+# This service exposes JSON REST APIs and does not use XsltView or an XSLT view resolver.
+# Remove this exception when migrating to Spring Boot 4 / Spring Framework 7.0.9 or later.
+CVE-2026-47884
