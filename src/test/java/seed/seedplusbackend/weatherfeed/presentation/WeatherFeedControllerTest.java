@@ -1,5 +1,6 @@
 package seed.seedplusbackend.weatherfeed.presentation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -7,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Validation;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,5 +76,22 @@ class WeatherFeedControllerTest {
         .andExpect(jsonPath("$.data.opportunity_score").value(64));
 
     verify(weatherFeedService).getDetail("강남구", "2026-09-30", "18:30", "저녁");
+  }
+
+  @Test
+  @DisplayName("인터페이스에서 상속한 시간대 검증 조건을 적용한다")
+  void validatesInheritedTimeBandConstraint() throws Exception {
+    WeatherFeedController controller = new WeatherFeedController(weatherFeedService);
+    Method method =
+        WeatherFeedController.class.getMethod(
+            "getOverview", String.class, String.class, String.class);
+
+    var violations =
+        Validation.buildDefaultValidatorFactory()
+            .getValidator()
+            .forExecutables()
+            .validateParameters(controller, method, new Object[] {null, null, "새벽"});
+
+    assertThat(violations).hasSize(1);
   }
 }

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,21 +24,35 @@ public interface WeatherFeedApi {
   @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.WEATHER_FEED_API_REQUEST_FAILED})
   @GetMapping("/overview")
   ResponseEntity<ApiResponse<JsonNode>> getOverview(
-      @Parameter(description = "조회 날짜 (YYYY-MM-DD)") @RequestParam(required = false) String date,
-      @Parameter(description = "조회 시간 (HH:mm)") @RequestParam(required = false) String time,
+      @Parameter(description = "조회 날짜 (YYYY-MM-DD)")
+          @RequestParam(required = false)
+          @Pattern(regexp = DATE_PATTERN)
+          String date,
+      @Parameter(description = "조회 시간 (HH:mm)")
+          @RequestParam(required = false)
+          @Pattern(regexp = TIME_PATTERN)
+          String time,
       @Parameter(description = "시간대 (심야, 아침, 점심, 오후, 저녁)")
           @RequestParam(name = "time_band", required = false)
+          @Pattern(regexp = TIME_BAND_PATTERN)
           String timeBand);
 
   @Operation(summary = "자치구 상권 날씨 상세 조회", operationId = "getWeatherFeedDetail")
   @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.WEATHER_FEED_API_REQUEST_FAILED})
   @GetMapping
   ResponseEntity<ApiResponse<JsonNode>> getDetail(
-      @Parameter(description = "자치구명", example = "강남구", required = true) @RequestParam
+      @Parameter(description = "자치구명", example = "강남구", required = true) @RequestParam @NotBlank
           String district,
-      @Parameter(description = "조회 날짜 (YYYY-MM-DD)") @RequestParam(required = false) String date,
-      @Parameter(description = "조회 시간 (HH:mm)") @RequestParam(required = false) String time,
+      @Parameter(description = "조회 날짜 (YYYY-MM-DD)")
+          @RequestParam(required = false)
+          @Pattern(regexp = DATE_PATTERN)
+          String date,
+      @Parameter(description = "조회 시간 (HH:mm)")
+          @RequestParam(required = false)
+          @Pattern(regexp = TIME_PATTERN)
+          String time,
       @Parameter(description = "시간대 (심야, 아침, 점심, 오후, 저녁)")
           @RequestParam(name = "time_band", required = false)
+          @Pattern(regexp = TIME_BAND_PATTERN)
           String timeBand);
 }

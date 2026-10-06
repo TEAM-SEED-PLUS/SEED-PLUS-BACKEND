@@ -1,8 +1,6 @@
 package seed.seedplusbackend.weatherfeed.presentation;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -22,21 +20,19 @@ public class WeatherFeedController implements WeatherFeedApi {
 
   @Override
   public ResponseEntity<ApiResponse<JsonNode>> getOverview(
-      @RequestParam(required = false) @Pattern(regexp = DATE_PATTERN) String date,
-      @RequestParam(required = false) @Pattern(regexp = TIME_PATTERN) String time,
-      @RequestParam(name = "time_band", required = false) @Pattern(regexp = TIME_BAND_PATTERN)
-          String timeBand) {
+      @RequestParam(required = false) String date,
+      @RequestParam(required = false) String time,
+      @RequestParam(name = "time_band", required = false) String timeBand) {
     return ResponseEntity.ok(
         ApiResponse.success(weatherFeedService.getOverview(date, time, timeBand)));
   }
 
   @Override
   public ResponseEntity<ApiResponse<JsonNode>> getDetail(
-      @RequestParam @NotBlank String district,
-      @RequestParam(required = false) @Pattern(regexp = DATE_PATTERN) String date,
-      @RequestParam(required = false) @Pattern(regexp = TIME_PATTERN) String time,
-      @RequestParam(name = "time_band", required = false) @Pattern(regexp = TIME_BAND_PATTERN)
-          String timeBand) {
+      @RequestParam String district,
+      @RequestParam(required = false) String date,
+      @RequestParam(required = false) String time,
+      @RequestParam(name = "time_band", required = false) String timeBand) {
     return ResponseEntity.ok(
         ApiResponse.success(weatherFeedService.getDetail(district, date, time, timeBand)));
   }
