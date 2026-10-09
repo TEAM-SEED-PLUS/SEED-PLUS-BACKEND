@@ -69,6 +69,12 @@ auth:
     mail:
       from-address: ${MAIL_FROM_ADDRESS:${MAIL_USERNAME}}
 
+support:
+  inquiry:
+    mail:
+      from-address: ${MAIL_FROM_ADDRESS:${MAIL_USERNAME}}
+      recipient-address: seedbusiness0@gmail.com
+
 external:
   rest-client:
     connect-timeout-millis: ${EXTERNAL_REST_CLIENT_CONNECT_TIMEOUT_MS:3000}
