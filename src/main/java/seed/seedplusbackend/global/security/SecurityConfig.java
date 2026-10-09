@@ -71,7 +71,9 @@ public class SecurityConfig {
                         "/api/v1/commercial-areas",
                         "/api/v1/commercial-areas/**",
                         "/api/v1/weather-feeds",
-                        "/api/v1/weather-feeds/**")
+                        "/api/v1/weather-feeds/**",
+                        "/api/v1/notices",
+                        "/api/v1/notices/**")
                     .permitAll()
                     .requestMatchers(
                         "/actuator/health",
