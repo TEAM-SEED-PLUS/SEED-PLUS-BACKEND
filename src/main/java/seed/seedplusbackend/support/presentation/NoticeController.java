@@ -33,12 +33,14 @@ public class NoticeController {
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
     return ResponseEntity.ok(
         ApiResponse.success(
-            PageResponse.from(noticeQueryService.getNotices(category, page, size), NoticeResponse::from)));
+            PageResponse.from(
+                noticeQueryService.getNotices(category, page, size), NoticeResponse::from)));
   }
 
   @GetMapping("/{noticeId}")
   public ResponseEntity<ApiResponse<NoticeDetailResponse>> getNotice(
       @PathVariable @Positive Long noticeId) {
-    return ResponseEntity.ok(ApiResponse.success(NoticeDetailResponse.from(noticeQueryService.getNotice(noticeId))));
+    return ResponseEntity.ok(
+        ApiResponse.success(NoticeDetailResponse.from(noticeQueryService.getNotice(noticeId))));
   }
 }

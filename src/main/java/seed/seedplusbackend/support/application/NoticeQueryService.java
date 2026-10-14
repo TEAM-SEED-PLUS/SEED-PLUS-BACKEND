@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seed.seedplusbackend.global.error.ApplicationException;
@@ -21,7 +20,7 @@ public class NoticeQueryService {
 
   @Transactional(readOnly = true)
   public Page<Notice> getNotices(NoticeCategory category, int page, int size) {
-    Pageable pageable = PageRequest.of(page, size, Sort.by("pinned").descending().and(Sort.by("publishedAt").descending()));
+    Pageable pageable = PageRequest.of(page, size);
     if (category == null) {
       return noticeRepository.findAllByOrderByPinnedDescPublishedAtDesc(pageable);
     }
