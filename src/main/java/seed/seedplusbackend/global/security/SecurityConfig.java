@@ -74,6 +74,7 @@ public class SecurityConfig {
                         "/api/v1/weather-feeds/**",
                         "/api/v1/notices",
                         "/api/v1/notices/**",
+                        "/api/v1/faqs",
                         "/api/v1/inquiries")
                     .permitAll()
                     .requestMatchers(
