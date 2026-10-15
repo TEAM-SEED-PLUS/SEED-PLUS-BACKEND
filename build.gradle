@@ -12,6 +12,10 @@ ext['postgresql.version'] = '42.7.12'
 // Boot BOM이 10.1.59 이상을 관리시 제거
 ext['tomcat.version'] = '10.1.59'
 
+// CVE-2026-68497, CVE-2026-91776, CVE-2026-91777 대응
+// Boot BOM이 2.21.7 이상을 관리시 제거
+ext['jackson-bom.version'] = '2.21.7'
+
 group = 'seed'
 version = '0.0.1-SNAPSHOT'
 description = 'SEED-PLUS-BACKEND'
