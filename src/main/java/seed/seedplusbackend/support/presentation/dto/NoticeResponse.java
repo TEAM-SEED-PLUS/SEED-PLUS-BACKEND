@@ -11,6 +11,10 @@ public record NoticeResponse(
 
   public static NoticeResponse from(Notice notice) {
     return new NoticeResponse(
-        notice.getId(), notice.getCategory(), notice.getTitle(), notice.isPinned(), notice.getPublishedAt());
+        notice.getId(),
+        notice.getCategory(),
+        notice.getTitle(),
+        notice.isPinned(),
+        notice.getPublishedAt());
   }
 }

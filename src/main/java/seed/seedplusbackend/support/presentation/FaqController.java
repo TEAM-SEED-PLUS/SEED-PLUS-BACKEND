@@ -32,6 +32,7 @@ public class FaqController {
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
     return ResponseEntity.ok(
         ApiResponse.success(
-            PageResponse.from(faqQueryService.getFaqs(group, category, page, size), FaqResponse::from)));
+            PageResponse.from(
+                faqQueryService.getFaqs(group, category, page, size), FaqResponse::from)));
   }
 }

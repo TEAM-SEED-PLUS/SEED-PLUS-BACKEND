@@ -44,20 +44,12 @@ class FaqControllerTest {
   void getFaqs_forwardsFilters() throws Exception {
     Faq faq =
         new Faq(
-            16L,
-            FaqGroup.PARTNER,
-            FaqCategory.COOPERATION,
-            "제휴는 어떻게 하나요?",
-            "문의하기를 이용해 주세요.",
-            1);
+            16L, FaqGroup.PARTNER, FaqCategory.COOPERATION, "제휴는 어떻게 하나요?", "문의하기를 이용해 주세요.", 1);
     given(faqQueryService.getFaqs(FaqGroup.PARTNER, FaqCategory.COOPERATION, 0, 20))
         .willReturn(new PageImpl<>(List.of(faq), PageRequest.of(0, 20), 1));
 
     mockMvc
-        .perform(
-            get("/api/v1/faqs")
-                .param("group", "PARTNER")
-                .param("category", "COOPERATION"))
+        .perform(get("/api/v1/faqs").param("group", "PARTNER").param("category", "COOPERATION"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value(200))
         .andExpect(jsonPath("$.data.content[0].id").value(16))

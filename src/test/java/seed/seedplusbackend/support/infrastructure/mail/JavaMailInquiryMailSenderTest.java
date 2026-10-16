@@ -36,11 +36,7 @@ class JavaMailInquiryMailSenderTest {
         new JavaMailInquiryMailSender(mailSender, properties);
     CreateInquiryCommand command =
         new CreateInquiryCommand(
-            InquiryType.SERVICE_ERROR,
-            "홍길동",
-            "user@example.com",
-            "오류 문의",
-            "분석 결과가 보이지 않습니다.");
+            InquiryType.SERVICE_ERROR, "홍길동", "user@example.com", "오류 문의", "분석 결과가 보이지 않습니다.");
 
     inquiryMailSender.send(command);
 
@@ -68,6 +64,7 @@ class JavaMailInquiryMailSenderTest {
     assertThatThrownBy(() -> inquiryMailSender.send(command))
         .isInstanceOfSatisfying(
             ApplicationException.class,
-            exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MAIL_SEND_FAILED));
+            exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MAIL_SEND_FAILED));
   }
 }
