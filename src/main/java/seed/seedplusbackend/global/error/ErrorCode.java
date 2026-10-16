@@ -76,6 +76,13 @@ public enum ErrorCode {
   NOT_OWNER_COMMENT(HttpStatus.FORBIDDEN, 7101, "댓글 작성자가 아닙니다."),
   INVALID_PARENT_COMMENT(HttpStatus.BAD_REQUEST, 7102, "유효하지 않은 부모 댓글입니다."),
 
+  // 7200: Community
+  NOT_FOUND_COMMUNITY_POST(HttpStatus.NOT_FOUND, 7200, "게시글을 찾을 수 없습니다."),
+  NOT_OWNER_COMMUNITY_POST(HttpStatus.FORBIDDEN, 7201, "게시글 작성자가 아닙니다."),
+  INVALID_COMMUNITY_TAG(HttpStatus.BAD_REQUEST, 7202, "유효하지 않은 커뮤니티 태그입니다."),
+  INVALID_COMMUNITY_CONTENT(HttpStatus.BAD_REQUEST, 7203, "커뮤니티 입력값이 올바르지 않습니다."),
+  INVALID_COMMUNITY_STATE(HttpStatus.CONFLICT, 7204, "커뮤니티 상태가 올바르지 않습니다."),
+
   // 8000: Score
   NOT_FOUND_SCORE(HttpStatus.NOT_FOUND, 8000, "점수 정보를 찾을 수 없습니다."),
 
