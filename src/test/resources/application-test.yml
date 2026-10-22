@@ -29,6 +29,12 @@ auth:
     mail:
       from-address: test@example.com
 
+support:
+  inquiry:
+    mail:
+      from-address: test@example.com
+      recipient-address: test-recipient@example.com
+
 external:
   rest-client:
     connect-timeout-millis: 3000
