@@ -46,6 +46,9 @@ public enum ErrorCode {
   DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, 4004, "이미 사용 중인 로그인 ID입니다."),
   PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, 4005, "새 비밀번호와 비밀번호 확인이 일치하지 않습니다."),
 
+  // 4100: Customer Support
+  NOT_FOUND_NOTICE(HttpStatus.NOT_FOUND, 4100, "공지사항을 찾을 수 없습니다."),
+
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),
 
