@@ -51,6 +51,7 @@ public enum ErrorCode {
 
   // 4200: Payment
   INVALID_REFUND_REQUEST_STATUS(HttpStatus.CONFLICT, 4200, "환불 요청 상태가 올바르지 않습니다."),
+  GMPAY_PAYMENT_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 4201, "GMPay 결제 요청에 실패했습니다."),
 
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),

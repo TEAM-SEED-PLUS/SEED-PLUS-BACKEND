@@ -84,6 +84,10 @@ weather-feed:
   fast-api:
     base-url: ${WEATHER_FEED_FAST_API_BASE_URL:http://127.0.0.1:8000}
 
+gmpay:
+  base-url: ${GMPAY_BASE_URL:https://api.gmpay.kr}
+  member-id: ${GMPAY_MEMBER_ID:}
+
 analysis:
   lambda:
     profit:
