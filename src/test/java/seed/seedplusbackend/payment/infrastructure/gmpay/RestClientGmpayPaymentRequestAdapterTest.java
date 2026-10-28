@@ -38,7 +38,10 @@ class RestClientGmpayPaymentRequestAdapterTest {
                 "https://api.gmpay.kr",
                 "seed-member",
                 "https://api.seedplus.kr/api/v1/payments/gmpay/feedback",
-                "https://seedplus.kr/payments/complete"));
+                "https://seedplus.kr/payments/complete",
+                "dev-id",
+                "dev-token",
+                "feedback-token"));
   }
 
   @Test

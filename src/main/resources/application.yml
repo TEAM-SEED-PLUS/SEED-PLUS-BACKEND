@@ -89,6 +89,9 @@ gmpay:
   member-id: ${GMPAY_MEMBER_ID:}
   feedback-url: ${GMPAY_FEEDBACK_URL:}
   return-url: ${GMPAY_RETURN_URL:}
+  dev-id: ${GMPAY_DEV_ID:}
+  dev-token: ${GMPAY_DEV_TOKEN:}
+  feedback-token: ${GMPAY_FEEDBACK_TOKEN:}
 
 analysis:
   lambda:

@@ -12,4 +12,7 @@ public interface SubscriptionJpaRepository
   @Override
   Optional<Subscription> findFirstByUser_IdAndStatusOrderByExpiresAtDesc(
       Long userId, SubscriptionStatus status);
+
+  @Override
+  <S extends Subscription> S save(S entity);
 }

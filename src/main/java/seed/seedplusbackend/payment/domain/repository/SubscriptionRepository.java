@@ -8,4 +8,6 @@ public interface SubscriptionRepository {
 
   Optional<Subscription> findFirstByUser_IdAndStatusOrderByExpiresAtDesc(
       Long userId, SubscriptionStatus status);
+
+  <S extends Subscription> S save(S entity);
 }

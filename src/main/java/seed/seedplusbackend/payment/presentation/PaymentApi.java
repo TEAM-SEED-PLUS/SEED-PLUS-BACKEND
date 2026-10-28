@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.security.AuthenticatedUser;
@@ -30,4 +31,15 @@ public interface PaymentApi {
   ResponseEntity<ApiResponse<PaymentOrderRequestResponse>> requestPayment(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
       @Valid @RequestBody CreatePaymentOrderRequest request);
+
+  @Operation(hidden = true)
+  @PostMapping("/gmpay/feedback")
+  ResponseEntity<ApiResponse<Void>> handleGmpayFeedback(
+      @RequestParam String memberId,
+      @RequestParam String feedbackToken,
+      @RequestParam String paymentState,
+      @RequestParam String orderNo,
+      @RequestParam(required = false) String payMethod,
+      @RequestParam(required = false) String approvalNo,
+      @RequestParam(required = false, name = "cstUrl") String receiptUrl);
 }
