@@ -87,6 +87,8 @@ weather-feed:
 gmpay:
   base-url: ${GMPAY_BASE_URL:https://api.gmpay.kr}
   member-id: ${GMPAY_MEMBER_ID:}
+  feedback-url: ${GMPAY_FEEDBACK_URL:}
+  return-url: ${GMPAY_RETURN_URL:}
 
 analysis:
   lambda:

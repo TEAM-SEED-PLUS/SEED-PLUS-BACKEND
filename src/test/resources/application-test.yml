@@ -43,6 +43,8 @@ external:
 gmpay:
   base-url: https://api.gmpay.kr
   member-id: test-member-id
+  feedback-url: https://api.example.com/api/v1/payments/gmpay/feedback
+  return-url: https://seedplus.example.com/payments/complete
 
 analysis:
   lambda:

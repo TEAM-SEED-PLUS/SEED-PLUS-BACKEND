@@ -31,13 +31,16 @@ public class RestClientGmpayPaymentRequestAdapter implements GmpayPaymentRequest
     if (properties.memberId() == null || properties.memberId().isBlank()) {
       throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, "memberId is missing", null);
     }
+    if (properties.feedbackUrl() == null || properties.feedbackUrl().isBlank()) {
+      throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, "feedbackUrl is missing", null);
+    }
 
     try {
       GmpayPaymentRequestResponse response =
           restClient
               .post()
               .uri(paymentRequestUri())
-              .body(GmpayPaymentRequest.from(properties.memberId(), command))
+              .body(GmpayPaymentRequest.from(properties, command))
               .retrieve()
               .onStatus(HttpStatusCode::isError, this::throwGmpayPaymentRequestException)
               .body(GmpayPaymentRequestResponse.class);
@@ -81,17 +84,22 @@ public class RestClientGmpayPaymentRequestAdapter implements GmpayPaymentRequest
       String var1,
       String var2) {
 
-    private static GmpayPaymentRequest from(String memberId, GmpayPaymentRequestCommand command) {
+    private static GmpayPaymentRequest from(
+        GmpayProperties properties, GmpayPaymentRequestCommand command) {
       return new GmpayPaymentRequest(
-          memberId,
+          properties.memberId(),
           command.totalPrice(),
           command.goodName(),
           command.buyerMobile(),
           command.buyerEmail(),
-          command.feedbackUrl(),
-          command.returnUrl(),
+          properties.feedbackUrl(),
+          blankToNull(properties.returnUrl()),
           command.orderKey(),
           command.productCode());
+    }
+
+    private static String blankToNull(String value) {
+      return value == null || value.isBlank() ? null : value;
     }
   }
 

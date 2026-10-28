@@ -33,7 +33,12 @@ class RestClientGmpayPaymentRequestAdapterTest {
     server = MockRestServiceServer.bindTo(builder).build();
     adapter =
         new RestClientGmpayPaymentRequestAdapter(
-            builder, new GmpayProperties("https://api.gmpay.kr", "seed-member"));
+            builder,
+            new GmpayProperties(
+                "https://api.gmpay.kr",
+                "seed-member",
+                "https://api.seedplus.kr/api/v1/payments/gmpay/feedback",
+                "https://seedplus.kr/payments/complete"));
   }
 
   @Test
@@ -45,6 +50,9 @@ class RestClientGmpayPaymentRequestAdapterTest {
         .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
         .andExpect(jsonPath("$.memberId").value("seed-member"))
         .andExpect(jsonPath("$.totalPrice").value(9000))
+        .andExpect(
+            jsonPath("$.feedbackUrl")
+                .value("https://api.seedplus.kr/api/v1/payments/gmpay/feedback"))
         .andExpect(jsonPath("$.var1").value("order-key"))
         .andExpect(jsonPath("$.var2").value("SURVIVAL_REPORT"))
         .andRespond(
@@ -82,8 +90,6 @@ class RestClientGmpayPaymentRequestAdapterTest {
         9000,
         "01012345678",
         "user@example.com",
-        "https://api.seedplus.kr/api/v1/payments/gmpay/feedback",
-        "https://seedplus.kr/payments/complete",
         "order-key",
         "SURVIVAL_REPORT");
   }

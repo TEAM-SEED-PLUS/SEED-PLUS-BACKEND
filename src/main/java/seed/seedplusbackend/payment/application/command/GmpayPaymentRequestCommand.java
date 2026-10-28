@@ -5,7 +5,5 @@ public record GmpayPaymentRequestCommand(
     long totalPrice,
     String buyerMobile,
     String buyerEmail,
-    String feedbackUrl,
-    String returnUrl,
     String orderKey,
     String productCode) {}
