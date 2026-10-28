@@ -93,6 +93,10 @@ gmpay:
   dev-token: ${GMPAY_DEV_TOKEN:}
   feedback-token: ${GMPAY_FEEDBACK_TOKEN:}
 
+payment:
+  billing-key-encryption:
+    secret: ${PAYMENT_BILLING_KEY_ENCRYPTION_SECRET:}
+
 analysis:
   lambda:
     profit:

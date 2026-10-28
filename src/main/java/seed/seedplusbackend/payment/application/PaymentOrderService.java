@@ -67,6 +67,9 @@ public class PaymentOrderService {
   }
 
   private void validateReportId(PaymentProduct product, String reportId) {
+    if (product.getBillingType() == PaymentProductBillingType.SUBSCRIPTION) {
+      throw new ApplicationException(ErrorCode.INVALID_PAYMENT_ORDER);
+    }
     boolean reportProduct = product.getBillingType() == PaymentProductBillingType.ONE_TIME;
     boolean hasReportId = reportId != null && !reportId.isBlank();
     if (reportProduct != hasReportId) {

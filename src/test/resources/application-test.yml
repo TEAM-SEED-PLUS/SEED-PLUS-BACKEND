@@ -49,6 +49,10 @@ gmpay:
   dev-token: test-dev-token
   feedback-token: test-feedback-token
 
+payment:
+  billing-key-encryption:
+    secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
 analysis:
   lambda:
     profit:

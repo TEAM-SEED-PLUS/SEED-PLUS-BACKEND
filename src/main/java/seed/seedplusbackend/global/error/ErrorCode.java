@@ -58,6 +58,8 @@ public enum ErrorCode {
   GMPAY_PAYMENT_INFO_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 4205, "GMPay 결제 정보 조회에 실패했습니다."),
   GMPAY_PAYMENT_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, 4206, "GMPay 결제 정보 검증에 실패했습니다."),
   NOT_FOUND_PAYMENT_ORDER(HttpStatus.NOT_FOUND, 4207, "결제 주문을 찾을 수 없습니다."),
+  BILLING_KEY_ENCRYPTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 4208, "빌링 키 암호화에 실패했습니다."),
+  GMPAY_CARD_REGISTRATION_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 4209, "GMPay 카드 등록 요청에 실패했습니다."),
 
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),
