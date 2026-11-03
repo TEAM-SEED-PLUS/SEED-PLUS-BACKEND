@@ -83,6 +83,15 @@ public class PaymentFeedbackService {
       paymentOrder.cancel();
       return;
     }
+    if (paymentOrder.getStatus() == PaymentOrderStatus.COMPLETED) {
+      Payment payment =
+          paymentRepository
+              .findByPaymentOrder_Id(paymentOrder.getId())
+              .orElseThrow(() -> new ApplicationException(ErrorCode.GMPAY_PAYMENT_VERIFICATION_FAILED));
+      payment.cancel(OffsetDateTime.now());
+      paymentOrder.cancel();
+      return;
+    }
     if (paymentOrder.getStatus() != PaymentOrderStatus.CANCELED) {
       throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_VERIFICATION_FAILED);
     }

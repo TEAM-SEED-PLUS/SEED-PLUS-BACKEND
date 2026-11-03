@@ -25,9 +25,11 @@ import seed.seedplusbackend.payment.application.result.GmpayPaymentInfo;
 import seed.seedplusbackend.payment.domain.entity.Payment;
 import seed.seedplusbackend.payment.domain.entity.PaymentOrder;
 import seed.seedplusbackend.payment.domain.entity.PaymentOrderStatus;
+import seed.seedplusbackend.payment.domain.entity.PaymentProvider;
 import seed.seedplusbackend.payment.domain.entity.PaymentProduct;
 import seed.seedplusbackend.payment.domain.entity.PaymentProductBillingType;
 import seed.seedplusbackend.payment.domain.entity.PaymentProductCode;
+import seed.seedplusbackend.payment.domain.entity.PaymentStatus;
 import seed.seedplusbackend.payment.domain.entity.ReportPurchaseEntitlement;
 import seed.seedplusbackend.payment.domain.entity.Subscription;
 import seed.seedplusbackend.payment.domain.repository.PaymentOrderRepository;
@@ -143,6 +145,33 @@ class PaymentFeedbackServiceTest {
     assertThat(paymentOrder.getStatus()).isEqualTo(PaymentOrderStatus.CANCELED);
     then(gmpayPaymentVerificationPort).should().validateFeedback(cancelCommand);
     then(gmpayPaymentVerificationPort).shouldHaveNoMoreInteractions();
+  }
+
+  @Test
+  @DisplayName("완료된 결제의 전체 취소 통지는 결제와 주문 상태를 취소로 변경한다")
+  void handleFeedback_cancelsCompletedPayment() {
+    PaymentOrder paymentOrder = paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
+    paymentOrder.complete();
+    Payment payment =
+        Payment.builder()
+            .paymentOrder(paymentOrder)
+            .provider(PaymentProvider.GMPAY)
+            .providerOrderNo("gmpay-order-1")
+            .status(PaymentStatus.COMPLETED)
+            .completedAt(OffsetDateTime.now())
+            .build();
+    GmpayPaymentFeedbackCommand cancelCommand =
+        new GmpayPaymentFeedbackCommand(
+            "seed-member", "feedback-token", "CANCEL", "gmpay-order-1", null, null, null);
+    given(paymentOrderRepository.findByProviderOrderNo("gmpay-order-1"))
+        .willReturn(Optional.of(paymentOrder));
+    given(paymentRepository.findByPaymentOrder_Id(any())).willReturn(Optional.of(payment));
+    doNothing().when(gmpayPaymentVerificationPort).validateFeedback(cancelCommand);
+
+    paymentFeedbackService.handleFeedback(cancelCommand);
+
+    assertThat(paymentOrder.getStatus()).isEqualTo(PaymentOrderStatus.CANCELED);
+    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.CANCELED);
   }
 
   private PaymentOrder paymentOrder(

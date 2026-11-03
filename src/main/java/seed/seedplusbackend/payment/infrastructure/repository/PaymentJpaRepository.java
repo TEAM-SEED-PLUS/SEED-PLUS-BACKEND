@@ -16,5 +16,8 @@ public interface PaymentJpaRepository extends JpaRepository<Payment, Long>, Paym
   Page<Payment> findByPaymentOrder_User_IdOrderByCompletedAtDesc(Long userId, Pageable pageable);
 
   @Override
+  Optional<Payment> findByPaymentOrder_Id(Long paymentOrderId);
+
+  @Override
   Optional<Payment> findByIdAndPaymentOrder_User_Id(Long paymentId, Long userId);
 }

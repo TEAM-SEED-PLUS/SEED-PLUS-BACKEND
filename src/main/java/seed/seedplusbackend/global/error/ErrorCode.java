@@ -65,6 +65,7 @@ public enum ErrorCode {
   GMPAY_RECURRING_PAYMENT_FAILED(HttpStatus.BAD_GATEWAY, 4212, "GMPay 등록결제에 실패했습니다."),
   INVALID_REFUNDABLE_PAYMENT(HttpStatus.CONFLICT, 4213, "환불 신청할 수 없는 결제입니다."),
   DUPLICATE_REFUND_REQUEST(HttpStatus.CONFLICT, 4214, "이미 환불 신청된 결제입니다."),
+  GMPAY_PAYMENT_CANCEL_FAILED(HttpStatus.BAD_GATEWAY, 4215, "GMPay 결제 취소에 실패했습니다."),
 
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),
