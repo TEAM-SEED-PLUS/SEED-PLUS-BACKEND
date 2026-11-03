@@ -26,7 +26,8 @@ public class SubscriptionQueryService {
                     subscription.isActiveAt(now),
                     subscription.getStartedAt(),
                     subscription.getExpiresAt(),
-                    subscription.getNextBillingAt()))
+                    subscription.getNextBillingAt(),
+                    subscription.getCanceledAt()))
         .orElse(SubscriptionStatusResult.empty());
   }
 }

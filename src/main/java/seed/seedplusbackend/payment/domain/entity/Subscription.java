@@ -76,7 +76,9 @@ public class Subscription extends BaseTimeEntity {
   }
 
   public boolean isActiveAt(OffsetDateTime now) {
-    return status == SubscriptionStatus.ACTIVE && expiresAt != null && now.isBefore(expiresAt);
+    return (status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.CANCELED)
+        && expiresAt != null
+        && now.isBefore(expiresAt);
   }
 
   public boolean isReadyForInitialPayment() {
@@ -104,5 +106,14 @@ public class Subscription extends BaseTimeEntity {
     this.status = SubscriptionStatus.ACTIVE;
     this.expiresAt = expiresAt;
     this.nextBillingAt = nextBillingAt;
+  }
+
+  public void cancel(OffsetDateTime canceledAt) {
+    if (status != SubscriptionStatus.ACTIVE) {
+      throw new IllegalStateException("활성 상태의 구독만 해지할 수 있습니다.");
+    }
+    this.status = SubscriptionStatus.CANCELED;
+    this.nextBillingAt = null;
+    this.canceledAt = canceledAt;
   }
 }

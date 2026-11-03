@@ -12,7 +12,8 @@ public record SubscriptionStatusResponse(
     boolean active,
     OffsetDateTime startedAt,
     OffsetDateTime expiresAt,
-    OffsetDateTime nextBillingAt) {
+    OffsetDateTime nextBillingAt,
+    OffsetDateTime canceledAt) {
 
   public static SubscriptionStatusResponse from(SubscriptionStatusResult result) {
     return new SubscriptionStatusResponse(
@@ -22,6 +23,7 @@ public record SubscriptionStatusResponse(
         result.active(),
         result.startedAt(),
         result.expiresAt(),
-        result.nextBillingAt());
+        result.nextBillingAt(),
+        result.canceledAt());
   }
 }

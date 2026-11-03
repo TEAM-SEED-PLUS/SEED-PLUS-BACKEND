@@ -7,9 +7,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.global.response.ApiResponse;
@@ -52,4 +53,11 @@ public interface SubscriptionApi {
   @GetMapping("/me")
   ResponseEntity<ApiResponse<SubscriptionStatusResponse>> getMySubscription(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser);
+
+  @Operation(summary = "구독 해지", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiErrorCodeExamples({ErrorCode.NOT_FOUND_SUBSCRIPTION, ErrorCode.INVALID_SUBSCRIPTION_STATUS})
+  @DeleteMapping("/{subscriptionId}")
+  ResponseEntity<ApiResponse<SubscriptionStatusResponse>> cancelSubscription(
+      @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+      @PathVariable("subscriptionId") Long subscriptionId);
 }

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.security.AuthenticatedUser;
 import seed.seedplusbackend.payment.application.SubscriptionCardRegistrationService;
+import seed.seedplusbackend.payment.application.SubscriptionCancellationService;
 import seed.seedplusbackend.payment.application.SubscriptionRecurringPaymentService;
 import seed.seedplusbackend.payment.application.SubscriptionQueryService;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationRequest;
@@ -25,6 +26,7 @@ import seed.seedplusbackend.payment.presentation.dto.SubscriptionStatusResponse;
 public class SubscriptionController implements SubscriptionApi {
 
   private final SubscriptionCardRegistrationService subscriptionCardRegistrationService;
+  private final SubscriptionCancellationService subscriptionCancellationService;
   private final SubscriptionRecurringPaymentService subscriptionRecurringPaymentService;
   private final SubscriptionQueryService subscriptionQueryService;
 
@@ -58,5 +60,16 @@ public class SubscriptionController implements SubscriptionApi {
             SubscriptionStatusResponse.from(
                 subscriptionQueryService.getLatestSubscription(
                     authenticatedUser.getId(), OffsetDateTime.now()))));
+  }
+
+  @Override
+  public ResponseEntity<ApiResponse<SubscriptionStatusResponse>> cancelSubscription(
+      @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+      @PathVariable("subscriptionId") Long subscriptionId) {
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            SubscriptionStatusResponse.from(
+                subscriptionCancellationService.cancel(
+                    authenticatedUser.getId(), subscriptionId, OffsetDateTime.now()))));
   }
 }

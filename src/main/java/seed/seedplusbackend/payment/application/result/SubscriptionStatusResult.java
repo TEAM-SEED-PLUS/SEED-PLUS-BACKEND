@@ -11,9 +11,10 @@ public record SubscriptionStatusResult(
     boolean active,
     OffsetDateTime startedAt,
     OffsetDateTime expiresAt,
-    OffsetDateTime nextBillingAt) {
+    OffsetDateTime nextBillingAt,
+    OffsetDateTime canceledAt) {
 
   public static SubscriptionStatusResult empty() {
-    return new SubscriptionStatusResult(null, null, null, false, null, null, null);
+    return new SubscriptionStatusResult(null, null, null, false, null, null, null, null);
   }
 }

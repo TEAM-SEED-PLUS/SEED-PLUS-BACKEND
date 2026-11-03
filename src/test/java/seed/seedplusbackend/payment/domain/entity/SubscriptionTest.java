@@ -31,4 +31,24 @@ class SubscriptionTest {
 
     assertThat(subscription.isActiveAt(now)).isFalse();
   }
+
+  @Test
+  @DisplayName("해지한 구독은 만료 전까지 PRO 권한을 유지하고 자동결제를 중단한다")
+  void cancel_keepsAccessUntilExpirationAndStopsBilling() {
+    OffsetDateTime now = OffsetDateTime.parse("2026-10-28T12:00:00+09:00");
+    Subscription subscription =
+        Subscription.builder()
+            .status(SubscriptionStatus.ACTIVE)
+            .expiresAt(now.plusDays(1))
+            .nextBillingAt(now.plusDays(1))
+            .build();
+
+    subscription.cancel(now);
+
+    assertThat(subscription.getStatus()).isEqualTo(SubscriptionStatus.CANCELED);
+    assertThat(subscription.getNextBillingAt()).isNull();
+    assertThat(subscription.getCanceledAt()).isEqualTo(now);
+    assertThat(subscription.isActiveAt(now)).isTrue();
+    assertThat(subscription.isDueForRenewalAt(now.plusDays(1))).isFalse();
+  }
 }
