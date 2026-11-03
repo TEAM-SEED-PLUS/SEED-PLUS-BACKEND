@@ -24,6 +24,7 @@ class AesGcmBillingKeyEncryptionAdapterTest {
     assertThat(first).isNotEqualTo("mp-key");
     assertThat(second).isNotEqualTo("mp-key");
     assertThat(first).isNotEqualTo(second);
+    assertThat(adapter.decrypt(first)).isEqualTo("mp-key");
   }
 
   @Test

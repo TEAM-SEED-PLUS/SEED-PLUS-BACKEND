@@ -9,5 +9,7 @@ public interface SubscriptionRepository {
   Optional<Subscription> findFirstByUser_IdAndStatusOrderByExpiresAtDesc(
       Long userId, SubscriptionStatus status);
 
+  Optional<Subscription> findByIdAndUser_Id(Long subscriptionId, Long userId);
+
   <S extends Subscription> S save(S entity);
 }

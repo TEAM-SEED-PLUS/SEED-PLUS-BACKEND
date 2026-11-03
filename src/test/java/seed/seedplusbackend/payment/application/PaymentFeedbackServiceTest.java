@@ -45,6 +45,7 @@ class PaymentFeedbackServiceTest {
   @Mock private PaymentRepository paymentRepository;
   @Mock private SubscriptionRepository subscriptionRepository;
   @Mock private ReportPurchaseEntitlementRepository reportPurchaseEntitlementRepository;
+  @Mock private SubscriptionPeriodCalculator subscriptionPeriodCalculator;
   @Mock private User user;
   @Mock private PaymentProduct product;
 
@@ -78,6 +79,8 @@ class PaymentFeedbackServiceTest {
     doNothing().when(gmpayPaymentVerificationPort).validateFeedback(command());
     given(gmpayPaymentVerificationPort.getPaymentInfo("gmpay-order-1"))
         .willReturn(paymentInfo(paymentOrder.getAmount(), paymentOrder.getProductName()));
+    given(subscriptionPeriodCalculator.calculateExpiresAt(any(), any()))
+        .willReturn(OffsetDateTime.parse("2027-10-28T12:00:00+09:00"));
 
     paymentFeedbackService.handleFeedback(command());
 

@@ -6,12 +6,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.security.AuthenticatedUser;
 import seed.seedplusbackend.payment.application.SubscriptionCardRegistrationService;
+import seed.seedplusbackend.payment.application.SubscriptionRecurringPaymentService;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationRequest;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationResponse;
+import seed.seedplusbackend.payment.presentation.dto.RecurringPaymentResponse;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ import seed.seedplusbackend.payment.presentation.dto.CardRegistrationResponse;
 public class SubscriptionController implements SubscriptionApi {
 
   private final SubscriptionCardRegistrationService subscriptionCardRegistrationService;
+  private final SubscriptionRecurringPaymentService subscriptionRecurringPaymentService;
 
   @Override
   public ResponseEntity<ApiResponse<CardRegistrationResponse>> requestCardRegistration(
@@ -29,5 +33,16 @@ public class SubscriptionController implements SubscriptionApi {
             CardRegistrationResponse.from(
                 subscriptionCardRegistrationService.requestCardRegistration(
                     authenticatedUser.getId(), request.toCommand()))));
+  }
+
+  @Override
+  public ResponseEntity<ApiResponse<RecurringPaymentResponse>> requestInitialPayment(
+      @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+      @PathVariable("subscriptionId") Long subscriptionId) {
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            RecurringPaymentResponse.from(
+                subscriptionRecurringPaymentService.requestInitialPayment(
+                    authenticatedUser.getId(), subscriptionId))));
   }
 }

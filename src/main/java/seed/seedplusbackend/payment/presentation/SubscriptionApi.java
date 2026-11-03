@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.global.response.ApiResponse;
@@ -15,6 +16,7 @@ import seed.seedplusbackend.global.security.AuthenticatedUser;
 import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationRequest;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationResponse;
+import seed.seedplusbackend.payment.presentation.dto.RecurringPaymentResponse;
 
 @Tag(name = "구독", description = "구독 API")
 public interface SubscriptionApi {
@@ -31,4 +33,16 @@ public interface SubscriptionApi {
   ResponseEntity<ApiResponse<CardRegistrationResponse>> requestCardRegistration(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
       @Valid @RequestBody CardRegistrationRequest request);
+
+  @Operation(summary = "등록 카드 최초 결제", security = @SecurityRequirement(name = "bearerAuth"))
+  @ApiErrorCodeExamples({
+    ErrorCode.NOT_FOUND_SUBSCRIPTION,
+    ErrorCode.INVALID_SUBSCRIPTION_STATUS,
+    ErrorCode.BILLING_KEY_ENCRYPTION_FAILED,
+    ErrorCode.GMPAY_RECURRING_PAYMENT_FAILED
+  })
+  @PostMapping("/{subscriptionId}/payments")
+  ResponseEntity<ApiResponse<RecurringPaymentResponse>> requestInitialPayment(
+      @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+      @PathVariable("subscriptionId") Long subscriptionId);
 }

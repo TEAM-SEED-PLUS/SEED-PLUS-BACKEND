@@ -15,7 +15,6 @@ import seed.seedplusbackend.payment.domain.entity.Payment;
 import seed.seedplusbackend.payment.domain.entity.PaymentOrder;
 import seed.seedplusbackend.payment.domain.entity.PaymentOrderStatus;
 import seed.seedplusbackend.payment.domain.entity.PaymentProductBillingType;
-import seed.seedplusbackend.payment.domain.entity.PaymentProductCode;
 import seed.seedplusbackend.payment.domain.entity.PaymentProvider;
 import seed.seedplusbackend.payment.domain.entity.PaymentStatus;
 import seed.seedplusbackend.payment.domain.entity.ReportPurchaseEntitlement;
@@ -37,6 +36,7 @@ public class PaymentFeedbackService {
   private final PaymentRepository paymentRepository;
   private final SubscriptionRepository subscriptionRepository;
   private final ReportPurchaseEntitlementRepository reportPurchaseEntitlementRepository;
+  private final SubscriptionPeriodCalculator subscriptionPeriodCalculator;
 
   @Transactional
   public void handleFeedback(GmpayPaymentFeedbackCommand command) {
@@ -119,7 +119,8 @@ public class PaymentFeedbackService {
   }
 
   private void grantSubscription(PaymentOrder paymentOrder, OffsetDateTime completedAt) {
-    OffsetDateTime expiresAt = calculateExpiration(paymentOrder.getProduct().getCode(), completedAt);
+    OffsetDateTime expiresAt =
+        subscriptionPeriodCalculator.calculateExpiresAt(paymentOrder.getProduct().getCode(), completedAt);
     subscriptionRepository.save(
         Subscription.builder()
             .user(paymentOrder.getUser())
@@ -129,14 +130,6 @@ public class PaymentFeedbackService {
             .expiresAt(expiresAt)
             .nextBillingAt(expiresAt)
             .build());
-  }
-
-  private OffsetDateTime calculateExpiration(PaymentProductCode productCode, OffsetDateTime completedAt) {
-    return switch (productCode) {
-      case PRO_MONTHLY -> completedAt.plusMonths(1);
-      case PRO_YEARLY -> completedAt.plusYears(1);
-      default -> throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_VERIFICATION_FAILED);
-    };
   }
 
   private OffsetDateTime toOffsetDateTime(LocalDateTime paidAt) {

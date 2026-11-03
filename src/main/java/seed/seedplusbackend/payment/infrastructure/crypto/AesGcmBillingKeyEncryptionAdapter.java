@@ -48,6 +48,29 @@ public class AesGcmBillingKeyEncryptionAdapter implements BillingKeyEncryptionPo
     }
   }
 
+  @Override
+  public String decrypt(String encryptedBillingKey) {
+    try {
+      byte[] encrypted = Base64.getUrlDecoder().decode(encryptedBillingKey);
+      if (encrypted.length <= INITIALIZATION_VECTOR_LENGTH) {
+        throw new ApplicationException(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, "invalid encrypted billing key", null);
+      }
+      ByteBuffer buffer = ByteBuffer.wrap(encrypted);
+      byte[] initializationVector = new byte[INITIALIZATION_VECTOR_LENGTH];
+      buffer.get(initializationVector);
+      byte[] encryptedValue = new byte[buffer.remaining()];
+      buffer.get(encryptedValue);
+      Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+      cipher.init(
+          Cipher.DECRYPT_MODE,
+          encryptionKey(),
+          new GCMParameterSpec(AUTHENTICATION_TAG_LENGTH, initializationVector));
+      return new String(cipher.doFinal(encryptedValue), StandardCharsets.UTF_8);
+    } catch (GeneralSecurityException | IllegalArgumentException exception) {
+      throw new ApplicationException(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, exception);
+    }
+  }
+
   private SecretKeySpec encryptionKey() {
     if (properties.secret() == null || properties.secret().isBlank()) {
       throw new ApplicationException(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, "encryption secret is missing", null);

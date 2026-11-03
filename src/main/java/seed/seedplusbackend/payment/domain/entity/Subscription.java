@@ -78,4 +78,19 @@ public class Subscription extends BaseTimeEntity {
   public boolean isActiveAt(OffsetDateTime now) {
     return status == SubscriptionStatus.ACTIVE && expiresAt != null && now.isBefore(expiresAt);
   }
+
+  public boolean isReadyForInitialPayment() {
+    return status == SubscriptionStatus.PENDING || status == SubscriptionStatus.PAYMENT_FAILED;
+  }
+
+  public void activate(OffsetDateTime startedAt, OffsetDateTime expiresAt, OffsetDateTime nextBillingAt) {
+    this.status = SubscriptionStatus.ACTIVE;
+    this.startedAt = startedAt;
+    this.expiresAt = expiresAt;
+    this.nextBillingAt = nextBillingAt;
+  }
+
+  public void markPaymentFailed() {
+    this.status = SubscriptionStatus.PAYMENT_FAILED;
+  }
 }
