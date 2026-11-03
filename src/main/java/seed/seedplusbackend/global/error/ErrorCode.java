@@ -63,6 +63,8 @@ public enum ErrorCode {
   NOT_FOUND_SUBSCRIPTION(HttpStatus.NOT_FOUND, 4210, "구독 정보를 찾을 수 없습니다."),
   INVALID_SUBSCRIPTION_STATUS(HttpStatus.CONFLICT, 4211, "구독 상태가 올바르지 않습니다."),
   GMPAY_RECURRING_PAYMENT_FAILED(HttpStatus.BAD_GATEWAY, 4212, "GMPay 등록결제에 실패했습니다."),
+  INVALID_REFUNDABLE_PAYMENT(HttpStatus.CONFLICT, 4213, "환불 신청할 수 없는 결제입니다."),
+  DUPLICATE_REFUND_REQUEST(HttpStatus.CONFLICT, 4214, "이미 환불 신청된 결제입니다."),
 
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),
