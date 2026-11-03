@@ -8,4 +8,9 @@ public interface PaymentJpaRepository extends JpaRepository<Payment, Long>, Paym
 
   @Override
   <S extends Payment> S save(S entity);
+
+  @Override
+  Page<Payment> findByPaymentOrder_User_IdOrderByCompletedAtDesc(Long userId, Pageable pageable);
 }
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;

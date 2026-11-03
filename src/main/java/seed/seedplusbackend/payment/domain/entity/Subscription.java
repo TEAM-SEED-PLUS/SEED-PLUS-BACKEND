@@ -93,4 +93,16 @@ public class Subscription extends BaseTimeEntity {
   public void markPaymentFailed() {
     this.status = SubscriptionStatus.PAYMENT_FAILED;
   }
+
+  public boolean isDueForRenewalAt(OffsetDateTime now) {
+    return status == SubscriptionStatus.ACTIVE
+        && nextBillingAt != null
+        && !nextBillingAt.isAfter(now);
+  }
+
+  public void renew(OffsetDateTime expiresAt, OffsetDateTime nextBillingAt) {
+    this.status = SubscriptionStatus.ACTIVE;
+    this.expiresAt = expiresAt;
+    this.nextBillingAt = nextBillingAt;
+  }
 }

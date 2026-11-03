@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import seed.seedplusbackend.global.error.ErrorCode;
@@ -17,6 +18,7 @@ import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationRequest;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationResponse;
 import seed.seedplusbackend.payment.presentation.dto.RecurringPaymentResponse;
+import seed.seedplusbackend.payment.presentation.dto.SubscriptionStatusResponse;
 
 @Tag(name = "구독", description = "구독 API")
 public interface SubscriptionApi {
@@ -45,4 +47,9 @@ public interface SubscriptionApi {
   ResponseEntity<ApiResponse<RecurringPaymentResponse>> requestInitialPayment(
       @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
       @PathVariable("subscriptionId") Long subscriptionId);
+
+  @Operation(summary = "내 구독 상태 조회", security = @SecurityRequirement(name = "bearerAuth"))
+  @GetMapping("/me")
+  ResponseEntity<ApiResponse<SubscriptionStatusResponse>> getMySubscription(
+      @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser);
 }

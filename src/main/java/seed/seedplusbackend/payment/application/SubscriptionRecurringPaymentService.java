@@ -47,6 +47,23 @@ public class SubscriptionRecurringPaymentService {
       throw new ApplicationException(ErrorCode.INVALID_SUBSCRIPTION_STATUS);
     }
 
+    return processPayment(subscription, false, OffsetDateTime.now());
+  }
+
+  @Transactional
+  public boolean renewDueSubscription(Long subscriptionId, OffsetDateTime now) {
+    Subscription subscription =
+        subscriptionRepository.findByIdForUpdate(subscriptionId).orElse(null);
+    if (subscription == null || !subscription.isDueForRenewalAt(now)) {
+      return false;
+    }
+
+    processPayment(subscription, true, now);
+    return true;
+  }
+
+  private RecurringPaymentResult processPayment(
+      Subscription subscription, boolean renewal, OffsetDateTime now) {
     String billingKey = billingKeyEncryptionPort.decrypt(subscription.getEncryptedBillingKey());
     PaymentOrder paymentOrder =
         paymentOrderRepository.save(
@@ -96,10 +113,23 @@ public class SubscriptionRecurringPaymentService {
             .completedAt(completedAt)
             .build());
     OffsetDateTime expiresAt =
-        subscriptionPeriodCalculator.calculateExpiresAt(subscription.getProduct().getCode(), completedAt);
-    subscription.activate(completedAt, expiresAt, expiresAt);
+        subscriptionPeriodCalculator.calculateExpiresAt(
+            subscription.getProduct().getCode(), renewalStartedAt(subscription, completedAt, now));
+    if (renewal) {
+      subscription.renew(expiresAt, expiresAt);
+    } else {
+      subscription.activate(completedAt, expiresAt, expiresAt);
+    }
     paymentOrder.complete();
     return new RecurringPaymentResult(true, paymentResult.providerOrderNo());
+  }
+
+  private OffsetDateTime renewalStartedAt(
+      Subscription subscription, OffsetDateTime completedAt, OffsetDateTime now) {
+    if (subscription.getExpiresAt() != null && subscription.getExpiresAt().isAfter(now)) {
+      return subscription.getExpiresAt();
+    }
+    return completedAt;
   }
 
   private OffsetDateTime toOffsetDateTime(LocalDateTime paidAt) {

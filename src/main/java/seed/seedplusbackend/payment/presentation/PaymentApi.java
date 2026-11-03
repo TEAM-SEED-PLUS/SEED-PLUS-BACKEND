@@ -5,17 +5,22 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.global.response.ApiResponse;
+import seed.seedplusbackend.global.response.PageResponse;
 import seed.seedplusbackend.global.security.AuthenticatedUser;
 import seed.seedplusbackend.global.swagger.annotation.ApiErrorCodeExamples;
 import seed.seedplusbackend.payment.presentation.dto.CreatePaymentOrderRequest;
 import seed.seedplusbackend.payment.presentation.dto.PaymentOrderRequestResponse;
+import seed.seedplusbackend.payment.presentation.dto.PaymentHistoryResponse;
 
 @Tag(name = "결제", description = "결제 API")
 public interface PaymentApi {
@@ -42,4 +47,11 @@ public interface PaymentApi {
       @RequestParam(required = false) String payMethod,
       @RequestParam(required = false) String approvalNo,
       @RequestParam(required = false, name = "cstUrl") String receiptUrl);
+
+  @Operation(summary = "내 결제내역 조회", security = @SecurityRequirement(name = "bearerAuth"))
+  @GetMapping("/history")
+  ResponseEntity<ApiResponse<PageResponse<PaymentHistoryResponse>>> getPaymentHistory(
+      @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size);
 }

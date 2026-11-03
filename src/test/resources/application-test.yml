@@ -52,6 +52,10 @@ gmpay:
 payment:
   billing-key-encryption:
     secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  subscription-renewal:
+    enabled: false
+    batch-size: 50
+    interval-millis: 300000
 
 analysis:
   lambda:

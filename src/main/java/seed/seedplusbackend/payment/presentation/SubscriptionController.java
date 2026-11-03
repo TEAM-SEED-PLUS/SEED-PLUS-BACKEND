@@ -1,6 +1,7 @@
 package seed.seedplusbackend.payment.presentation;
 
 import jakarta.validation.Valid;
+import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,9 +13,11 @@ import seed.seedplusbackend.global.response.ApiResponse;
 import seed.seedplusbackend.global.security.AuthenticatedUser;
 import seed.seedplusbackend.payment.application.SubscriptionCardRegistrationService;
 import seed.seedplusbackend.payment.application.SubscriptionRecurringPaymentService;
+import seed.seedplusbackend.payment.application.SubscriptionQueryService;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationRequest;
 import seed.seedplusbackend.payment.presentation.dto.CardRegistrationResponse;
 import seed.seedplusbackend.payment.presentation.dto.RecurringPaymentResponse;
+import seed.seedplusbackend.payment.presentation.dto.SubscriptionStatusResponse;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +26,7 @@ public class SubscriptionController implements SubscriptionApi {
 
   private final SubscriptionCardRegistrationService subscriptionCardRegistrationService;
   private final SubscriptionRecurringPaymentService subscriptionRecurringPaymentService;
+  private final SubscriptionQueryService subscriptionQueryService;
 
   @Override
   public ResponseEntity<ApiResponse<CardRegistrationResponse>> requestCardRegistration(
@@ -44,5 +48,15 @@ public class SubscriptionController implements SubscriptionApi {
             RecurringPaymentResponse.from(
                 subscriptionRecurringPaymentService.requestInitialPayment(
                     authenticatedUser.getId(), subscriptionId))));
+  }
+
+  @Override
+  public ResponseEntity<ApiResponse<SubscriptionStatusResponse>> getMySubscription(
+      @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            SubscriptionStatusResponse.from(
+                subscriptionQueryService.getLatestSubscription(
+                    authenticatedUser.getId(), OffsetDateTime.now()))));
   }
 }
