@@ -68,10 +68,18 @@ public class SecurityConfig {
                         "/api/v1/builder-stores",
                         "/api/v1/builder-stores/*",
                         "/api/v1/builder-stores/*/comments",
+                        "/api/v1/community/posts",
+                        "/api/v1/community/posts/*",
+                        "/api/v1/community/posts/*/comments",
                         "/api/v1/commercial-areas",
                         "/api/v1/commercial-areas/**",
                         "/api/v1/weather-feeds",
-                        "/api/v1/weather-feeds/**")
+                        "/api/v1/weather-feeds/**",
+                        "/api/v1/notices",
+                        "/api/v1/notices/**",
+                        "/api/v1/faqs")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/inquiries")
                     .permitAll()
                     .requestMatchers(
                         "/actuator/health",

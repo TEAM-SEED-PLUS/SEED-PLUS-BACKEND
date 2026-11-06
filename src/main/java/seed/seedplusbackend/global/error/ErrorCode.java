@@ -46,6 +46,9 @@ public enum ErrorCode {
   DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, 4004, "이미 사용 중인 로그인 ID입니다."),
   PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, 4005, "새 비밀번호와 비밀번호 확인이 일치하지 않습니다."),
 
+  // 4100: Customer Support
+  NOT_FOUND_NOTICE(HttpStatus.NOT_FOUND, 4100, "공지사항을 찾을 수 없습니다."),
+
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),
 
@@ -75,6 +78,13 @@ public enum ErrorCode {
   NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, 7100, "댓글을 찾을 수 없습니다."),
   NOT_OWNER_COMMENT(HttpStatus.FORBIDDEN, 7101, "댓글 작성자가 아닙니다."),
   INVALID_PARENT_COMMENT(HttpStatus.BAD_REQUEST, 7102, "유효하지 않은 부모 댓글입니다."),
+
+  // 7200: Community
+  NOT_FOUND_COMMUNITY_POST(HttpStatus.NOT_FOUND, 7200, "게시글을 찾을 수 없습니다."),
+  NOT_OWNER_COMMUNITY_POST(HttpStatus.FORBIDDEN, 7201, "게시글 작성자가 아닙니다."),
+  INVALID_COMMUNITY_TAG(HttpStatus.BAD_REQUEST, 7202, "유효하지 않은 커뮤니티 태그입니다."),
+  INVALID_COMMUNITY_CONTENT(HttpStatus.BAD_REQUEST, 7203, "커뮤니티 입력값이 올바르지 않습니다."),
+  INVALID_COMMUNITY_STATE(HttpStatus.CONFLICT, 7204, "커뮤니티 상태가 올바르지 않습니다."),
 
   // 8000: Score
   NOT_FOUND_SCORE(HttpStatus.NOT_FOUND, 8000, "점수 정보를 찾을 수 없습니다."),
