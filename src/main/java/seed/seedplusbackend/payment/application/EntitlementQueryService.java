@@ -18,10 +18,11 @@ public class EntitlementQueryService {
   @Transactional(readOnly = true)
   public UserEntitlements getEntitlements(Long userId, String reportId, OffsetDateTime now) {
     boolean pro =
-        subscriptionRepository
-            .existsByUser_IdAndStatusAndExpiresAtAfter(userId, SubscriptionStatus.ACTIVE, now);
+        subscriptionRepository.existsByUser_IdAndStatusAndExpiresAtAfter(
+            userId, SubscriptionStatus.ACTIVE, now);
     boolean reportPurchased =
-        reportId != null && reportPurchaseEntitlementRepository.existsByUser_IdAndReportId(userId, reportId);
+        reportId != null
+            && reportPurchaseEntitlementRepository.existsByUser_IdAndReportId(userId, reportId);
     return new UserEntitlements(pro ? UserPlan.PRO : UserPlan.FREE, pro, reportPurchased);
   }
 }
