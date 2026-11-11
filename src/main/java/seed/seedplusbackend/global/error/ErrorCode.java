@@ -49,6 +49,9 @@ public enum ErrorCode {
   // 4100: Customer Support
   NOT_FOUND_NOTICE(HttpStatus.NOT_FOUND, 4100, "공지사항을 찾을 수 없습니다."),
 
+  // 4200: Payment
+  INVALID_REFUND_REQUEST_STATUS(HttpStatus.CONFLICT, 4200, "환불 요청 상태가 올바르지 않습니다."),
+
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),
 
