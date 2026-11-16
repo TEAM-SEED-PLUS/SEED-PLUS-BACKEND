@@ -1,7 +1,6 @@
 package seed.seedplusbackend.payment.infrastructure.gmpay;
 
 import java.nio.charset.StandardCharsets;
-import java.net.URI;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -9,7 +8,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.util.UriComponentsBuilder;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.payment.application.command.GmpayPaymentFeedbackCommand;
@@ -17,16 +15,13 @@ import seed.seedplusbackend.payment.application.port.GmpayPaymentVerificationPor
 import seed.seedplusbackend.payment.application.result.GmpayPaymentInfo;
 
 @Component
-public class RestClientGmpayPaymentVerificationAdapter implements GmpayPaymentVerificationPort {
-
-  private final GmpayProperties properties;
-  private final RestClient restClient;
+public class RestClientGmpayPaymentVerificationAdapter extends GmpayRestClientSupport
+    implements GmpayPaymentVerificationPort {
 
   public RestClientGmpayPaymentVerificationAdapter(
       @Qualifier("externalRestClientBuilder") RestClient.Builder restClientBuilder,
       GmpayProperties properties) {
-    this.properties = properties;
-    this.restClient = restClientBuilder.build();
+    super(restClientBuilder, properties);
   }
 
   @Override
@@ -50,11 +45,14 @@ public class RestClientGmpayPaymentVerificationAdapter implements GmpayPaymentVe
       GmpayPaymentInfoResponse response =
           restClient
               .get()
-              .uri(paymentInfoUri(providerOrderNo))
+              .uri(uri("/oapi/p/payment/info", "orderNo", providerOrderNo))
               .header("devID", properties.devId())
               .header("devToken", properties.devToken())
               .retrieve()
-              .onStatus(HttpStatusCode::isError, this::throwGmpayPaymentInfoException)
+              .onStatus(
+                  HttpStatusCode::isError,
+                  (request, response) ->
+                      throwGmpayException(ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, response))
               .body(GmpayPaymentInfoResponse.class);
       if (response == null || !response.success() || response.data() == null || !response.data().exists()) {
         throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, "invalid response", null);
@@ -70,36 +68,9 @@ public class RestClientGmpayPaymentVerificationAdapter implements GmpayPaymentVe
     }
   }
 
-  private URI paymentInfoUri(String providerOrderNo) {
-    String baseUrl = properties.baseUrl().replaceAll("/+$", "");
-    return UriComponentsBuilder.fromUriString(baseUrl + "/oapi/p/payment/info")
-        .queryParam("orderNo", providerOrderNo)
-        .build()
-        .toUri();
-  }
-
   private void validatePaymentInfoCredentials() {
-    if (isBlank(properties.devId()) || isBlank(properties.devToken())) {
-      throw new ApplicationException(
-          ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, "payment info credentials are missing", null);
-    }
-  }
-
-  private void throwGmpayPaymentInfoException(
-      org.springframework.http.HttpRequest request,
-      org.springframework.http.client.ClientHttpResponse response) {
-    try {
-      throw new ApplicationException(
-          ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED,
-          "status=%d".formatted(response.getStatusCode().value()),
-          null);
-    } catch (java.io.IOException exception) {
-      throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, exception);
-    }
-  }
-
-  private boolean isBlank(String value) {
-    return value == null || value.isBlank();
+    validateRequired(
+        ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, properties.devId(), properties.devToken());
   }
 
   private record GmpayPaymentInfoResponse(boolean success, GmpayPaymentInfoData data) {}

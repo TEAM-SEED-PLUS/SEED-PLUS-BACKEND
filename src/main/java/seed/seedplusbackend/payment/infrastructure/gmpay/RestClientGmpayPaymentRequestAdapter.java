@@ -1,12 +1,10 @@
 package seed.seedplusbackend.payment.infrastructure.gmpay;
 
-import java.net.URI;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.util.UriComponentsBuilder;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.payment.application.command.GmpayPaymentRequestCommand;
@@ -14,35 +12,31 @@ import seed.seedplusbackend.payment.application.port.GmpayPaymentRequestPort;
 import seed.seedplusbackend.payment.application.result.GmpayPaymentRequestResult;
 
 @Component
-public class RestClientGmpayPaymentRequestAdapter implements GmpayPaymentRequestPort {
-
-  private final GmpayProperties properties;
-  private final RestClient restClient;
+public class RestClientGmpayPaymentRequestAdapter extends GmpayRestClientSupport
+    implements GmpayPaymentRequestPort {
 
   public RestClientGmpayPaymentRequestAdapter(
       @Qualifier("externalRestClientBuilder") RestClient.Builder restClientBuilder,
       GmpayProperties properties) {
-    this.restClient = restClientBuilder.build();
-    this.properties = properties;
+    super(restClientBuilder, properties);
   }
 
   @Override
   public GmpayPaymentRequestResult requestPayment(GmpayPaymentRequestCommand command) {
-    if (properties.memberId() == null || properties.memberId().isBlank()) {
-      throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, "memberId is missing", null);
-    }
-    if (properties.feedbackUrl() == null || properties.feedbackUrl().isBlank()) {
-      throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, "feedbackUrl is missing", null);
-    }
+    validateRequired(
+        ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, properties.memberId(), properties.feedbackUrl());
 
     try {
       GmpayPaymentRequestResponse response =
           restClient
               .post()
-              .uri(paymentRequestUri())
+              .uri(uri("/oapi/payment/request"))
               .body(GmpayPaymentRequest.from(properties, command))
               .retrieve()
-              .onStatus(HttpStatusCode::isError, this::throwGmpayPaymentRequestException)
+              .onStatus(
+                  HttpStatusCode::isError,
+                  (request, response) ->
+                      throwGmpayException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, response))
               .body(GmpayPaymentRequestResponse.class);
       if (response == null || !response.success() || response.orderNo() == null || response.payUrl() == null) {
         throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, "invalid response", null);
@@ -51,24 +45,6 @@ public class RestClientGmpayPaymentRequestAdapter implements GmpayPaymentRequest
     } catch (ApplicationException exception) {
       throw exception;
     } catch (RestClientException exception) {
-      throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, exception);
-    }
-  }
-
-  private URI paymentRequestUri() {
-    String baseUrl = properties.baseUrl().replaceAll("/+$", "");
-    return UriComponentsBuilder.fromUriString(baseUrl + "/oapi/payment/request").build().toUri();
-  }
-
-  private void throwGmpayPaymentRequestException(
-      org.springframework.http.HttpRequest request,
-      org.springframework.http.client.ClientHttpResponse response) {
-    try {
-      throw new ApplicationException(
-          ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED,
-          "status=%d".formatted(response.getStatusCode().value()),
-          null);
-    } catch (java.io.IOException exception) {
       throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, exception);
     }
   }
@@ -93,13 +69,9 @@ public class RestClientGmpayPaymentRequestAdapter implements GmpayPaymentRequest
           command.buyerMobile(),
           command.buyerEmail(),
           properties.feedbackUrl(),
-          blankToNull(properties.returnUrl()),
+          properties.returnUrlOrNull(),
           command.orderKey(),
           command.productCode());
-    }
-
-    private static String blankToNull(String value) {
-      return value == null || value.isBlank() ? null : value;
     }
   }
 

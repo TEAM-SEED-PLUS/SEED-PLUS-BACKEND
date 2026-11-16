@@ -10,4 +10,9 @@ public record GmpayProperties(
     String returnUrl,
     String devId,
     String devToken,
-    String feedbackToken) {}
+    String feedbackToken) {
+
+  public String returnUrlOrNull() {
+    return returnUrl == null || returnUrl.isBlank() ? null : returnUrl;
+  }
+}
