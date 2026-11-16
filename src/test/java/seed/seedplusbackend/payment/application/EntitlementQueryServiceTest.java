@@ -4,14 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import seed.seedplusbackend.payment.domain.entity.Subscription;
 import seed.seedplusbackend.payment.domain.entity.SubscriptionStatus;
 import seed.seedplusbackend.payment.domain.repository.ReportPurchaseEntitlementRepository;
 import seed.seedplusbackend.payment.domain.repository.SubscriptionRepository;
@@ -31,15 +29,10 @@ class EntitlementQueryServiceTest {
     Long userId = 1L;
     String reportId = "report-1";
     OffsetDateTime now = OffsetDateTime.parse("2026-10-28T12:00:00+09:00");
-    Subscription subscription =
-        Subscription.builder()
-            .status(SubscriptionStatus.ACTIVE)
-            .expiresAt(now.plusDays(1))
-            .build();
     given(
-            subscriptionRepository.findFirstByUser_IdAndStatusOrderByExpiresAtDesc(
-                userId, SubscriptionStatus.ACTIVE))
-        .willReturn(Optional.of(subscription));
+            subscriptionRepository.existsByUser_IdAndStatusAndExpiresAtAfter(
+                userId, SubscriptionStatus.ACTIVE, now))
+        .willReturn(true);
     given(reportPurchaseEntitlementRepository.existsByUser_IdAndReportId(userId, reportId))
         .willReturn(true);
 
@@ -57,9 +50,9 @@ class EntitlementQueryServiceTest {
     String reportId = "report-1";
     OffsetDateTime now = OffsetDateTime.parse("2026-10-28T12:00:00+09:00");
     given(
-            subscriptionRepository.findFirstByUser_IdAndStatusOrderByExpiresAtDesc(
-                userId, SubscriptionStatus.ACTIVE))
-        .willReturn(Optional.empty());
+            subscriptionRepository.existsByUser_IdAndStatusAndExpiresAtAfter(
+                userId, SubscriptionStatus.ACTIVE, now))
+        .willReturn(false);
     given(reportPurchaseEntitlementRepository.existsByUser_IdAndReportId(userId, reportId))
         .willReturn(true);
 
@@ -75,15 +68,10 @@ class EntitlementQueryServiceTest {
   void getEntitlements_returnsFreeForExpiredSubscription() {
     Long userId = 1L;
     OffsetDateTime now = OffsetDateTime.parse("2026-10-28T12:00:00+09:00");
-    Subscription subscription =
-        Subscription.builder()
-            .status(SubscriptionStatus.ACTIVE)
-            .expiresAt(now.minusSeconds(1))
-            .build();
     given(
-            subscriptionRepository.findFirstByUser_IdAndStatusOrderByExpiresAtDesc(
-                userId, SubscriptionStatus.ACTIVE))
-        .willReturn(Optional.of(subscription));
+            subscriptionRepository.existsByUser_IdAndStatusAndExpiresAtAfter(
+                userId, SubscriptionStatus.ACTIVE, now))
+        .willReturn(false);
 
     UserEntitlements result = entitlementQueryService.getEntitlements(userId, null, now);
 

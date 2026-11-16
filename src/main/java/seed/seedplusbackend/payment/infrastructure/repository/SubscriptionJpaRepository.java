@@ -38,4 +38,8 @@ public interface SubscriptionJpaRepository
 
   @Override
   <S extends Subscription> S save(S entity);
+
+  @Override
+  boolean existsByUser_IdAndStatusAndExpiresAtAfter(
+      Long userId, SubscriptionStatus status, OffsetDateTime expiresAt);
 }

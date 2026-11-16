@@ -22,4 +22,7 @@ public interface SubscriptionRepository {
   Optional<Subscription> findFirstByUser_IdOrderByCreatedAtDesc(Long userId);
 
   <S extends Subscription> S save(S entity);
+
+  boolean existsByUser_IdAndStatusAndExpiresAtAfter(
+      Long userId, SubscriptionStatus status, OffsetDateTime expiresAt);
 }
