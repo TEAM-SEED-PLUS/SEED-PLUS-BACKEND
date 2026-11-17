@@ -25,10 +25,10 @@ import seed.seedplusbackend.payment.application.result.GmpayPaymentInfo;
 import seed.seedplusbackend.payment.domain.entity.Payment;
 import seed.seedplusbackend.payment.domain.entity.PaymentOrder;
 import seed.seedplusbackend.payment.domain.entity.PaymentOrderStatus;
-import seed.seedplusbackend.payment.domain.entity.PaymentProvider;
 import seed.seedplusbackend.payment.domain.entity.PaymentProduct;
 import seed.seedplusbackend.payment.domain.entity.PaymentProductBillingType;
 import seed.seedplusbackend.payment.domain.entity.PaymentProductCode;
+import seed.seedplusbackend.payment.domain.entity.PaymentProvider;
 import seed.seedplusbackend.payment.domain.entity.PaymentStatus;
 import seed.seedplusbackend.payment.domain.entity.ReportPurchaseEntitlement;
 import seed.seedplusbackend.payment.domain.entity.Subscription;
@@ -56,7 +56,9 @@ class PaymentFeedbackServiceTest {
   @Test
   @DisplayName("완료된 단건결제는 서버 검증 후 리포트 권한을 부여한다")
   void handleFeedback_grantsReportEntitlementAfterVerification() {
-    PaymentOrder paymentOrder = paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
+    PaymentOrder paymentOrder =
+        paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
+    given(product.getBillingType()).willReturn(PaymentProductBillingType.ONE_TIME);
     given(paymentOrderRepository.findByProviderOrderNo("gmpay-order-1"))
         .willReturn(Optional.of(paymentOrder));
     doNothing().when(gmpayPaymentVerificationPort).validateFeedback(command());
@@ -75,7 +77,10 @@ class PaymentFeedbackServiceTest {
   @Test
   @DisplayName("완료된 연간 구독 결제는 1년 유효한 PRO 구독을 생성한다")
   void handleFeedback_createsYearlySubscription() {
-    PaymentOrder paymentOrder = paymentOrder(PaymentProductBillingType.SUBSCRIPTION, PaymentProductCode.PRO_YEARLY);
+    PaymentOrder paymentOrder =
+        paymentOrder(PaymentProductBillingType.SUBSCRIPTION, PaymentProductCode.PRO_YEARLY);
+    given(product.getBillingType()).willReturn(PaymentProductBillingType.SUBSCRIPTION);
+    given(product.getCode()).willReturn(PaymentProductCode.PRO_YEARLY);
     given(paymentOrderRepository.findByProviderOrderNo("gmpay-order-1"))
         .willReturn(Optional.of(paymentOrder));
     doNothing().when(gmpayPaymentVerificationPort).validateFeedback(command());
@@ -95,7 +100,8 @@ class PaymentFeedbackServiceTest {
   @Test
   @DisplayName("결제 금액이 주문 정보와 다르면 권한을 부여하지 않는다")
   void handleFeedback_throwsExceptionWhenAmountDoesNotMatch() {
-    PaymentOrder paymentOrder = paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
+    PaymentOrder paymentOrder =
+        paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
     given(paymentOrderRepository.findByProviderOrderNo("gmpay-order-1"))
         .willReturn(Optional.of(paymentOrder));
     doNothing().when(gmpayPaymentVerificationPort).validateFeedback(command());
@@ -115,7 +121,8 @@ class PaymentFeedbackServiceTest {
   @Test
   @DisplayName("이미 완료된 주문의 중복 통지는 권한을 다시 부여하지 않는다")
   void handleFeedback_doesNotGrantEntitlementAgainWhenOrderIsCompleted() {
-    PaymentOrder paymentOrder = paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
+    PaymentOrder paymentOrder =
+        paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
     paymentOrder.complete();
     given(paymentOrderRepository.findByProviderOrderNo("gmpay-order-1"))
         .willReturn(Optional.of(paymentOrder));
@@ -132,7 +139,8 @@ class PaymentFeedbackServiceTest {
   @Test
   @DisplayName("취소 통지는 주문을 취소 상태로만 변경한다")
   void handleFeedback_cancelsPaymentOrder() {
-    PaymentOrder paymentOrder = paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
+    PaymentOrder paymentOrder =
+        paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
     GmpayPaymentFeedbackCommand cancelCommand =
         new GmpayPaymentFeedbackCommand(
             "seed-member", "feedback-token", "CANCEL", "gmpay-order-1", null, null, null);
@@ -150,7 +158,8 @@ class PaymentFeedbackServiceTest {
   @Test
   @DisplayName("완료된 결제의 전체 취소 통지는 결제와 주문 상태를 취소로 변경한다")
   void handleFeedback_cancelsCompletedPayment() {
-    PaymentOrder paymentOrder = paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
+    PaymentOrder paymentOrder =
+        paymentOrder(PaymentProductBillingType.ONE_TIME, PaymentProductCode.SURVIVAL_REPORT);
     paymentOrder.complete();
     Payment payment =
         Payment.builder()
@@ -179,8 +188,6 @@ class PaymentFeedbackServiceTest {
     boolean reportProduct = billingType == PaymentProductBillingType.ONE_TIME;
     String productName = reportProduct ? "생존율 상세 리포트" : "PRO 연간 구독";
     long amount = reportProduct ? 9000L : 59000L;
-    given(product.getBillingType()).willReturn(billingType);
-    given(product.getCode()).willReturn(productCode);
     PaymentOrder paymentOrder =
         PaymentOrder.builder()
             .user(user)
