@@ -41,10 +41,14 @@ public class RestClientGmpayCardRegistrationAdapter extends GmpayRestClientSuppo
               .retrieve()
               .onStatus(
                   HttpStatusCode::isError,
-                  (request, response) ->
-                      throwGmpayException(ErrorCode.GMPAY_CARD_REGISTRATION_REQUEST_FAILED, response))
+                  (request, clientResponse) ->
+                      throwGmpayException(
+                          ErrorCode.GMPAY_CARD_REGISTRATION_REQUEST_FAILED, clientResponse))
               .body(GmpayCardRegistrationResponse.class);
-      if (response == null || !response.success() || isBlank(response.mpKey()) || isBlank(response.payUrl())) {
+      if (response == null
+          || !response.success()
+          || isBlank(response.mpKey())
+          || isBlank(response.payUrl())) {
         throw new ApplicationException(
             ErrorCode.GMPAY_CARD_REGISTRATION_REQUEST_FAILED, "invalid response", null);
       }

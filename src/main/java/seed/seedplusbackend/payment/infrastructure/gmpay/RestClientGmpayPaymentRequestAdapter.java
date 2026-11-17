@@ -35,11 +35,15 @@ public class RestClientGmpayPaymentRequestAdapter extends GmpayRestClientSupport
               .retrieve()
               .onStatus(
                   HttpStatusCode::isError,
-                  (request, response) ->
-                      throwGmpayException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, response))
+                  (request, clientResponse) ->
+                      throwGmpayException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, clientResponse))
               .body(GmpayPaymentRequestResponse.class);
-      if (response == null || !response.success() || response.orderNo() == null || response.payUrl() == null) {
-        throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, "invalid response", null);
+      if (response == null
+          || !response.success()
+          || response.orderNo() == null
+          || response.payUrl() == null) {
+        throw new ApplicationException(
+            ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED, "invalid response", null);
       }
       return new GmpayPaymentRequestResult(response.orderNo(), response.payUrl());
     } catch (ApplicationException exception) {

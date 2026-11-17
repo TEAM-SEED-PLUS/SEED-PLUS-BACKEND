@@ -41,11 +41,12 @@ public class RestClientGmpayRecurringPaymentAdapter extends GmpayRestClientSuppo
               .retrieve()
               .onStatus(
                   HttpStatusCode::isError,
-                  (request, response) ->
-                      throwGmpayException(ErrorCode.GMPAY_RECURRING_PAYMENT_FAILED, response))
+                  (request, clientResponse) ->
+                      throwGmpayException(ErrorCode.GMPAY_RECURRING_PAYMENT_FAILED, clientResponse))
               .body(GmpayRecurringPaymentResponse.class);
       if (response == null || !response.success() || response.payInfo() == null) {
-        throw new ApplicationException(ErrorCode.GMPAY_RECURRING_PAYMENT_FAILED, "invalid response", null);
+        throw new ApplicationException(
+            ErrorCode.GMPAY_RECURRING_PAYMENT_FAILED, "invalid response", null);
       }
       return response.payInfo().toResult();
     } catch (ApplicationException exception) {
@@ -95,7 +96,8 @@ public class RestClientGmpayRecurringPaymentAdapter extends GmpayRestClientSuppo
 
     private GmpayRecurringPaymentResult toResult() {
       if (amt == null || orderNo == null || orderNo.isBlank()) {
-        throw new ApplicationException(ErrorCode.GMPAY_RECURRING_PAYMENT_FAILED, "invalid payInfo", null);
+        throw new ApplicationException(
+            ErrorCode.GMPAY_RECURRING_PAYMENT_FAILED, "invalid payInfo", null);
       }
       return new GmpayRecurringPaymentResult(
           orderNo, amt, "CARD", authCode, cstUrl, parsePaidAt(authDate));

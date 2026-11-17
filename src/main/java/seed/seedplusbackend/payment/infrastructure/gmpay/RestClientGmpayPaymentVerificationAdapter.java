@@ -51,11 +51,16 @@ public class RestClientGmpayPaymentVerificationAdapter extends GmpayRestClientSu
               .retrieve()
               .onStatus(
                   HttpStatusCode::isError,
-                  (request, response) ->
-                      throwGmpayException(ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, response))
+                  (request, clientResponse) ->
+                      throwGmpayException(
+                          ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, clientResponse))
               .body(GmpayPaymentInfoResponse.class);
-      if (response == null || !response.success() || response.data() == null || !response.data().exists()) {
-        throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, "invalid response", null);
+      if (response == null
+          || !response.success()
+          || response.data() == null
+          || !response.data().exists()) {
+        throw new ApplicationException(
+            ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, "invalid response", null);
       }
       if (!properties.memberId().equals(response.data().memberId())) {
         throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_VERIFICATION_FAILED);
@@ -88,7 +93,8 @@ public class RestClientGmpayPaymentVerificationAdapter extends GmpayRestClientSu
 
     private GmpayPaymentInfo toResult() {
       if (totalPrice == null) {
-        throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, "totalPrice is missing", null);
+        throw new ApplicationException(
+            ErrorCode.GMPAY_PAYMENT_INFO_REQUEST_FAILED, "totalPrice is missing", null);
       }
       return new GmpayPaymentInfo(
           orderNo, state, totalPrice, goodName, memberId, payMethod, approvalNo, payDate);
