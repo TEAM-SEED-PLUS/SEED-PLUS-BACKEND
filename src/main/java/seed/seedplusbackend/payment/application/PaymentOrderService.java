@@ -33,7 +33,9 @@ public class PaymentOrderService {
   @Transactional
   public PaymentOrderRequestResult requestPayment(Long userId, CreatePaymentOrderCommand command) {
     User user =
-        userRepository.findById(userId).orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_USER));
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_USER));
     PaymentProduct product =
         paymentProductRepository
             .findByCodeAndActiveTrue(command.productCode())

@@ -37,6 +37,7 @@ class AesGcmBillingKeyEncryptionAdapterTest {
         .isInstanceOfSatisfying(
             ApplicationException.class,
             exception ->
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED));
+                assertThat(exception.getErrorCode())
+                    .isEqualTo(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED));
   }
 }

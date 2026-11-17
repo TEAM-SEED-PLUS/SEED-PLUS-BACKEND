@@ -64,12 +64,7 @@ class RestClientGmpayCardRegistrationAdapterTest {
     GmpayCardRegistrationRequestResult result =
         adapter.requestCardRegistration(
             new GmpayCardRegistrationRequestCommand(
-                "PRO 월간 구독",
-                "01012345678",
-                "1",
-                "사용자",
-                "user@example.com",
-                "PRO_MONTHLY"));
+                "PRO 월간 구독", "01012345678", "1", "사용자", "user@example.com", "PRO_MONTHLY"));
 
     assertThat(result.mpKey()).isEqualTo("mp-key");
     assertThat(result.payUrl()).isEqualTo("https://pay.gmpay.kr/card");

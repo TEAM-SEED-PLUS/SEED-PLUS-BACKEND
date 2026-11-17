@@ -7,7 +7,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seed.seedplusbackend.payment.application.result.PaymentHistoryResult;
-import seed.seedplusbackend.payment.domain.entity.Payment;
 import seed.seedplusbackend.payment.domain.repository.PaymentRepository;
 
 @Service

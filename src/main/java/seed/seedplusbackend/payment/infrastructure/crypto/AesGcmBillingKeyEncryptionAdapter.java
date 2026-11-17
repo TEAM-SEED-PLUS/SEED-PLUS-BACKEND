@@ -39,10 +39,11 @@ public class AesGcmBillingKeyEncryptionAdapter implements BillingKeyEncryptionPo
       byte[] encrypted = cipher.doFinal(billingKey.getBytes(StandardCharsets.UTF_8));
       return Base64.getUrlEncoder()
           .withoutPadding()
-          .encodeToString(ByteBuffer.allocate(initializationVector.length + encrypted.length)
-              .put(initializationVector)
-              .put(encrypted)
-              .array());
+          .encodeToString(
+              ByteBuffer.allocate(initializationVector.length + encrypted.length)
+                  .put(initializationVector)
+                  .put(encrypted)
+                  .array());
     } catch (GeneralSecurityException | IllegalArgumentException exception) {
       throw new ApplicationException(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, exception);
     }
@@ -53,7 +54,8 @@ public class AesGcmBillingKeyEncryptionAdapter implements BillingKeyEncryptionPo
     try {
       byte[] encrypted = Base64.getUrlDecoder().decode(encryptedBillingKey);
       if (encrypted.length <= INITIALIZATION_VECTOR_LENGTH) {
-        throw new ApplicationException(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, "invalid encrypted billing key", null);
+        throw new ApplicationException(
+            ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, "invalid encrypted billing key", null);
       }
       ByteBuffer buffer = ByteBuffer.wrap(encrypted);
       byte[] initializationVector = new byte[INITIALIZATION_VECTOR_LENGTH];
@@ -73,11 +75,13 @@ public class AesGcmBillingKeyEncryptionAdapter implements BillingKeyEncryptionPo
 
   private SecretKeySpec encryptionKey() {
     if (properties.secret() == null || properties.secret().isBlank()) {
-      throw new ApplicationException(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, "encryption secret is missing", null);
+      throw new ApplicationException(
+          ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, "encryption secret is missing", null);
     }
     byte[] decoded = Base64.getDecoder().decode(properties.secret());
     if (decoded.length != 32) {
-      throw new ApplicationException(ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, "invalid encryption secret", null);
+      throw new ApplicationException(
+          ErrorCode.BILLING_KEY_ENCRYPTION_FAILED, "invalid encryption secret", null);
     }
     return new SecretKeySpec(decoded, "AES");
   }

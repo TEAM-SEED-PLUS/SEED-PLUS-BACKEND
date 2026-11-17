@@ -54,7 +54,8 @@ class SubscriptionRecurringPaymentServiceTest {
   void requestInitialPayment_activatesSubscriptionWhenPaymentSucceeds() {
     Subscription subscription = pendingSubscription();
     given(subscriptionRepository.findByIdAndUser_Id(1L, 1L)).willReturn(Optional.of(subscription));
-    given(paymentOrderRepository.save(any(PaymentOrder.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(paymentOrderRepository.save(any(PaymentOrder.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
     given(billingKeyEncryptionPort.decrypt("encrypted-mp-key")).willReturn("mp-key");
     given(gmpayRecurringPaymentPort.requestPayment(any()))
         .willReturn(
@@ -68,7 +69,8 @@ class SubscriptionRecurringPaymentServiceTest {
     OffsetDateTime expiresAt = OffsetDateTime.parse("2026-12-03T12:00:00+09:00");
     given(subscriptionPeriodCalculator.calculateExpiresAt(any(), any())).willReturn(expiresAt);
 
-    RecurringPaymentResult result = subscriptionRecurringPaymentService.requestInitialPayment(1L, 1L);
+    RecurringPaymentResult result =
+        subscriptionRecurringPaymentService.requestInitialPayment(1L, 1L);
 
     ArgumentCaptor<GmpayRecurringPaymentCommand> commandCaptor =
         ArgumentCaptor.forClass(GmpayRecurringPaymentCommand.class);
@@ -88,12 +90,14 @@ class SubscriptionRecurringPaymentServiceTest {
   void requestInitialPayment_marksSubscriptionAsPaymentFailedWhenPaymentFails() {
     Subscription subscription = pendingSubscription();
     given(subscriptionRepository.findByIdAndUser_Id(1L, 1L)).willReturn(Optional.of(subscription));
-    given(paymentOrderRepository.save(any(PaymentOrder.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(paymentOrderRepository.save(any(PaymentOrder.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
     given(billingKeyEncryptionPort.decrypt("encrypted-mp-key")).willReturn("mp-key");
     given(gmpayRecurringPaymentPort.requestPayment(any()))
         .willThrow(new ApplicationException(ErrorCode.GMPAY_RECURRING_PAYMENT_FAILED));
 
-    RecurringPaymentResult result = subscriptionRecurringPaymentService.requestInitialPayment(1L, 1L);
+    RecurringPaymentResult result =
+        subscriptionRecurringPaymentService.requestInitialPayment(1L, 1L);
 
     ArgumentCaptor<PaymentOrder> paymentOrderCaptor = ArgumentCaptor.forClass(PaymentOrder.class);
     then(paymentOrderRepository).should().save(paymentOrderCaptor.capture());

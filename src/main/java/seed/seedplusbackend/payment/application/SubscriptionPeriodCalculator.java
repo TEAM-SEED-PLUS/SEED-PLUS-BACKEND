@@ -9,7 +9,8 @@ import seed.seedplusbackend.payment.domain.entity.PaymentProductCode;
 @Component
 public class SubscriptionPeriodCalculator {
 
-  public OffsetDateTime calculateExpiresAt(PaymentProductCode productCode, OffsetDateTime startedAt) {
+  public OffsetDateTime calculateExpiresAt(
+      PaymentProductCode productCode, OffsetDateTime startedAt) {
     return switch (productCode) {
       case PRO_MONTHLY -> startedAt.plusMonths(1);
       case PRO_YEARLY -> startedAt.plusYears(1);

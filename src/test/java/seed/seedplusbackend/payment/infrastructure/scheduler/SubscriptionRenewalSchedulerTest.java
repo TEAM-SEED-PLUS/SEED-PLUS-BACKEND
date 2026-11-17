@@ -45,8 +45,9 @@ class SubscriptionRenewalSchedulerTest {
             subscriptionRepository,
             subscriptionRecurringPaymentService);
     given(subscription.getId()).willReturn(1L);
-    given(subscriptionRepository.findByStatusAndNextBillingAtLessThanEqualOrderByNextBillingAtAsc(
-            any(), any(), any()))
+    given(
+            subscriptionRepository.findByStatusAndNextBillingAtLessThanEqualOrderByNextBillingAtAsc(
+                any(), any(), any()))
         .willReturn(List.of(subscription));
 
     scheduler.renewDueSubscriptions();

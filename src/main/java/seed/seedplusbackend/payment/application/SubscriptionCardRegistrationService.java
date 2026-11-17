@@ -34,7 +34,9 @@ public class SubscriptionCardRegistrationService {
   public CardRegistrationRequestResult requestCardRegistration(
       Long userId, CreateCardRegistrationCommand command) {
     User user =
-        userRepository.findById(userId).orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_USER));
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_USER));
     PaymentProduct product =
         paymentProductRepository
             .findByCodeAndActiveTrue(command.productCode())

@@ -55,7 +55,8 @@ class PaymentOrderServiceTest {
     given(product.getCode()).willReturn(PaymentProductCode.SURVIVAL_REPORT);
     given(user.getPhoneNumber()).willReturn("01012345678");
     given(user.getEmail()).willReturn("user@example.com");
-    given(paymentOrderRepository.save(any(PaymentOrder.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(paymentOrderRepository.save(any(PaymentOrder.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
     given(gmpayPaymentRequestPort.requestPayment(any()))
         .willReturn(new GmpayPaymentRequestResult("gmpay-order-1", "https://pay.gmpay.kr/1"));
 
@@ -92,7 +93,8 @@ class PaymentOrderServiceTest {
                     1L, new CreatePaymentOrderCommand(PaymentProductCode.SURVIVAL_REPORT, null)))
         .isInstanceOfSatisfying(
             ApplicationException.class,
-            exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_PAYMENT_ORDER));
+            exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_PAYMENT_ORDER));
     then(gmpayPaymentRequestPort).shouldHaveNoInteractions();
   }
 
@@ -110,7 +112,8 @@ class PaymentOrderServiceTest {
                     1L, new CreatePaymentOrderCommand(PaymentProductCode.PRO_MONTHLY, "report-1")))
         .isInstanceOfSatisfying(
             ApplicationException.class,
-            exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_PAYMENT_ORDER));
+            exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_PAYMENT_ORDER));
     then(gmpayPaymentRequestPort).shouldHaveNoInteractions();
   }
 }

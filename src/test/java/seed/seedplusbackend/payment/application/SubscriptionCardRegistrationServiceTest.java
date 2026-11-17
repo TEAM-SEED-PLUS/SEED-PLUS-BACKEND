@@ -60,7 +60,8 @@ class SubscriptionCardRegistrationServiceTest {
     given(gmpayCardRegistrationPort.requestCardRegistration(any()))
         .willReturn(new GmpayCardRegistrationRequestResult("mp-key", "https://pay.gmpay.kr/card"));
     given(billingKeyEncryptionPort.encrypt("mp-key")).willReturn("encrypted-mp-key");
-    given(subscriptionRepository.save(any(Subscription.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(subscriptionRepository.save(any(Subscription.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
 
     CardRegistrationRequestResult result =
         subscriptionCardRegistrationService.requestCardRegistration(
@@ -73,7 +74,8 @@ class SubscriptionCardRegistrationServiceTest {
     then(subscriptionRepository).should().save(subscriptionCaptor.capture());
     assertThat(requestCaptor.getValue().subscriptionProductCode()).isEqualTo("PRO_MONTHLY");
     assertThat(subscriptionCaptor.getValue().getStatus()).isEqualTo(SubscriptionStatus.PENDING);
-    assertThat(subscriptionCaptor.getValue().getEncryptedBillingKey()).isEqualTo("encrypted-mp-key");
+    assertThat(subscriptionCaptor.getValue().getEncryptedBillingKey())
+        .isEqualTo("encrypted-mp-key");
     assertThat(result.payUrl()).isEqualTo("https://pay.gmpay.kr/card");
   }
 
@@ -91,7 +93,8 @@ class SubscriptionCardRegistrationServiceTest {
                     1L, new CreateCardRegistrationCommand(PaymentProductCode.SURVIVAL_REPORT)))
         .isInstanceOfSatisfying(
             ApplicationException.class,
-            exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_PAYMENT_ORDER));
+            exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_PAYMENT_ORDER));
     then(gmpayCardRegistrationPort).shouldHaveNoInteractions();
   }
 }

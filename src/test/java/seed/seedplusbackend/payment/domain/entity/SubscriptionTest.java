@@ -14,10 +14,7 @@ class SubscriptionTest {
   void isActiveAt_returnsTrueBeforeExpiration() {
     OffsetDateTime now = OffsetDateTime.parse("2026-10-28T12:00:00+09:00");
     Subscription subscription =
-        Subscription.builder()
-            .status(SubscriptionStatus.ACTIVE)
-            .expiresAt(now.plusDays(1))
-            .build();
+        Subscription.builder().status(SubscriptionStatus.ACTIVE).expiresAt(now.plusDays(1)).build();
 
     assertThat(subscription.isActiveAt(now)).isTrue();
   }

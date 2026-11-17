@@ -35,7 +35,10 @@ public class SubscriptionRenewalScheduler {
       try {
         subscriptionRecurringPaymentService.renewDueSubscription(subscription.getId(), now);
       } catch (RuntimeException exception) {
-        log.error("[SubscriptionRenewalScheduler] 구독 정기결제 처리 실패, subscriptionId={}", subscription.getId(), exception);
+        log.error(
+            "[SubscriptionRenewalScheduler] 구독 정기결제 처리 실패, subscriptionId={}",
+            subscription.getId(),
+            exception);
       }
     }
   }

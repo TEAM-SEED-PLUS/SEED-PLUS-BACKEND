@@ -44,7 +44,8 @@ class RestClientGmpayPaymentCancellationAdapterTest {
   @DisplayName("취소 토큰을 조회한 뒤 주문번호로 결제를 취소한다")
   void cancelPayment_requestsMemberTokenAndCancelsPayment() {
     server
-        .expect(once(), requestTo("https://api.gmpay.kr/oapi/p/member/token/v2?memberId=seed-member"))
+        .expect(
+            once(), requestTo("https://api.gmpay.kr/oapi/p/member/token/v2?memberId=seed-member"))
         .andExpect(method(GET))
         .andExpect(header("devID", "dev-id"))
         .andExpect(header("devToken", "dev-token"))

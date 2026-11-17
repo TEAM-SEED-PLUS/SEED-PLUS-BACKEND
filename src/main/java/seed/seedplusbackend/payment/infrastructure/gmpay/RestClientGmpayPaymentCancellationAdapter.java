@@ -41,7 +41,9 @@ public class RestClientGmpayPaymentCancellationAdapter extends GmpayRestClientSu
           restClient
               .post()
               .uri(uri("/oapi/payment/cancel"))
-              .body(new GmpayPaymentCancellationRequest(properties.memberId(), providerOrderNo, cancelToken))
+              .body(
+                  new GmpayPaymentCancellationRequest(
+                      properties.memberId(), providerOrderNo, cancelToken))
               .retrieve()
               .onStatus(
                   HttpStatusCode::isError,
@@ -49,7 +51,8 @@ public class RestClientGmpayPaymentCancellationAdapter extends GmpayRestClientSu
                       throwGmpayException(ErrorCode.GMPAY_PAYMENT_CANCEL_FAILED, response))
               .body(GmpayPaymentCancellationResponse.class);
       if (cancellationResponse == null || !cancellationResponse.success()) {
-        throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_CANCEL_FAILED, "invalid response", null);
+        throw new ApplicationException(
+            ErrorCode.GMPAY_PAYMENT_CANCEL_FAILED, "invalid response", null);
       }
     } catch (ApplicationException exception) {
       throw exception;
@@ -63,7 +66,8 @@ public class RestClientGmpayPaymentCancellationAdapter extends GmpayRestClientSu
         || !response.success()
         || response.data() == null
         || isBlank(response.data().cancelToken())) {
-      throw new ApplicationException(ErrorCode.GMPAY_PAYMENT_CANCEL_FAILED, "cancel token is missing", null);
+      throw new ApplicationException(
+          ErrorCode.GMPAY_PAYMENT_CANCEL_FAILED, "cancel token is missing", null);
     }
     return response.data().cancelToken();
   }

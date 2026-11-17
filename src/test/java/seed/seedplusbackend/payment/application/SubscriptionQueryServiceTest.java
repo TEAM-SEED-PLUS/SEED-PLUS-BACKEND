@@ -32,7 +32,8 @@ class SubscriptionQueryServiceTest {
   @Test
   @DisplayName("구독이 없으면 FREE 상태를 반환한다")
   void getLatestSubscription_returnsInactiveResultWhenSubscriptionDoesNotExist() {
-    given(subscriptionRepository.findFirstByUser_IdOrderByCreatedAtDesc(1L)).willReturn(Optional.empty());
+    given(subscriptionRepository.findFirstByUser_IdOrderByCreatedAtDesc(1L))
+        .willReturn(Optional.empty());
 
     SubscriptionStatusResult result =
         subscriptionQueryService.getLatestSubscription(1L, OffsetDateTime.now());

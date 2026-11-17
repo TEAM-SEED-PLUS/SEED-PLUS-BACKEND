@@ -87,7 +87,8 @@ public class PaymentFeedbackService {
       Payment payment =
           paymentRepository
               .findByPaymentOrder_Id(paymentOrder.getId())
-              .orElseThrow(() -> new ApplicationException(ErrorCode.GMPAY_PAYMENT_VERIFICATION_FAILED));
+              .orElseThrow(
+                  () -> new ApplicationException(ErrorCode.GMPAY_PAYMENT_VERIFICATION_FAILED));
       payment.cancel(OffsetDateTime.now());
       paymentOrder.cancel();
       return;
@@ -129,7 +130,8 @@ public class PaymentFeedbackService {
 
   private void grantSubscription(PaymentOrder paymentOrder, OffsetDateTime completedAt) {
     OffsetDateTime expiresAt =
-        subscriptionPeriodCalculator.calculateExpiresAt(paymentOrder.getProduct().getCode(), completedAt);
+        subscriptionPeriodCalculator.calculateExpiresAt(
+            paymentOrder.getProduct().getCode(), completedAt);
     subscriptionRepository.save(
         Subscription.builder()
             .user(paymentOrder.getUser())

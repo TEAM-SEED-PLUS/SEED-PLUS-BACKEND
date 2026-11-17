@@ -83,17 +83,13 @@ class RestClientGmpayPaymentRequestAdapterTest {
         .isInstanceOfSatisfying(
             ApplicationException.class,
             exception ->
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED));
+                assertThat(exception.getErrorCode())
+                    .isEqualTo(ErrorCode.GMPAY_PAYMENT_REQUEST_FAILED));
     server.verify();
   }
 
   private GmpayPaymentRequestCommand command() {
     return new GmpayPaymentRequestCommand(
-        "생존율 상세 리포트",
-        9000,
-        "01012345678",
-        "user@example.com",
-        "order-key",
-        "SURVIVAL_REPORT");
+        "생존율 상세 리포트", 9000, "01012345678", "user@example.com", "order-key", "SURVIVAL_REPORT");
   }
 }

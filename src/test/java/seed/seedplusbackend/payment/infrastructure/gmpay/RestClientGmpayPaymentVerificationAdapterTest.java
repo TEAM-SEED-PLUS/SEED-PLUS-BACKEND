@@ -75,6 +75,7 @@ class RestClientGmpayPaymentVerificationAdapterTest {
     assertThatThrownBy(() -> adapter.validateFeedback(command))
         .isInstanceOfSatisfying(
             ApplicationException.class,
-            exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_GMPAY_FEEDBACK));
+            exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_GMPAY_FEEDBACK));
   }
 }
