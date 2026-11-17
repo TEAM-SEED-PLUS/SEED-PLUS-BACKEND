@@ -76,6 +76,45 @@ public class Subscription extends BaseTimeEntity {
   }
 
   public boolean isActiveAt(OffsetDateTime now) {
-    return status == SubscriptionStatus.ACTIVE && expiresAt != null && now.isBefore(expiresAt);
+    return (status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.CANCELED)
+        && expiresAt != null
+        && now.isBefore(expiresAt);
+  }
+
+  public boolean isReadyForInitialPayment() {
+    return status == SubscriptionStatus.PENDING || status == SubscriptionStatus.PAYMENT_FAILED;
+  }
+
+  public void activate(
+      OffsetDateTime startedAt, OffsetDateTime expiresAt, OffsetDateTime nextBillingAt) {
+    this.status = SubscriptionStatus.ACTIVE;
+    this.startedAt = startedAt;
+    this.expiresAt = expiresAt;
+    this.nextBillingAt = nextBillingAt;
+  }
+
+  public void markPaymentFailed() {
+    this.status = SubscriptionStatus.PAYMENT_FAILED;
+  }
+
+  public boolean isDueForRenewalAt(OffsetDateTime now) {
+    return status == SubscriptionStatus.ACTIVE
+        && nextBillingAt != null
+        && !nextBillingAt.isAfter(now);
+  }
+
+  public void renew(OffsetDateTime expiresAt, OffsetDateTime nextBillingAt) {
+    this.status = SubscriptionStatus.ACTIVE;
+    this.expiresAt = expiresAt;
+    this.nextBillingAt = nextBillingAt;
+  }
+
+  public void cancel(OffsetDateTime canceledAt) {
+    if (status != SubscriptionStatus.ACTIVE) {
+      throw new IllegalStateException("활성 상태의 구독만 해지할 수 있습니다.");
+    }
+    this.status = SubscriptionStatus.CANCELED;
+    this.nextBillingAt = null;
+    this.canceledAt = canceledAt;
   }
 }

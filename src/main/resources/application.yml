@@ -84,6 +84,23 @@ weather-feed:
   fast-api:
     base-url: ${WEATHER_FEED_FAST_API_BASE_URL:http://127.0.0.1:8000}
 
+gmpay:
+  base-url: ${GMPAY_BASE_URL:https://api.gmpay.kr}
+  member-id: ${GMPAY_MEMBER_ID:}
+  feedback-url: ${GMPAY_FEEDBACK_URL:}
+  return-url: ${GMPAY_RETURN_URL:}
+  dev-id: ${GMPAY_DEV_ID:}
+  dev-token: ${GMPAY_DEV_TOKEN:}
+  feedback-token: ${GMPAY_FEEDBACK_TOKEN:}
+
+payment:
+  billing-key-encryption:
+    secret: ${PAYMENT_BILLING_KEY_ENCRYPTION_SECRET:}
+  subscription-renewal:
+    enabled: ${PAYMENT_SUBSCRIPTION_RENEWAL_ENABLED:false}
+    batch-size: ${PAYMENT_SUBSCRIPTION_RENEWAL_BATCH_SIZE:50}
+    interval-millis: ${PAYMENT_SUBSCRIPTION_RENEWAL_INTERVAL_MILLIS:300000}
+
 analysis:
   lambda:
     profit:

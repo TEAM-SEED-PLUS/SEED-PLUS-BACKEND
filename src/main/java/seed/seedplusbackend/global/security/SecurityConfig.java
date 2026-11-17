@@ -81,6 +81,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/inquiries")
                     .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/payments/gmpay/feedback")
+                    .permitAll()
                     .requestMatchers(
                         "/actuator/health",
                         "/actuator/prometheus",

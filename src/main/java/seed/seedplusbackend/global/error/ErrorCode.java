@@ -51,6 +51,21 @@ public enum ErrorCode {
 
   // 4200: Payment
   INVALID_REFUND_REQUEST_STATUS(HttpStatus.CONFLICT, 4200, "환불 요청 상태가 올바르지 않습니다."),
+  GMPAY_PAYMENT_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 4201, "GMPay 결제 요청에 실패했습니다."),
+  NOT_FOUND_PAYMENT_PRODUCT(HttpStatus.NOT_FOUND, 4202, "결제 상품을 찾을 수 없습니다."),
+  INVALID_PAYMENT_ORDER(HttpStatus.BAD_REQUEST, 4203, "결제 주문 정보가 올바르지 않습니다."),
+  INVALID_GMPAY_FEEDBACK(HttpStatus.FORBIDDEN, 4204, "GMPay 결제 통지 정보가 올바르지 않습니다."),
+  GMPAY_PAYMENT_INFO_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 4205, "GMPay 결제 정보 조회에 실패했습니다."),
+  GMPAY_PAYMENT_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, 4206, "GMPay 결제 정보 검증에 실패했습니다."),
+  NOT_FOUND_PAYMENT_ORDER(HttpStatus.NOT_FOUND, 4207, "결제 주문을 찾을 수 없습니다."),
+  BILLING_KEY_ENCRYPTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 4208, "빌링 키 암호화에 실패했습니다."),
+  GMPAY_CARD_REGISTRATION_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, 4209, "GMPay 카드 등록 요청에 실패했습니다."),
+  NOT_FOUND_SUBSCRIPTION(HttpStatus.NOT_FOUND, 4210, "구독 정보를 찾을 수 없습니다."),
+  INVALID_SUBSCRIPTION_STATUS(HttpStatus.CONFLICT, 4211, "구독 상태가 올바르지 않습니다."),
+  GMPAY_RECURRING_PAYMENT_FAILED(HttpStatus.BAD_GATEWAY, 4212, "GMPay 등록결제에 실패했습니다."),
+  INVALID_REFUNDABLE_PAYMENT(HttpStatus.CONFLICT, 4213, "환불 신청할 수 없는 결제입니다."),
+  DUPLICATE_REFUND_REQUEST(HttpStatus.CONFLICT, 4214, "이미 환불 신청된 결제입니다."),
+  GMPAY_PAYMENT_CANCEL_FAILED(HttpStatus.BAD_GATEWAY, 4215, "GMPay 결제 취소에 실패했습니다."),
 
   // 5000: Region
   NOT_FOUND_REGION(HttpStatus.NOT_FOUND, 5000, "지역을 찾을 수 없습니다."),

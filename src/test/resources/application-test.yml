@@ -40,6 +40,23 @@ external:
     connect-timeout-millis: 3000
     read-timeout-millis: 5000
 
+gmpay:
+  base-url: https://api.gmpay.kr
+  member-id: test-member-id
+  feedback-url: https://api.example.com/api/v1/payments/gmpay/feedback
+  return-url: https://seedplus.example.com/payments/complete
+  dev-id: test-dev-id
+  dev-token: test-dev-token
+  feedback-token: test-feedback-token
+
+payment:
+  billing-key-encryption:
+    secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  subscription-renewal:
+    enabled: false
+    batch-size: 50
+    interval-millis: 300000
+
 analysis:
   lambda:
     profit:

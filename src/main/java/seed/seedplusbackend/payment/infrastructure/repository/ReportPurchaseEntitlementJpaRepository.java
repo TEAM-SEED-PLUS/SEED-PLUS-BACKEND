@@ -9,4 +9,7 @@ public interface ReportPurchaseEntitlementJpaRepository
 
   @Override
   boolean existsByUser_IdAndReportId(Long userId, String reportId);
+
+  @Override
+  <S extends ReportPurchaseEntitlement> S save(S entity);
 }
