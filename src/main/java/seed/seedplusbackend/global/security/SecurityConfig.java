@@ -75,11 +75,16 @@ public class SecurityConfig {
                         "/api/v1/commercial-areas/**",
                         "/api/v1/weather-feeds",
                         "/api/v1/weather-feeds/**",
+                        "/api/v1/news/articles",
+                        "/api/v1/news/articles/*",
+                        "/api/v1/news/popular",
+                        "/api/v1/news/digests",
                         "/api/v1/notices",
                         "/api/v1/notices/**",
                         "/api/v1/faqs")
                     .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/v1/inquiries")
+                    .requestMatchers(
+                        HttpMethod.POST, "/api/v1/inquiries", "/api/v1/news/articles/*/views")
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/payments/gmpay/feedback")
                     .permitAll()
