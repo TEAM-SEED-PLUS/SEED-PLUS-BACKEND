@@ -177,6 +177,51 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
   }
 
   @Test
+  @DisplayName("RSS는 시도 문맥을 확인해 동명 지역과 불확실한 지역 태깅을 생략한다")
+  void rssRegionsRequireMatchingSido() throws Exception {
+    Long jung = jdbc.queryForObject("SELECT region_id FROM regions WHERE code='11140'", Long.class);
+    Long gangseo =
+        jdbc.queryForObject("SELECT region_id FROM regions WHERE code='11500'", Long.class);
+    int key = 1;
+    for (String title :
+        List.of(
+            "부산 중구 소상공인 지원",
+            "부산 강서구 소상공인 지원",
+            "중구 소상공인 지원",
+            "강서구 소상공인 지원",
+            "서울 창업박람회에 부산 중구 소상공인 참여")) {
+      long id =
+          publication.publish(
+              news(key++, title, now, NewsCategory.POLICY_FINANCE, List.of(), List.of()));
+      assertThat(query.detail(id).regions()).as(title).isEmpty();
+    }
+    int mixedKey = key;
+    long mixedId =
+        publication.publish(
+            news(
+                mixedKey,
+                "서울 중구·부산 강서구 소상공인 지원",
+                now,
+                NewsCategory.POLICY_FINANCE,
+                List.of(),
+                List.of()));
+    assertThat(query.detail(mixedId).regions())
+        .extracting(region -> region.id())
+        .containsExactly(jung);
+    mvc.perform(get("/api/v1/news/articles").param("regionIds", jung.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content.length()").value(1))
+        .andExpect(jsonPath("$.data.content[0].id").value(mixedId));
+    mvc.perform(get("/api/v1/news/articles").param("regionIds", gangseo.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content").isEmpty());
+
+    publication.publish(
+        news(mixedKey, "부산 중구 소상공인 지원", now, NewsCategory.POLICY_FINANCE, List.of(), List.of()));
+    assertThat(query.detail(mixedId).regions()).isEmpty();
+  }
+
+  @Test
   @DisplayName("복합 필터·KST 날짜 경계·동률 ID 정렬·상위 업종 검색을 적용한다")
   void searchAndPaging() throws Exception {
     Long gangnam =
@@ -337,7 +382,8 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
     views.record(id, 5L, null);
     when(feed.fetch(NewsSource.MSS_PRESS))
         .thenReturn(
-            List.of(new NewsFeedPort.RawItem("강남구 소상공인 수정", raw(1).url(), raw(1).publishedText())));
+            List.of(
+                new NewsFeedPort.RawItem("서울 강남구 소상공인 수정", raw(1).url(), raw(1).publishedText())));
     collection.collect(NewsSource.MSS_PRESS);
     assertThat(query.detail(id).viewCount()).isEqualTo(1);
     assertThat(query.detail(id).title()).contains("수정");
@@ -550,6 +596,29 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
                 "SELECT active FROM news_articles WHERE source_key='NEWS_TEST:NEWS_INDUSTRY:20262'",
                 Boolean.class))
         .isTrue();
+  }
+
+  @Test
+  @DisplayName("지역 매핑이 없는 임대료 인사이트도 상위 지역 경로를 보존하고 검색된다")
+  void rentInsightPreservesAreaPathWithoutRegionMapping() throws Exception {
+    rent(2025, 4, "73.1");
+    rent(2026, 1, "73.6");
+    jdbc.update(
+        "UPDATE reb_small_retail_rent_areas SET area_name='도심',area_path='서울 > 도심',area_level=2 WHERE source_area_key='NEWS_TEST'");
+
+    maintenance.insights();
+
+    Long id =
+        jdbc.queryForObject(
+            "SELECT news_article_id FROM news_articles WHERE source='REB_RENT' AND source_key='NEWS_TEST:20261'",
+            Long.class);
+    assertThat(query.detail(id).regions()).isEmpty();
+    assertThat(query.detail(id).title()).contains("서울 > 도심");
+    assertThat(query.detail(id).body()).contains("서울 > 도심");
+    mvc.perform(get("/api/v1/news/articles").param("keyword", "서울"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content.length()").value(1))
+        .andExpect(jsonPath("$.data.content[0].id").value(id));
   }
 
   @Test

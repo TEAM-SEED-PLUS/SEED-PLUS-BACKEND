@@ -39,13 +39,13 @@ public class JdbcNewsInsightAdapter implements NewsInsightPort {
   private static final String RENT =
       """
    WITH ranked AS (
-     SELECT m.*,a.source_area_key,a.area_name,a.region_id,a.commercial_area_id,
+     SELECT m.*,a.source_area_key,a.area_path,a.region_id,a.commercial_area_id,
        concat(a.source_area_key,':',m.reference_year,m.reference_quarter) AS item_key,
        row_number() OVER(PARTITION BY m.reb_small_retail_rent_area_id
          ORDER BY m.reference_year DESC,m.reference_quarter DESC) AS recency
      FROM reb_small_retail_rent_metrics m JOIN reb_small_retail_rent_areas a USING(reb_small_retail_rent_area_id)
    )
-   SELECT s.item_key,s.area_name AS target,s.reference_year AS year,s.reference_quarter AS quarter,
+   SELECT s.item_key,s.area_path AS target,s.reference_year AS year,s.reference_quarter AS quarter,
      s.rent_per_square_meter_thousand_krw AS current_value,
      p.rent_per_square_meter_thousand_krw AS previous_value,
      ARRAY(SELECT DISTINCT district.region_id FROM regions r JOIN regions district

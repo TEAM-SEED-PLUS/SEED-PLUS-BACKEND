@@ -7,6 +7,7 @@ import java.time.*;
 import java.util.List;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import seed.seedplusbackend.global.error.DomainException;
 
@@ -88,6 +89,35 @@ class NewsPolicyTest {
     assertThat(NewsPolicy.RULE_VERSION).isEqualTo("v1");
     assertThat(NewsPolicy.tags("강남구 소상공인 창업 지원")).containsExactly("소상공인", "창업");
     assertThat(NewsPolicy.relevant("인사 발령")).isFalse();
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "서울 중구 소상공인 지원, 서울특별시, 중구, true",
+    "서울시 중구 소상공인 지원, 서울특별시, 중구, true",
+    "서울특별시 중구 소상공인 지원, 서울특별시, 중구, true",
+    "[서울 중구] 소상공인 지원, 서울특별시, 중구, true",
+    "서울 중구의 소상공인 지원, 서울특별시, 중구, true",
+    "서울 중구에서 창업 지원, 서울특별시, 중구, true",
+    "서울 강서구 소상공인 지원, 서울특별시, 강서구, true",
+    "부산 중구 소상공인 지원, 서울특별시, 중구, false",
+    "부산 강서구 소상공인 지원, 서울특별시, 강서구, false",
+    "부산광역시 강서구 소상공인 지원, 서울특별시, 강서구, false",
+    "중구 소상공인 지원, 서울특별시, 중구, false",
+    "강서구 소상공인 지원, 서울특별시, 강서구, false",
+    "서울 창업박람회에 부산 중구 소상공인 참여, 서울특별시, 중구, false",
+    "서울 중구·부산 강서구 소상공인 지원, 서울특별시, 중구, true",
+    "서울 중구·부산 강서구 소상공인 지원, 서울특별시, 강서구, false",
+    "남서울 중구 소상공인 지원, 서울특별시, 중구, false",
+    "서울 중구역 소상공인 지원, 서울특별시, 중구, false",
+    "부산 중구 소상공인 지원, 부산광역시, 중구, true",
+    "부산시 강서구 소상공인 지원, 부산광역시, 강서구, true",
+    "부산광역시 강서구 소상공인 지원, 부산광역시, 강서구, true"
+  })
+  @DisplayName("지역 태깅은 시도 표기를 허용하되 다른 지역·불명확한 문맥·부분 단어를 연결하지 않는다")
+  void regionTagsRequireExplicitMatchingSido(
+      String title, String sido, String sigungu, boolean expected) {
+    assertThat(NewsPolicy.matchesRegion(title, sido, sigungu)).isEqualTo(expected);
   }
 
   @Test

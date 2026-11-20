@@ -45,12 +45,21 @@ public class JdbcNewsPublicationAdapter implements NewsPublicationPort {
     var industries = new LinkedHashSet<>(item.industryIds());
     if (item.source().rss()) {
       regions.addAll(
-          jdbc.queryForList(
-              """
-       SELECT region_id FROM regions WHERE code_type='SIGUNGU' AND length(sigungu)>1 AND strpos(?,sigungu)>0
+          jdbc
+              .query(
+                  """
+       SELECT region_id,sido,sigungu FROM regions
+       WHERE code_type='SIGUNGU' AND length(sigungu)>1 AND strpos(?,sigungu)>0
        """,
-              Long.class,
-              item.title()));
+                  (rs, row) ->
+                      new RegionCandidate(
+                          rs.getLong("region_id"), rs.getString("sido"), rs.getString("sigungu")),
+                  item.title())
+              .stream()
+              .filter(
+                  region -> NewsPolicy.matchesRegion(item.title(), region.sido(), region.sigungu()))
+              .map(RegionCandidate::id)
+              .toList());
       industries.addAll(
           jdbc.queryForList(
               """
@@ -75,4 +84,6 @@ public class JdbcNewsPublicationAdapter implements NewsPublicationPort {
         source.name(),
         key);
   }
+
+  private record RegionCandidate(long id, String sido, String sigungu) {}
 }
