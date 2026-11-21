@@ -101,6 +101,18 @@ payment:
     batch-size: ${PAYMENT_SUBSCRIPTION_RENEWAL_BATCH_SIZE:50}
     interval-millis: ${PAYMENT_SUBSCRIPTION_RENEWAL_INTERVAL_MILLIS:300000}
 
+news:
+  batch:
+    enabled: ${NEWS_BATCH_ENABLED:false}
+    run-once: ${NEWS_RUN_ONCE:}
+    press-cron: "${NEWS_PRESS_CRON:0 */10 * * * *}"
+    announcement-cron: "${NEWS_ANNOUNCEMENT_CRON:30 */10 * * * *}"
+    insight-cron: "${NEWS_INSIGHT_CRON:0 0 6 * * *}"
+    digest-cron: "${NEWS_DIGEST_CRON:0 0 9 * * *}"
+  viewer:
+    secret: ${NEWS_VIEWER_SECRET:}
+    cookie-secure: ${NEWS_VIEWER_COOKIE_SECURE:true}
+
 analysis:
   lambda:
     profit:

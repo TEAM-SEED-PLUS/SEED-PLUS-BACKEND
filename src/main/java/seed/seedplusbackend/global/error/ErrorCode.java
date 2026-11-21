@@ -104,6 +104,13 @@ public enum ErrorCode {
   INVALID_COMMUNITY_CONTENT(HttpStatus.BAD_REQUEST, 7203, "커뮤니티 입력값이 올바르지 않습니다."),
   INVALID_COMMUNITY_STATE(HttpStatus.CONFLICT, 7204, "커뮤니티 상태가 올바르지 않습니다."),
 
+  // 7300: News
+  NOT_FOUND_NEWS(HttpStatus.NOT_FOUND, 7300, "뉴스를 찾을 수 없습니다."),
+  INVALID_NEWS_ITEM(HttpStatus.BAD_REQUEST, 7301, "뉴스 항목이 올바르지 않습니다."),
+  NEWS_SOURCE_FAILED(HttpStatus.BAD_GATEWAY, 7302, "뉴스 소스를 가져올 수 없습니다."),
+  NEWS_LEASE_LOST(HttpStatus.CONFLICT, 7303, "뉴스 작업의 실행 권한이 만료되었습니다."),
+  NEWS_VIEWER_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, 7304, "뉴스 조회 집계 설정이 필요합니다."),
+
   // 8000: Score
   NOT_FOUND_SCORE(HttpStatus.NOT_FOUND, 8000, "점수 정보를 찾을 수 없습니다."),
 

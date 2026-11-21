@@ -10,6 +10,7 @@ import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,7 +43,9 @@ public class PublicDataBatchConfiguration {
 
   @Bean
   PublicDataBatchScheduler publicDataBatchScheduler(
-      PublicDataCollectionProperties properties, PublicDataBatchLauncher launcher, Clock clock) {
+      PublicDataCollectionProperties properties,
+      PublicDataBatchLauncher launcher,
+      @Qualifier("publicDataBatchClock") Clock clock) {
     return new PublicDataBatchScheduler(properties, launcher, clock);
   }
 
