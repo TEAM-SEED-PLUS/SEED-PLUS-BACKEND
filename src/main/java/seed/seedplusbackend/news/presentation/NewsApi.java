@@ -21,7 +21,8 @@ import seed.seedplusbackend.news.presentation.dto.*;
 public interface NewsApi {
   @Operation(
       summary = "뉴스 검색",
-      description = "0-base 기사 수 페이징. KST 날짜 범위, 지역·업종 내부 OR 및 필터 간 AND. 최신순 고정.")
+      description =
+          "0-base 기사 수 페이징. contentType=NEWS 또는 INSIGHT로 구역별 조회하며 생략하면 통합 조회. KST 날짜 범위, 지역·업종 내부 OR 및 필터 간 AND. 최신순 고정.")
   @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER, ErrorCode.INVALID_SORT})
   @GetMapping("/articles")
   ResponseEntity<ApiResponse<PageResponse<NewsArticleResponse>>> articles(
@@ -51,9 +52,11 @@ public interface NewsApi {
 
   @Operation(
       summary = "일간 뉴스 다이제스트",
-      description = "기본 date=KST 오늘. 전일 기사 카테고리별 최대 3개. 미생성 날짜는 빈 결과.")
+      description =
+          "date 생략 시 KST 오늘 이하에서 노출 가능한 기사가 있는 최신 브리핑을 기간 제한 없이 조회. 날짜 지정 시 해당 날짜만 조회하고 없으면 빈 결과. digestDate는 요청일 또는 실제 제공 기준일이며, 날짜 생략 시 제공 가능한 자료가 없으면 null. 전일 기사 카테고리별 최대 3개 선정은 유지.")
+  @ApiErrorCodeExamples({ErrorCode.INVALID_PARAMETER})
   @GetMapping("/digests")
-  ResponseEntity<ApiResponse<PageResponse<NewsArticleResponse>>> digest(
+  ResponseEntity<ApiResponse<NewsDigestResponse>> digest(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate date);
 }

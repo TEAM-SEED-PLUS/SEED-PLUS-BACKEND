@@ -111,6 +111,35 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
             List.of()));
   }
 
+  private NewsItem insight(
+      int id,
+      String title,
+      OffsetDateTime published,
+      NewsCategory category,
+      List<Long> regions,
+      List<Long> industries) {
+    return new NewsItem(
+        NewsSource.SEOUL_SALES,
+        "filter:" + id,
+        title,
+        "분기 비교 요약",
+        "분기 비교 본문",
+        "https://data.seoul.go.kr/",
+        published,
+        category,
+        "통계",
+        regions,
+        industries);
+  }
+
+  private void digestEntry(LocalDate date, long articleId, int position) {
+    jdbc.update(
+        "INSERT INTO news_digests(digest_date,article_id,position) VALUES (?,?,?)",
+        date,
+        articleId,
+        position);
+  }
+
   private NewsFeedPort.RawItem raw(int id) {
     return new NewsFeedPort.RawItem(
         "소상공인 지원 " + id,
@@ -170,10 +199,60 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
             "size=0",
             "page=-1",
             "category=WRONG",
+            "contentType=WRONG",
+            "contentType=news",
+            "contentType=",
             "sort=title,asc",
             "from=2026-11-21&to=2026-11-20")) {
       mvc.perform(get("/api/v1/news/articles?" + param)).andExpect(status().isBadRequest());
     }
+  }
+
+  @Test
+  @DisplayName("유형 필터는 페이징과 건수 계산 전에 적용되고 생략하면 통합 최신순을 유지한다")
+  void contentTypeFiltersBeforePaging() throws Exception {
+    long firstNews = publish(1);
+    long secondNews = publish(2);
+    for (int i = 1; i <= 25; i++) {
+      publication.publish(
+          insight(
+              i, "인사이트 " + i, now.minusMinutes(1), NewsCategory.COMMERCIAL, List.of(), List.of()));
+    }
+    long hidden =
+        publication.publish(
+            insight(100, "숨긴 인사이트", now, NewsCategory.COMMERCIAL, List.of(), List.of()));
+    jdbc.update("UPDATE news_articles SET active=false WHERE news_article_id=?", hidden);
+    publication.publish(
+        news(3, "미래 뉴스", now.plusHours(1), NewsCategory.POLICY_FINANCE, List.of(), List.of()));
+
+    mvc.perform(get("/api/v1/news/articles"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.pageInfo.totalElements").value(27))
+        .andExpect(jsonPath("$.data.content.length()").value(20))
+        .andExpect(
+            jsonPath("$.data.content[*].contentType")
+                .value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is("INSIGHT"))));
+    mvc.perform(get("/api/v1/news/articles").param("contentType", "NEWS").param("size", "1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.pageInfo.totalElements").value(2))
+        .andExpect(jsonPath("$.data.pageInfo.totalPages").value(2))
+        .andExpect(jsonPath("$.data.content[0].id").value(secondNews));
+    mvc.perform(
+            get("/api/v1/news/articles")
+                .param("contentType", "NEWS")
+                .param("size", "1")
+                .param("page", "1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.pageInfo.totalElements").value(2))
+        .andExpect(jsonPath("$.data.pageInfo.hasNext").value(false))
+        .andExpect(jsonPath("$.data.content[0].id").value(firstNews));
+    mvc.perform(get("/api/v1/news/articles").param("contentType", "INSIGHT").param("page", "1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.pageInfo.totalElements").value(25))
+        .andExpect(jsonPath("$.data.content.length()").value(5))
+        .andExpect(
+            jsonPath("$.data.content[*].contentType")
+                .value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is("INSIGHT"))));
   }
 
   @Test
@@ -268,8 +347,18 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
             first.category(),
             List.of(songpa),
             List.of(industry)));
+    long insightId =
+        publication.publish(
+            insight(
+                1,
+                "소상공인 성장",
+                first.publishedAt(),
+                first.category(),
+                List.of(gangnam),
+                List.of(industry)));
     var filter =
         new NewsSearchQuery(
+            "NEWS",
             "POLICY_FINANCE",
             null,
             List.of(gangnam),
@@ -284,7 +373,7 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
             query
                 .search(
                     new NewsSearchQuery(
-                        null, "%", List.of(), List.of(), null, null, PageRequest.of(0, 20)))
+                        null, null, "%", List.of(), List.of(), null, null, PageRequest.of(0, 20)))
                 .getContent())
         .extracting(x -> x.id())
         .containsExactly(firstId);
@@ -292,6 +381,7 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
             query
                 .search(
                     new NewsSearchQuery(
+                        "NEWS",
                         null,
                         "강남구",
                         List.of(gangnam),
@@ -302,6 +392,31 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
                 .getContent())
         .extracting(x -> x.id())
         .containsExactly(firstId);
+
+    for (String type : List.of("NEWS", "INSIGHT")) {
+      mvc.perform(
+              get("/api/v1/news/articles")
+                  .param("contentType", type)
+                  .param("category", "POLICY_FINANCE")
+                  .param("regionIds", gangnam.toString())
+                  .param("industryIds", parent.toString())
+                  .param("keyword", "성장")
+                  .param("from", "2026-11-20")
+                  .param("to", "2026-11-20")
+                  .param("size", "1"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.data.pageInfo.totalElements").value(type.equals("NEWS") ? 2 : 1))
+          .andExpect(
+              jsonPath("$.data.content[0].id").value(type.equals("NEWS") ? lastId : insightId))
+          .andExpect(jsonPath("$.data.content[0].contentType").value(type));
+    }
+    mvc.perform(
+            get("/api/v1/news/articles")
+                .param("contentType", "INSIGHT")
+                .param("category", "TRANSACTION"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content").isEmpty())
+        .andExpect(jsonPath("$.data.pageInfo.totalElements").value(0));
   }
 
   @Test
@@ -542,10 +657,141 @@ class NewsIntegrationTest extends AbstractPostgresContainerTest {
     maintenance.digest(now.toLocalDate());
     maintenance.digest(now.toLocalDate());
     assertThat(count("news_digests")).isEqualTo(3);
-    assertThat(query.digest(now.toLocalDate()).getContent())
+    assertThat(query.digest(now.toLocalDate()).articles().getContent())
         .extracting(x -> x.id())
         .containsExactly(popular, 4L, 3L);
-    assertThat(query.digest(now.toLocalDate().minusDays(1))).isEmpty();
+    assertThat(query.digest(now.toLocalDate().minusDays(1)).articles()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("오전 생성 전에는 이전 브리핑을 제공하고 당일 생성 후 최신 기준일로 전환한다")
+  void latestDigestBeforeAndAfterMorning() throws Exception {
+    setTime("2026-11-20T00:00:00+09:00");
+    long previous =
+        publication.publish(
+            news(1, "이전 뉴스", now.minusDays(2), NewsCategory.POLICY_FINANCE, List.of(), List.of()));
+    long current =
+        publication.publish(
+            news(
+                2, "전일 뉴스", now.minusHours(12), NewsCategory.POLICY_FINANCE, List.of(), List.of()));
+    maintenance.digest(LocalDate.parse("2026-11-19"));
+    for (String time : List.of("2026-11-20T00:00:00+09:00", "2026-11-20T08:59:59+09:00")) {
+      setTime(time);
+      mvc.perform(get("/api/v1/news/digests"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.data.digestDate").value("2026-11-19"))
+          .andExpect(jsonPath("$.data.content[0].id").value(previous));
+    }
+    setTime("2026-11-20T09:00:00+09:00");
+    maintenance.digest(now.toLocalDate());
+    mvc.perform(get("/api/v1/news/digests"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.digestDate").value("2026-11-20"))
+        .andExpect(jsonPath("$.data.content[0].id").value(current))
+        .andExpect(jsonPath("$.data.pageInfo.size").value(12))
+        .andExpect(jsonPath("$.data.pageInfo.totalElements").value(1));
+  }
+
+  @Test
+  @DisplayName("최신 다이제스트 기준일은 UTC가 아닌 한국 시간 자정에 바뀐다")
+  void latestDigestUsesKstDate() throws Exception {
+    setTime("2026-11-19T23:59:59+09:00");
+    long id = publish(1);
+    digestEntry(LocalDate.parse("2026-11-19"), id, 1);
+    digestEntry(LocalDate.parse("2026-11-20"), id, 1);
+    mvc.perform(get("/api/v1/news/digests"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.digestDate").value("2026-11-19"));
+    setTime("2026-11-20T00:00:00+09:00");
+    mvc.perform(get("/api/v1/news/digests"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.digestDate").value("2026-11-20"));
+  }
+
+  @Test
+  @DisplayName("기본 다이제스트는 숨김·미래 게시·미래 기준일을 제외하고 오래된 제공분도 유지한다")
+  void latestDigestSkipsUnavailableDates() throws Exception {
+    LocalDate today = now.toLocalDate();
+    LocalDate oldDate = today.minusDays(60);
+    long visible =
+        publication.publish(
+            news(
+                1, "오래된 뉴스", now.minusDays(61), NewsCategory.POLICY_FINANCE, List.of(), List.of()));
+    long hidden = publish(2);
+    long future =
+        publication.publish(
+            news(
+                3,
+                "미래 게시 뉴스",
+                now.plusSeconds(1),
+                NewsCategory.POLICY_FINANCE,
+                List.of(),
+                List.of()));
+    jdbc.update("UPDATE news_articles SET active=false WHERE news_article_id=?", hidden);
+    digestEntry(oldDate, visible, 1);
+    digestEntry(today, hidden, 1);
+    digestEntry(today, future, 2);
+    digestEntry(today.plusDays(1), visible, 1);
+
+    mvc.perform(get("/api/v1/news/digests"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.digestDate").value(oldDate.toString()))
+        .andExpect(jsonPath("$.data.content[0].id").value(visible));
+    for (LocalDate requested : List.of(today, today.minusDays(1))) {
+      mvc.perform(get("/api/v1/news/digests").param("date", requested.toString()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.data.digestDate").value(requested.toString()))
+          .andExpect(jsonPath("$.data.content").isEmpty())
+          .andExpect(jsonPath("$.data.pageInfo.totalElements").value(0));
+    }
+    jdbc.update("UPDATE news_articles SET active=false WHERE news_article_id=?", visible);
+    mvc.perform(get("/api/v1/news/digests"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.digestDate").value(org.hamcrest.Matchers.nullValue()))
+        .andExpect(jsonPath("$.data.content").isEmpty());
+  }
+
+  @Test
+  @DisplayName("다이제스트의 일부 기사만 숨겨져도 기준일과 나머지 기사의 선정 순서는 유지한다")
+  void latestDigestKeepsVisibleSelectionOrder() throws Exception {
+    long first = publish(1), second = publish(2), hidden = publish(3);
+    long future =
+        publication.publish(
+            news(4, "미래 뉴스", now.plusHours(1), NewsCategory.POLICY_FINANCE, List.of(), List.of()));
+    jdbc.update("UPDATE news_articles SET active=false WHERE news_article_id=?", hidden);
+    digestEntry(now.toLocalDate(), second, 1);
+    digestEntry(now.toLocalDate(), hidden, 2);
+    digestEntry(now.toLocalDate(), first, 3);
+    digestEntry(now.toLocalDate(), future, 4);
+    mvc.perform(get("/api/v1/news/digests"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.digestDate").value(now.toLocalDate().toString()))
+        .andExpect(jsonPath("$.data.content.length()").value(2))
+        .andExpect(jsonPath("$.data.content[0].id").value(second))
+        .andExpect(jsonPath("$.data.content[1].id").value(first))
+        .andExpect(jsonPath("$.data.pageInfo.totalElements").value(2));
+  }
+
+  @Test
+  @DisplayName("발행 이력이 없으면 날짜 생략은 null을 반환하고 날짜 지정은 요청일을 유지한다")
+  void digestEmptyResponsePreservesContract() throws Exception {
+    mvc.perform(get("/api/v1/news/digests"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.hasKey("digestDate")))
+        .andExpect(jsonPath("$.data.digestDate").value(org.hamcrest.Matchers.nullValue()))
+        .andExpect(jsonPath("$.data.content").isEmpty())
+        .andExpect(jsonPath("$.data.pageInfo.page").value(0))
+        .andExpect(jsonPath("$.data.pageInfo.size").value(12))
+        .andExpect(jsonPath("$.data.pageInfo.totalElements").value(0))
+        .andExpect(jsonPath("$.data.pageInfo.totalPages").value(0))
+        .andExpect(jsonPath("$.data.pageInfo.hasNext").value(false))
+        .andExpect(jsonPath("$.data.pageInfo.isLast").value(true));
+    mvc.perform(get("/api/v1/news/digests").param("date", "2026-11-19"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.digestDate").value("2026-11-19"))
+        .andExpect(jsonPath("$.data.content").isEmpty());
+    mvc.perform(get("/api/v1/news/digests").param("date", "invalid"))
+        .andExpect(status().isBadRequest());
   }
 
   @Test

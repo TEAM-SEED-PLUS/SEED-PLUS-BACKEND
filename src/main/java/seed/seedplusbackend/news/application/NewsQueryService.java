@@ -5,12 +5,14 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import seed.seedplusbackend.global.cache.*;
 import seed.seedplusbackend.global.error.*;
 import seed.seedplusbackend.news.application.port.NewsReadPort;
 import seed.seedplusbackend.news.application.query.NewsSearchQuery;
 import seed.seedplusbackend.news.application.result.NewsArticleResult;
+import seed.seedplusbackend.news.application.result.NewsDigestResult;
 import seed.seedplusbackend.news.domain.NewsPolicy;
 
 @Service
@@ -57,13 +59,20 @@ public class NewsQueryService {
     return new PageImpl<>(snapshot.items(), PageRequest.of(0, 3), snapshot.items().size());
   }
 
-  public Page<NewsArticleResult> digest(LocalDate date) {
-    LocalDate selected = date == null ? LocalDate.now(clock.withZone(NewsPolicy.ZONE)) : date;
-    var items =
-        read.digest(selected, OffsetDateTime.now(clock)).stream()
-            .map(NewsArticleResult::from)
-            .toList();
-    return new PageImpl<>(items, PageRequest.of(0, 12), items.size());
+  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+  public NewsDigestResult digest(LocalDate date) {
+    OffsetDateTime now = OffsetDateTime.now(clock);
+    LocalDate selected =
+        date == null
+            ? read.latestDigestDate(now.atZoneSameInstant(NewsPolicy.ZONE).toLocalDate(), now)
+                .orElse(null)
+            : date;
+    List<NewsArticleResult> items =
+        selected == null
+            ? List.of()
+            : read.digest(selected, now).stream().map(NewsArticleResult::from).toList();
+    return new NewsDigestResult(
+        selected, new PageImpl<>(items, PageRequest.of(0, 12), items.size()));
   }
 
   private record PopularSnapshot(List<NewsArticleResult> items) {}

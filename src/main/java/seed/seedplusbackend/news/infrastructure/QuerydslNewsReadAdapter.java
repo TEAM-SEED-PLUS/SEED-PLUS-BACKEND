@@ -31,6 +31,7 @@ public class QuerydslNewsReadAdapter implements NewsReadPort {
     var parent = new QIndustry("newsIndustryParent");
     var grandparent = new QIndustry("newsIndustryGrandparent");
     var where = new BooleanBuilder(a.active.isTrue().and(a.publishedAt.loe(now)));
+    if (query.contentType() != null) where.and(a.contentType.eq(query.contentType()));
     if (query.category() != null)
       where.and(
           a.category.eq(seed.seedplusbackend.news.domain.NewsCategory.valueOf(query.category())));
@@ -125,6 +126,20 @@ public class QuerydslNewsReadAdapter implements NewsReadPort {
             to,
             now);
     return ordered(ids, now);
+  }
+
+  @Override
+  public Optional<LocalDate> latestDigestDate(LocalDate today, OffsetDateTime now) {
+    return Optional.ofNullable(
+        jdbc.queryForObject(
+            """
+            SELECT max(d.digest_date) FROM news_digests d
+            JOIN news_articles a ON a.news_article_id=d.article_id
+            WHERE d.digest_date<=? AND a.active AND a.published_at<=?
+            """,
+            LocalDate.class,
+            today,
+            now));
   }
 
   @Override

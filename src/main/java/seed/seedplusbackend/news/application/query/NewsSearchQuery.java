@@ -6,8 +6,10 @@ import org.springframework.data.domain.Pageable;
 import seed.seedplusbackend.global.error.ApplicationException;
 import seed.seedplusbackend.global.error.ErrorCode;
 import seed.seedplusbackend.news.domain.NewsCategory;
+import seed.seedplusbackend.news.domain.NewsContentType;
 
 public record NewsSearchQuery(
+    String contentType,
     String category,
     String keyword,
     List<Long> regionIds,
@@ -17,6 +19,7 @@ public record NewsSearchQuery(
     Pageable pageable) {
   public NewsSearchQuery {
     try {
+      if (contentType != null) NewsContentType.valueOf(contentType);
       if (category != null) NewsCategory.valueOf(category);
     } catch (IllegalArgumentException e) {
       throw new ApplicationException(ErrorCode.INVALID_PARAMETER);

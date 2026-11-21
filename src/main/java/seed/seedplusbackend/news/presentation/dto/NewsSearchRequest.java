@@ -10,6 +10,10 @@ import seed.seedplusbackend.global.error.*;
 import seed.seedplusbackend.news.application.query.NewsSearchQuery;
 
 public record NewsSearchRequest(
+    @Schema(
+            description = "콘텐츠 유형. 생략하면 뉴스와 인사이트를 함께 조회",
+            allowableValues = {"NEWS", "INSIGHT"})
+        String contentType,
     @Schema(allowableValues = {"MARKET", "COMMERCIAL", "TRANSACTION", "POLICY_FINANCE"})
         String category,
     @Size(max = 200) String keyword,
@@ -27,6 +31,7 @@ public record NewsSearchRequest(
     if (sort != null && !sort.equals("publishedAt,desc"))
       throw new ApplicationException(ErrorCode.INVALID_SORT);
     return new NewsSearchQuery(
+        contentType,
         category,
         keyword,
         regionIds,

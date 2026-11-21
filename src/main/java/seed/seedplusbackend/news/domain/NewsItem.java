@@ -48,7 +48,7 @@ public record NewsItem(
   }
 
   public String contentType() {
-    return source.rss() ? "NEWS" : "INSIGHT";
+    return (source.rss() ? NewsContentType.NEWS : NewsContentType.INSIGHT).name();
   }
 
   public String displayMode() {

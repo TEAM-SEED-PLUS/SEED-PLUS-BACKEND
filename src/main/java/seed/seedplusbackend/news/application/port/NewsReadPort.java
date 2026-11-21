@@ -13,5 +13,7 @@ public interface NewsReadPort {
 
   List<NewsArticle> popular(LocalDate from, LocalDate to, OffsetDateTime now);
 
+  Optional<LocalDate> latestDigestDate(LocalDate today, OffsetDateTime now);
+
   List<NewsArticle> digest(LocalDate date, OffsetDateTime now);
 }

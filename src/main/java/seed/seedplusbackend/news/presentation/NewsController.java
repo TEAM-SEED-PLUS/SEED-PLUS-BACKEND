@@ -68,8 +68,7 @@ public class NewsController implements NewsApi {
   }
 
   @Override
-  public ResponseEntity<ApiResponse<PageResponse<NewsArticleResponse>>> digest(LocalDate date) {
-    return ResponseEntity.ok(
-        ApiResponse.success(PageResponse.from(query.digest(date), NewsArticleResponse::from)));
+  public ResponseEntity<ApiResponse<NewsDigestResponse>> digest(LocalDate date) {
+    return ResponseEntity.ok(ApiResponse.success(NewsDigestResponse.from(query.digest(date))));
   }
 }
